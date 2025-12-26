@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import apiClient from '../services/apiClient.js';
@@ -6,14 +6,14 @@ import apiClient from '../services/apiClient.js';
 function AdminLogin() {
   const { setUser } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@example.com');
+  const [adminEmail, setAdminEmail] = useState(import.meta.env.VITE_ADMIN_EMAIL || 'admin@example.com');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
     setError('');
     try {
-      const res = await apiClient.post('/api/admin/login', { email, password });
+      const res = await apiClient.post('/api/admin/login', { email: adminEmail, password });
       const { user, token } = res.data;
       window.localStorage.setItem('iaac_token', token);
       setUser(user);
@@ -22,6 +22,22 @@ function AdminLogin() {
       setError(err?.response?.data?.message || 'Login failed');
     }
   };
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchAdminEmail() {
+      try {
+        const res = await apiClient.get('/api/admin/config');
+        if (mounted && res?.data?.adminEmail) {
+          setAdminEmail(res.data.adminEmail);
+        }
+      } catch (_) {
+        // ignore; fallback to env/default
+      }
+    }
+    fetchAdminEmail();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
@@ -37,14 +53,10 @@ function AdminLogin() {
         )}
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@example.com"
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-            />
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Admin Email</label>
+            <div className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-700">
+              {adminEmail}
+            </div>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Password</label>

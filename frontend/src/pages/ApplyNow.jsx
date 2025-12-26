@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import apiClient from '../services/apiClient.js';
 import { 
   FileText, 
   User, 
@@ -12,6 +13,30 @@ import {
 } from 'lucide-react';
 
 function ApplyNow() {
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    dob: '',
+    nic: '',
+    gender: '',
+    email: '',
+    phone: '',
+    address: '',
+    program: '',
+  });
+  const [status, setStatus] = useState({ submitting: false, success: false, error: '' });
+
+  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+  const submit = async () => {
+    setStatus({ submitting: true, success: false, error: '' });
+    try {
+      await apiClient.post('/api/applications', form);
+      setStatus({ submitting: false, success: true, error: '' });
+      setForm({ firstName: '', lastName: '', dob: '', nic: '', gender: '', email: '', phone: '', address: '', program: '' });
+    } catch (err) {
+      setStatus({ submitting: false, success: false, error: err?.response?.data?.message || 'Failed to submit application' });
+    }
+  };
   return (
     <>
       {/* --- HERO SECTION --- */}
@@ -43,7 +68,7 @@ function ApplyNow() {
                 </div>
               </div>
 
-              <form className="space-y-8">
+              <form className="space-y-8" onSubmit={(e) => { e.preventDefault(); submit(); }}>
                 
                 {/* 1. Personal Information */}
                 <div>
@@ -51,16 +76,16 @@ function ApplyNow() {
                     <User size={18} className="text-blue-500" /> Personal Information
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <InputField label="First Name" placeholder="Sanuthi" />
-                    <InputField label="Last Name" placeholder="Ranaweera" />
-                    <InputField label="Date of Birth" type="date" />
-                    <InputField label="NIC / Passport Number" placeholder="123456789V" />
+                    <InputField label="First Name" placeholder="Sanuthi" value={form.firstName} onChange={update('firstName')} />
+                    <InputField label="Last Name" placeholder="Ranaweera" value={form.lastName} onChange={update('lastName')} />
+                    <InputField label="Date of Birth" type="date" value={form.dob} onChange={update('dob')} />
+                    <InputField label="NIC / Passport Number" placeholder="123456789V" value={form.nic} onChange={update('nic')} />
                     
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
                       <div className="flex gap-6 mt-2">
-                        <RadioOption name="gender" label="Male" />
-                        <RadioOption name="gender" label="Female" />
+                        <RadioOption name="gender" label="Male" checked={form.gender==='Male'} onChange={() => setForm((f)=>({...f, gender:'Male'}))} />
+                        <RadioOption name="gender" label="Female" checked={form.gender==='Female'} onChange={() => setForm((f)=>({...f, gender:'Female'}))} />
                       </div>
                     </div>
                   </div>
@@ -72,10 +97,10 @@ function ApplyNow() {
                     <MapPin size={18} className="text-blue-500" /> Contact Details
                   </h3>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <InputField label="Email Address" type="email" placeholder="student@example.com" icon={Mail} />
-                    <InputField label="Phone Number" type="tel" placeholder="071 234 5678" icon={Phone} />
+                    <InputField label="Email Address" type="email" placeholder="student@example.com" icon={Mail} value={form.email} onChange={update('email')} />
+                    <InputField label="Phone Number" type="tel" placeholder="071 234 5678" icon={Phone} value={form.phone} onChange={update('phone')} />
                     <div className="md:col-span-2">
-                      <InputField label="Home Address" placeholder="No. 123, Street Name, City" />
+                      <InputField label="Home Address" placeholder="No. 123, Street Name, City" value={form.address} onChange={update('address')} />
                     </div>
                   </div>
                 </div>
@@ -87,8 +112,8 @@ function ApplyNow() {
                   </h3>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 mb-1">Select Program</label>
-                    <select className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none transition-all appearance-none">
-                      <option value="" disabled selected>Choose a course...</option>
+                    <select value={form.program} onChange={update('program')} className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none transition-all appearance-none">
+                      <option value="" disabled>Choose a course...</option>
                       <option value="cabin-crew">Diploma in Airline Cabin Crew</option>
                       <option value="ground-ops">Diploma in Airport Ground Operations</option>
                       <option value="ticketing">Diploma in Ticketing & Reservations</option>
@@ -101,8 +126,14 @@ function ApplyNow() {
 
                 {/* Submit Button */}
                 <div className="pt-4 border-t border-slate-100">
-                  <button type="button" className="w-full py-4 bg-blue-600 text-white font-bold text-lg rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all flex items-center justify-center gap-2">
-                    Submit Application
+                  {status.error && (
+                    <div className="mb-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-3 py-2">{status.error}</div>
+                  )}
+                  {status.success && (
+                    <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm px-3 py-2">Application submitted successfully.</div>
+                  )}
+                  <button type="submit" disabled={status.submitting} className="w-full py-4 bg-blue-600 disabled:opacity-60 text-white font-bold text-lg rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all flex items-center justify-center gap-2">
+                    {status.submitting ? 'Submitting...' : 'Submit Application'}
                     <Send size={20} />
                   </button>
                   <p className="text-center text-xs text-slate-400 mt-4">

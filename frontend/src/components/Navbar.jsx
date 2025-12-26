@@ -35,7 +35,7 @@ function Navbar() {
             <NavLink to="/" text="Home" />
             <NavLink to={{ pathname: '/', hash: '#about' }} text="About Us" />
             <NavLink to="/student-life" text="Student Life" />
-            {isAdmin && <NavLink to="/admin/dashboard" text="Admin" />}
+            {/* Admin links hidden from public navbar */}
 
             {/* Training Dropdown */}
             <div className="relative group h-20 flex items-center">
@@ -93,12 +93,7 @@ function Navbar() {
             >
               Apply Now
             </Link>
-            <Link
-              to="/admin/login"
-              className="text-xs font-semibold text-slate-500 hover:text-blue-600 ml-2"
-            >
-              Admin
-            </Link>
+            {/* Admin login button removed from public navbar */}
           </div>
 
           {/* --- MOBILE MENU BUTTON --- */}
@@ -130,18 +125,8 @@ function Navbar() {
             <MobileLink to="/" text="Home" onNavigate={() => setIsMobileMenuOpen(false)} />
             <MobileLink to={{ pathname: '/', hash: '#about' }} text="About Us" onNavigate={() => setIsMobileMenuOpen(false)} />
             <MobileLink to="/student-life" text="Student Life" onNavigate={() => setIsMobileMenuOpen(false)} />
-            <MobileLink
-              to="/admin/login"
-              text="Admin"
-              onNavigate={() => setIsMobileMenuOpen(false)}
-            />
-            {isAdmin && (
-              <MobileLink
-                to="/admin/dashboard"
-                text="Admin Dashboard"
-                onNavigate={() => setIsMobileMenuOpen(false)}
-              />
-            )}
+            {/* Admin mobile link removed */}
+            {/* Admin dashboard link hidden from mobile menu */}
 
             <div>
               <button 

@@ -18,6 +18,12 @@ function Dashboard() {
   const [healthStatus, setHealthStatus] = useState(null);
   const [statsData, setStatsData] = useState(null);
   const [applicationsData, setApplicationsData] = useState([]);
+  const [courseForm, setCourseForm] = useState({ title: '', duration: '' });
+  const [courseStatus, setCourseStatus] = useState({ submitting: false, success: false, error: '' });
+  const [eventForm, setEventForm] = useState({ title: '', description: '', imageUrl: '', eventDate: '' });
+  const [eventStatus, setEventStatus] = useState({ submitting: false, success: false, error: '' });
+  const [courses, setCourses] = useState([]);
+  const [events, setEvents] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -55,8 +61,28 @@ function Dashboard() {
       }
     }
 
+    async function fetchCourses() {
+      try {
+        const res = await apiClient.get('/api/courses');
+        if (isMounted) setCourses(res.data.items || []);
+      } catch (err) {
+        if (isMounted) setCourses([]);
+      }
+    }
+
+    async function fetchEvents() {
+      try {
+        const res = await apiClient.get('/api/events');
+        if (isMounted) setEvents(res.data.items || []);
+      } catch (err) {
+        if (isMounted) setEvents([]);
+      }
+    }
+
     fetchStats();
     fetchApplications();
+    fetchCourses();
+    fetchEvents();
 
     return () => {
       isMounted = false;
@@ -148,8 +174,8 @@ function Dashboard() {
                         <td className="px-6 py-6 text-center text-slate-400" colSpan="4">No applications found</td>
                       </tr>
                     ) : (
-                      applicationsData.map((a, idx) => (
-                        <TableRow key={idx} name={a.name} course={a.course} contact={a.contact} />
+                      applicationsData.map((a) => (
+                        <TableRow key={a.id} name={a.name} course={a.course} contact={a.contact} onDelete={async ()=>{ try { await apiClient.delete(`/api/admin/applications/${a.id}`); setApplicationsData((arr)=>arr.filter(x=>x.id!==a.id)); } catch(_){} }} />
                       ))
                     )}
                   </tbody>
@@ -157,6 +183,50 @@ function Dashboard() {
               </div>
               <div className="p-4 border-t border-slate-100 bg-slate-50 text-center">
                 <button className="text-sm text-blue-600 font-bold hover:underline">View All Applications</button>
+              </div>
+            </div>
+
+            {/* Manage Courses */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="font-bold text-slate-800 text-lg">Manage Courses</h3>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {courses.length === 0 ? (
+                  <div className="px-6 py-6 text-slate-400 text-sm">No courses</div>
+                ) : (
+                  courses.map((c)=> (
+                    <div key={c._id} className="px-6 py-4 flex justify-between items-center text-sm">
+                      <div>
+                        <div className="font-bold text-slate-800">{c.title}</div>
+                        <div className="text-slate-500">{c.duration}</div>
+                      </div>
+                      <button className="px-3 py-1.5 text-xs font-bold rounded bg-red-50 text-red-600 hover:bg-red-100" onClick={async ()=>{ try { await apiClient.delete(`/api/admin/courses/${c._id}`); setCourses(arr=>arr.filter(x=>x._id!==c._id)); } catch(_){} }}>Delete</button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Manage Events */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="font-bold text-slate-800 text-lg">Manage Events</h3>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {events.length === 0 ? (
+                  <div className="px-6 py-6 text-slate-400 text-sm">No events</div>
+                ) : (
+                  events.map((e)=> (
+                    <div key={e._id} className="px-6 py-4 flex justify-between items-center text-sm">
+                      <div>
+                        <div className="font-bold text-slate-800">{e.title}</div>
+                        <div className="text-slate-500">{e.eventDate ? new Date(e.eventDate).toLocaleDateString() : ''}</div>
+                      </div>
+                      <button className="px-3 py-1.5 text-xs font-bold rounded bg-red-50 text-red-600 hover:bg-red-100" onClick={async ()=>{ try { await apiClient.delete(`/api/admin/events/${e._id}`); setEvents(arr=>arr.filter(x=>x._id!==e._id)); } catch(_){} }}>Delete</button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -184,44 +254,54 @@ function Dashboard() {
 
               {/* FORM: ADD COURSE */}
               {activeTab === 'course' && (
-                <form className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <form className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300" onSubmit={async (e)=>{e.preventDefault(); setCourseStatus({submitting:true,success:false,error:''}); try { await apiClient.post('/api/admin/courses', courseForm); setCourseStatus({submitting:false,success:true,error:''}); setCourseForm({title:'',duration:''}); } catch(err){ setCourseStatus({submitting:false,success:false,error: err?.response?.data?.message || 'Failed to publish course'}); } }}>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Title</label>
-                    <input type="text" placeholder="e.g. Adv. Diploma in Aviation" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
+                    <input value={courseForm.title} onChange={(e)=>setCourseForm(f=>({...f,title:e.target.value}))} type="text" placeholder="e.g. Adv. Diploma in Aviation" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
-                    <input type="text" placeholder="e.g. 6 Months" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
+                    <input value={courseForm.duration} onChange={(e)=>setCourseForm(f=>({...f,duration:e.target.value}))} type="text" placeholder="e.g. 6 Months" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
                   </div>
+                  {courseStatus.error && (<div className="rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs px-3 py-2">{courseStatus.error}</div>)}
+                  {courseStatus.success && (<div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs px-3 py-2">Course published.</div>)}
                   <button className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm">
-                    <Plus size={16} /> Publish Course
+                    <Plus size={16} /> {courseStatus.submitting ? 'Publishing...' : 'Publish Course'}
                   </button>
                 </form>
               )}
 
               {/* FORM: ADD EVENT */}
               {activeTab === 'event' && (
-                <form className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <form className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300" onSubmit={async (e)=>{e.preventDefault(); setEventStatus({submitting:true,success:false,error:''}); try { await apiClient.post('/api/admin/events', eventForm); setEventStatus({submitting:false,success:true,error:''}); setEventForm({ title:'', description:'', imageUrl:'', eventDate:''}); } catch(err){ setEventStatus({submitting:false,success:false,error: err?.response?.data?.message || 'Failed to publish event'}); } }}>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Title</label>
-                    <input type="text" placeholder="e.g. Graduation Ceremony 2025" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
+                    <input value={eventForm.title} onChange={(e)=>setEventForm(f=>({...f,title:e.target.value}))} type="text" placeholder="e.g. Graduation Ceremony 2025" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
                   </div>
                   
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Image</label>
-                    <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-slate-400 hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
+                    <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-slate-400">
                       <UploadCloud size={32} className="mb-2" />
-                      <span className="text-xs">Click to upload image</span>
+                      <span className="text-xs">Image URL (optional)</span>
+                      <input value={eventForm.imageUrl} onChange={(e)=>setEventForm(f=>({...f,imageUrl:e.target.value}))} type="url" placeholder="https://..." className="mt-2 w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-xs" />
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
-                    <textarea rows="3" placeholder="Event details..." className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"></textarea>
+                    <textarea rows="3" value={eventForm.description} onChange={(e)=>setEventForm(f=>({...f,description:e.target.value}))} placeholder="Event details..." className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"></textarea>
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Date</label>
+                    <input value={eventForm.eventDate} onChange={(e)=>setEventForm(f=>({...f,eventDate:e.target.value}))} type="date" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
+                  </div>
+
+                  {eventStatus.error && (<div className="rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs px-3 py-2">{eventStatus.error}</div>)}
+                  {eventStatus.success && (<div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs px-3 py-2">Event published.</div>)}
                   <button className="w-full py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm">
-                    <Calendar size={16} /> Publish Event
+                    <Calendar size={16} /> {eventStatus.submitting ? 'Publishing...' : 'Publish Event'}
                   </button>
                 </form>
               )}
@@ -252,16 +332,23 @@ function StatCard({ title, value, subtext, Icon, color }) {
   );
 }
 
-function TableRow({ name, course, contact }) {
+function TableRow({ name, course, contact, onDelete }) {
   return (
     <tr className="hover:bg-slate-50/80 transition-colors group">
       <td className="px-6 py-4 font-bold text-slate-800">{name}</td>
       <td className="px-6 py-4 text-slate-600">{course}</td>
       <td className="px-6 py-4 text-slate-500">{contact}</td>
       <td className="px-6 py-4 text-center">
-        <button className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-bold rounded hover:bg-blue-100 transition-colors">
-          <Eye size={14} /> View
-        </button>
+        <div className="flex items-center justify-center gap-2">
+          <button className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-bold rounded hover:bg-blue-100 transition-colors">
+            <Eye size={14} /> View
+          </button>
+          {onDelete && (
+            <button onClick={onDelete} className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded hover:bg-red-100 transition-colors">
+              Delete
+            </button>
+          )}
+        </div>
       </td>
     </tr>
   );

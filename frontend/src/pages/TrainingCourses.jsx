@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -11,8 +11,24 @@ import {
   Award,
   Rocket
 } from 'lucide-react';
+import apiClient from '../services/apiClient.js';
 
 function TrainingCourses() {
+  const [extraCourses, setExtraCourses] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const res = await apiClient.get('/api/courses');
+        if (mounted) setExtraCourses(res.data.items || []);
+      } catch (_) {
+        if (mounted) setExtraCourses([]);
+      }
+    }
+    load();
+    return () => { mounted = false; };
+  }, []);
   return (
     <>
       {/* --- HERO SECTION --- */}
@@ -86,6 +102,47 @@ function TrainingCourses() {
           </motion.div>
         </div>
       </section>
+
+      {extraCourses.length > 0 && (
+        <section id="courses" className="py-20 bg-slate-50 border-t border-slate-200">
+          <div className="container mx-auto px-6">
+            <motion.div
+              className="flex items-center gap-3 mb-12"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              viewport={{ once: true, amount: 0.2 }}
+            >
+              <div className="p-3 bg-sky-100 text-sky-600 rounded-xl">
+                <BookOpen size={28} />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-slate-900">Additional Courses</h2>
+                <p className="text-slate-500">Courses published via the Admin Dashboard.</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="grid md:grid-cols-2 gap-8"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } } }}
+            >
+              {extraCourses.map((c) => (
+                <CourseCard
+                  key={c._id}
+                  title={c.title}
+                  Icon={BookOpen}
+                  duration={c.duration || '—'}
+                  to="#"
+                  description=""
+                />
+              ))}
+            </motion.div>
+          </div>
+        </section>
+      )}
 
       {/* ====================================================
           PART 2: PILOT TRAINING PROGRAMS (Coming Soon)

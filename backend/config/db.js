@@ -8,9 +8,9 @@ const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
 
-    if (process.env.NODE_ENV !== 'production') {
-      mongoose.set('debug', true);
-    }
+    // Enable verbose Mongoose query logs only when explicitly requested
+    const mongoDebug = (process.env.MONGO_DEBUG || 'false').toLowerCase() === 'true';
+    mongoose.set('debug', mongoDebug);
 
     console.log('MongoDB connected');
   } catch (err) {

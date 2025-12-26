@@ -20,11 +20,26 @@ app.use(
   })
 );
 app.use(express.json({ limit: '1mb' }));
-app.use(morgan('dev'));
+
+// Optional request logging via morgan
+const shouldLogRequests = (process.env.LOG_REQUESTS || 'false').toLowerCase() === 'true';
+if (shouldLogRequests) {
+  app.use(morgan('dev'));
+}
 
 // Mount API routes here
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
+
+// Public routes
+const applicationRoutes = require('./routes/applications');
+app.use('/api/applications', applicationRoutes);
+
+const courseRoutes = require('./routes/courses');
+app.use('/api/courses', courseRoutes);
+
+const eventRoutes = require('./routes/events');
+app.use('/api/events', eventRoutes);
 app.get('/api/health', (req, res) => {
   const dbState = mongoose.connection.readyState;
 

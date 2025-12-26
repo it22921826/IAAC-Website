@@ -11,6 +11,7 @@ import TrainingCourses from './pages/TrainingCourses.jsx';
 import CareerSupport from './pages/CareerSupport.jsx';
 import ContactUs from './pages/ContactUs.jsx';
 import ApplyNow from './pages/ApplyNow.jsx';
+import UpcomingEvents from './pages/UpcomingEvents.jsx';
 import CabinCrewDiploma from './pages/CabinCrewDiploma.jsx';
 import GroundOpsDiploma from './pages/GroundOpsDiploma.jsx';
 import TicketingDiploma from './pages/TicketingDiploma.jsx';
@@ -47,6 +48,7 @@ function App() {
           <Route path="/career-support" element={<CareerSupport />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/apply-now" element={<ApplyNow />} />
+          <Route path="/events/upcoming" element={<UpcomingEvents />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin/dashboard"
