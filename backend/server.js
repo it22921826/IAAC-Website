@@ -13,11 +13,18 @@ const app = express();
 
 // Apply essential middleware for security, logging, and parsing
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
 
-// Mount API routes here, e.g. app.use('/api/auth', authRoutes);
+// Mount API routes here
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
 app.get('/api/health', (req, res) => {
   const dbState = mongoose.connection.readyState;
 

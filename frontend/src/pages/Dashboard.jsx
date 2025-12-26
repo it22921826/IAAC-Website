@@ -16,6 +16,8 @@ function Dashboard() {
   // Simple state to toggle between the two forms (Course vs Event)
   const [activeTab, setActiveTab] = useState('course');
   const [healthStatus, setHealthStatus] = useState(null);
+  const [statsData, setStatsData] = useState(null);
+  const [applicationsData, setApplicationsData] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -34,6 +36,27 @@ function Dashboard() {
     }
 
     checkHealth();
+
+    async function fetchStats() {
+      try {
+        const res = await apiClient.get('/api/admin/stats');
+        if (isMounted) setStatsData(res.data);
+      } catch (err) {
+        if (isMounted) setStatsData(null);
+      }
+    }
+
+    async function fetchApplications() {
+      try {
+        const res = await apiClient.get('/api/admin/applications');
+        if (isMounted) setApplicationsData(res.data.items || []);
+      } catch (err) {
+        if (isMounted) setApplicationsData([]);
+      }
+    }
+
+    fetchStats();
+    fetchApplications();
 
     return () => {
       isMounted = false;
@@ -75,21 +98,21 @@ function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatCard 
             title="Applications Today" 
-            value="12" 
-            subtext="Total for Dec 25, 2025" 
+            value={statsData?.applicationsToday ?? '–'} 
+            subtext={`Total for ${statsData?.period ?? '–'}`} 
             Icon={FileText} 
             color="bg-blue-600"
           />
           <StatCard 
             title="Total Students" 
-            value="1,240" 
-            subtext="+5% growth this month" 
+            value={statsData?.totalStudents ?? '–'} 
+            subtext="Monthly growth" 
             Icon={Users} 
             color="bg-indigo-600"
           />
           <StatCard 
             title="Upcoming Events" 
-            value="3" 
+            value={statsData?.upcomingEvents ?? '–'} 
             subtext="Scheduled for this week" 
             Icon={Calendar} 
             color="bg-orange-500"
@@ -120,31 +143,15 @@ function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-sm">
-                    <TableRow 
-                      name="Sanuthi Ranaweera" 
-                      course="Diploma in Cabin Crew" 
-                      contact="071 234 5678" 
-                    />
-                    <TableRow 
-                      name="Kasun Perera" 
-                      course="Pilot Training (PPL)" 
-                      contact="077 123 9876" 
-                    />
-                    <TableRow 
-                      name="Amaya De Silva" 
-                      course="Airport Ground Ops" 
-                      contact="070 555 1234" 
-                    />
-                    <TableRow 
-                      name="Mohammed Riaz" 
-                      course="Cargo & Logistics" 
-                      contact="076 888 4444" 
-                    />
-                    <TableRow 
-                      name="Nimali Fernando" 
-                      course="Ticketing & Reservations" 
-                      contact="071 999 0000" 
-                    />
+                    {applicationsData.length === 0 ? (
+                      <tr>
+                        <td className="px-6 py-6 text-center text-slate-400" colSpan="4">No applications found</td>
+                      </tr>
+                    ) : (
+                      applicationsData.map((a, idx) => (
+                        <TableRow key={idx} name={a.name} course={a.course} contact={a.contact} />
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
