@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    /* FIXED: Changed background to Slate-50 (Light Grey/White) */
+    @apply bg-slate-50 text-slate-900 antialiased;
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+}
+
+@layer components {
+  /* FIXED: Updated Button to use Royal Blue (Blue-600) directly */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full 
+           bg-blue-600 px-6 py-3 text-sm font-bold text-white 
+           shadow-[0_0_15px_rgba(37,99,235,0.3)] 
+           transition-all duration-200 
+           hover:bg-blue-700 hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.5)] 
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2;
+  }
+
+  /* FIXED: Updated Card to be Pure White with a Light Border */
+  .card {
+    @apply relative overflow-hidden rounded-2xl 
+           border border-slate-200 bg-white 
+           p-8 shadow-xl shadow-slate-200/50 
+           transition-transform duration-200 
+           hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/60;
+  }
+}

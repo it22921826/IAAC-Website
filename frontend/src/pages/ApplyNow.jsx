@@ -1,0 +1,215 @@
+import React from 'react';
+import { 
+  FileText, 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  BookOpen, 
+  CheckCircle2, 
+  Send,
+  Calendar
+} from 'lucide-react';
+
+function ApplyNow() {
+  return (
+    <>
+      {/* --- HERO SECTION --- */}
+      <section className="bg-slate-900 pt-32 pb-16 px-6">
+        <div className="container mx-auto text-center">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
+            Apply for <span className="text-blue-500">2025 Intake</span>
+          </h1>
+          <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+            Take the first step towards your career in aviation. Fill out the form below to start your admission process.
+          </p>
+        </div>
+      </section>
+
+      {/* --- APPLICATION CONTENT --- */}
+      <section className="py-20 bg-slate-50">
+        <div className="container mx-auto px-6 grid lg:grid-cols-3 gap-12">
+
+          {/* --- LEFT COLUMN: FORM --- */}
+          <div className="lg:col-span-2">
+            <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
+              <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-100">
+                <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                  <FileText size={24} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Online Application Form</h2>
+                  <p className="text-slate-500 text-sm">Please fill in all required fields accurately.</p>
+                </div>
+              </div>
+
+              <form className="space-y-8">
+                
+                {/* 1. Personal Information */}
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <User size={18} className="text-blue-500" /> Personal Information
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <InputField label="First Name" placeholder="Sanuthi" />
+                    <InputField label="Last Name" placeholder="Ranaweera" />
+                    <InputField label="Date of Birth" type="date" />
+                    <InputField label="NIC / Passport Number" placeholder="123456789V" />
+                    
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
+                      <div className="flex gap-6 mt-2">
+                        <RadioOption name="gender" label="Male" />
+                        <RadioOption name="gender" label="Female" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Contact Details */}
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <MapPin size={18} className="text-blue-500" /> Contact Details
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <InputField label="Email Address" type="email" placeholder="student@example.com" icon={Mail} />
+                    <InputField label="Phone Number" type="tel" placeholder="071 234 5678" icon={Phone} />
+                    <div className="md:col-span-2">
+                      <InputField label="Home Address" placeholder="No. 123, Street Name, City" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Course Selection */}
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <BookOpen size={18} className="text-blue-500" /> Course Interest
+                  </h3>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Select Program</label>
+                    <select className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 outline-none transition-all appearance-none">
+                      <option value="" disabled selected>Choose a course...</option>
+                      <option value="cabin-crew">Diploma in Airline Cabin Crew</option>
+                      <option value="ground-ops">Diploma in Airport Ground Operations</option>
+                      <option value="ticketing">Diploma in Ticketing & Reservations</option>
+                      <option value="cargo">Diploma in Air Cargo & Logistics</option>
+                      <option value="pilot-ppl">Pilot Training - PPL</option>
+                      <option value="pilot-cpl">Pilot Training - CPL/IR</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="pt-4 border-t border-slate-100">
+                  <button type="button" className="w-full py-4 bg-blue-600 text-white font-bold text-lg rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all flex items-center justify-center gap-2">
+                    Submit Application
+                    <Send size={20} />
+                  </button>
+                  <p className="text-center text-xs text-slate-400 mt-4">
+                    By submitting this form, you agree to our Terms of Service and Privacy Policy.
+                  </p>
+                </div>
+
+              </form>
+            </div>
+          </div>
+
+          {/* --- RIGHT COLUMN: INFO & STEPS --- */}
+          <div className="space-y-8">
+            
+            {/* Admission Steps */}
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+              <h3 className="text-xl font-bold text-slate-900 mb-6">Admission Steps</h3>
+              <div className="space-y-6">
+                <StepItem number="1" title="Submit Application" desc="Fill out this online form with accurate details." />
+                <StepItem number="2" title="Counselor Call" desc="Our admissions team will contact you for a brief discussion." />
+                <StepItem number="3" title="Interview" desc="Attend a friendly interview to assess your aptitude." />
+                <StepItem number="4" title="Enrollment" desc="Pay the registration fee and start your journey!" />
+              </div>
+            </div>
+
+            {/* Requirements Box */}
+            <div className="bg-blue-600 text-white p-8 rounded-3xl relative overflow-hidden">
+               <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+               
+               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                 <CheckCircle2 size={20} /> Requirements
+               </h3>
+               <ul className="space-y-3 text-blue-50 text-sm">
+                 <li className="flex gap-3 items-start">
+                   <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
+                   <span>Minimum of 6 Passes in G.C.E O/L (including English & Math)</span>
+                 </li>
+                 <li className="flex gap-3 items-start">
+                   <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
+                   <span>Age between 17 - 28 years</span>
+                 </li>
+                 <li className="flex gap-3 items-start">
+                   <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
+                   <span>Good command of English</span>
+                 </li>
+                 <li className="flex gap-3 items-start">
+                   <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
+                   <span>Pleasing personality & grooming</span>
+                 </li>
+               </ul>
+            </div>
+
+            {/* Help Contact */}
+            <div className="text-center p-6">
+              <p className="text-slate-500 text-sm mb-2">Need help applying?</p>
+              <a href="tel:0766763777" className="text-blue-600 font-bold hover:underline">
+                Call Admissions: 076 676 3777
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+    </>
+  );
+}
+
+// --- Helper Components ---
+
+function InputField({ label, type = "text", placeholder, icon: Icon }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      <div className="relative">
+        <input 
+          type={type} 
+          placeholder={placeholder}
+          className={`w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all ${Icon ? 'pl-10' : ''}`}
+        />
+        {Icon && <Icon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />}
+      </div>
+    </div>
+  );
+}
+
+function RadioOption({ name, label }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <input type="radio" name={name} className="w-4 h-4 text-blue-600 focus:ring-blue-500" />
+      <span className="text-slate-700">{label}</span>
+    </label>
+  );
+}
+
+function StepItem({ number, title, desc }) {
+  return (
+    <div className="flex gap-4">
+      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold flex items-center justify-center border border-blue-100">
+        {number}
+      </div>
+      <div>
+        <h4 className="font-bold text-slate-900 text-sm">{title}</h4>
+        <p className="text-xs text-slate-500 mt-1 leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
+export default ApplyNow;
