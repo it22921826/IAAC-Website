@@ -98,12 +98,30 @@ exports.config = (req, res) => {
 
 exports.createCourse = async (req, res) => {
   try {
-    const { title, duration } = req.body || {};
+    const {
+      title,
+      duration,
+      shortDescription,
+      totalCourseFee,
+      minimumEntryRequirements,
+      evaluationCriteria,
+      examinationFormat,
+      additionalNotes,
+    } = req.body || {};
     if (!title || !duration) {
       return res.status(400).json({ message: 'Title and duration are required' });
     }
     const Course = require('../models/Course');
-    const course = await Course.create({ title, duration });
+    const course = await Course.create({
+      title,
+      duration,
+      shortDescription,
+      totalCourseFee,
+      minimumEntryRequirements,
+      evaluationCriteria,
+      examinationFormat,
+      additionalNotes,
+    });
     return res.status(201).json({ id: course._id, createdAt: course.createdAt });
   } catch (err) {
     return res.status(500).json({ message: 'Failed to create course' });

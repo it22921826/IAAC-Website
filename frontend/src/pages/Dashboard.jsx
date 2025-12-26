@@ -18,7 +18,16 @@ function Dashboard() {
   const [healthStatus, setHealthStatus] = useState(null);
   const [statsData, setStatsData] = useState(null);
   const [applicationsData, setApplicationsData] = useState([]);
-  const [courseForm, setCourseForm] = useState({ title: '', duration: '' });
+  const [courseForm, setCourseForm] = useState({
+    title: '',
+    duration: '',
+    shortDescription: '',
+    totalCourseFee: '',
+    minimumEntryRequirements: '',
+    evaluationCriteria: '',
+    examinationFormat: '',
+    additionalNotes: '',
+  });
   const [courseStatus, setCourseStatus] = useState({ submitting: false, success: false, error: '' });
   const [eventForm, setEventForm] = useState({ title: '', description: '', imageUrl: '', eventDate: '' });
   const [eventStatus, setEventStatus] = useState({ submitting: false, success: false, error: '' });
@@ -254,14 +263,156 @@ function Dashboard() {
 
               {/* FORM: ADD COURSE */}
               {activeTab === 'course' && (
-                <form className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300" onSubmit={async (e)=>{e.preventDefault(); setCourseStatus({submitting:true,success:false,error:''}); try { await apiClient.post('/api/admin/courses', courseForm); setCourseStatus({submitting:false,success:true,error:''}); setCourseForm({title:'',duration:''}); } catch(err){ setCourseStatus({submitting:false,success:false,error: err?.response?.data?.message || 'Failed to publish course'}); } }}>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Title</label>
-                    <input value={courseForm.title} onChange={(e)=>setCourseForm(f=>({...f,title:e.target.value}))} type="text" placeholder="e.g. Adv. Diploma in Aviation" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
+                <form
+                  className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setCourseStatus({ submitting: true, success: false, error: '' });
+                    try {
+                      await apiClient.post('/api/admin/courses', courseForm);
+                      setCourseStatus({ submitting: false, success: true, error: '' });
+                      setCourseForm({
+                        title: '',
+                        duration: '',
+                        shortDescription: '',
+                        totalCourseFee: '',
+                        minimumEntryRequirements: '',
+                        evaluationCriteria: '',
+                        examinationFormat: '',
+                        additionalNotes: '',
+                      });
+                    } catch (err) {
+                      setCourseStatus({
+                        submitting: false,
+                        success: false,
+                        error: err?.response?.data?.message || 'Failed to publish course',
+                      });
+                    }
+                  }}
+                >
+                  {/* Main Details (Card Preview) */}
+                  <div className="space-y-3">
+                    <div className="text-[11px] font-semibold text-slate-500 tracking-wide uppercase">
+                      Main Details (Card Preview)
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Title</label>
+                        <input
+                          value={courseForm.title}
+                          onChange={(e) => setCourseForm((f) => ({ ...f, title: e.target.value }))}
+                          type="text"
+                          placeholder="e.g. Adv. Diploma in Aviation"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
+                        <input
+                          value={courseForm.duration}
+                          onChange={(e) => setCourseForm((f) => ({ ...f, duration: e.target.value }))}
+                          type="text"
+                          placeholder="e.g. 6 Months"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Short Description</label>
+                        <textarea
+                          rows="3"
+                          value={courseForm.shortDescription}
+                          onChange={(e) =>
+                            setCourseForm((f) => ({ ...f, shortDescription: e.target.value }))
+                          }
+                          placeholder="Brief overview shown on course cards..."
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"
+                        ></textarea>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
-                    <input value={courseForm.duration} onChange={(e)=>setCourseForm(f=>({...f,duration:e.target.value}))} type="text" placeholder="e.g. 6 Months" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
+
+                  {/* Detailed Course Information */}
+                  <div className="space-y-3">
+                    <div className="text-[11px] font-semibold text-slate-500 tracking-wide uppercase">
+                      Detailed Course Information
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Total Course Fee
+                        </label>
+                        <input
+                          value={courseForm.totalCourseFee}
+                          onChange={(e) =>
+                            setCourseForm((f) => ({ ...f, totalCourseFee: e.target.value }))
+                          }
+                          type="text"
+                          placeholder="e.g. LKR 250,000 / USD 1,200"
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Minimum Entry Requirements
+                        </label>
+                        <textarea
+                          rows="3"
+                          value={courseForm.minimumEntryRequirements}
+                          onChange={(e) =>
+                            setCourseForm((f) => ({ ...f, minimumEntryRequirements: e.target.value }))
+                          }
+                          placeholder="List key requirements, one per line..."
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"
+                        ></textarea>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                            Evaluation Criteria
+                          </label>
+                          <input
+                            value={courseForm.evaluationCriteria}
+                            onChange={(e) =>
+                              setCourseForm((f) => ({ ...f, evaluationCriteria: e.target.value }))
+                            }
+                            type="text"
+                            placeholder="e.g. Final Written Exam"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                            Examination Format
+                          </label>
+                          <input
+                            value={courseForm.examinationFormat}
+                            onChange={(e) =>
+                              setCourseForm((f) => ({ ...f, examinationFormat: e.target.value }))
+                            }
+                            type="text"
+                            placeholder="e.g. Closed Book, Open Book"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                          Additional Notes / Syllabus Highlights
+                        </label>
+                        <textarea
+                          rows="3"
+                          value={courseForm.additionalNotes}
+                          onChange={(e) =>
+                            setCourseForm((f) => ({ ...f, additionalNotes: e.target.value }))
+                          }
+                          placeholder="Any extra details, key modules, or highlights..."
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"
+                        ></textarea>
+                      </div>
+                    </div>
                   </div>
                   {courseStatus.error && (<div className="rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs px-3 py-2">{courseStatus.error}</div>)}
                   {courseStatus.success && (<div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs px-3 py-2">Course published.</div>)}
@@ -281,10 +432,46 @@ function Dashboard() {
                   
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Image</label>
-                    <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 flex flex-col items-center justify-center text-slate-400">
-                      <UploadCloud size={32} className="mb-2" />
-                      <span className="text-xs">Image URL (optional)</span>
-                      <input value={eventForm.imageUrl} onChange={(e)=>setEventForm(f=>({...f,imageUrl:e.target.value}))} type="url" placeholder="https://..." className="mt-2 w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-xs" />
+                    <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-slate-400 gap-3">
+                      <UploadCloud size={32} className="mb-1" />
+                      <span className="text-xs mb-1 text-center">
+                        Upload an image from your device
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-700"
+                        onChange={(e) => {
+                          const file = e.target.files && e.target.files[0];
+                          if (!file) {
+                            setEventForm((f) => ({ ...f, imageUrl: '' }));
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const result = reader.result;
+                            if (typeof result === 'string') {
+                              setEventForm((f) => ({ ...f, imageUrl: result }));
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                      {eventForm.imageUrl && (
+                        <div className="mt-2 w-full flex flex-col items-center gap-1">
+                          <span className="text-[10px] uppercase tracking-wide text-slate-400">Preview</span>
+                          <div className="h-20 w-full rounded-lg overflow-hidden bg-slate-200">
+                            <img
+                              src={eventForm.imageUrl}
+                              alt="Event preview"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
