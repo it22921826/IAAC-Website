@@ -39,7 +39,6 @@ const startServer = async () => {
   try {
     await connectDB();
     app.listen(port, () => {
-      console.log('MongoDB connected');
       console.log(`API running on http://localhost:${port}`);
     });
   } catch (err) {
