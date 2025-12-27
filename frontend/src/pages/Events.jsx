@@ -32,7 +32,7 @@ function UpcomingEvents() {
       <section className="bg-slate-900 pt-[160px] pb-16 px-6">
         <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
-            Upcoming <span className="text-blue-500">Events</span>
+           <span className="text-blue-500">Events</span>
           </h1>
           <p className="text-slate-400 max-w-2xl mx-auto text-lg">Latest events published by IAAC.</p>
         </div>

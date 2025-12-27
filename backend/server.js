@@ -19,7 +19,8 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: '1mb' }));
+// Allow large JSON payloads (multiple base64 images from dashboard)
+app.use(express.json({ limit: '50mb' }));
 
 // Optional request logging via morgan
 const shouldLogRequests = (process.env.LOG_REQUESTS || 'false').toLowerCase() === 'true';

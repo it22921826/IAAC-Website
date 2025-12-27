@@ -1,5 +1,5 @@
 import React from 'react';
-import { Facebook, Twitter, Linkedin, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Linkedin, Instagram, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 
 function Footer() {
   return (
@@ -16,10 +16,26 @@ function Footer() {
               Authorized by the TVEC and Ministry of Skills Development. Sri Lanka's premier aviation institute empowering the next generation since 2015.
             </p>
             <div className="flex gap-4 pt-2">
-              <SocialIcon Icon={Facebook} href="#" />
-              <SocialIcon Icon={Twitter} href="#" />
-              <SocialIcon Icon={Linkedin} href="#" />
-              <SocialIcon Icon={Instagram} href="#" />
+              <SocialIcon
+                Icon={Facebook}
+                href="https://www.facebook.com/iaacsl"
+                label="IAAC on Facebook"
+              />
+              <SocialIcon
+                Icon={Youtube}
+                href="https://www.youtube.com/@internationalairlineaviati4986"
+                label="IAAC on YouTube"
+              />
+              <SocialIcon
+                Icon={Linkedin}
+                href="https://www.linkedin.com/company/international-airline-aviation-college/posts/?feedView=all"
+                label="IAAC on LinkedIn"
+              />
+              <SocialIcon
+                Icon={Instagram}
+                href="https://www.instagram.com/iaac_aviation/"
+                label="IAAC on Instagram"
+              />
             </div>
           </div>
 
@@ -97,10 +113,13 @@ function FooterLink({ href, text }) {
   );
 }
 
-function SocialIcon({ Icon, href }) {
+function SocialIcon({ Icon, href, label }) {
   return (
     <a 
       href={href} 
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
       className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-blue-600 hover:text-white transition-all"
     >
       <Icon size={16} />

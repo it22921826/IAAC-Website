@@ -24,7 +24,9 @@ exports.create = async (req, res) => {
       minimumEntryRequirements, 
       evaluationCriteria, 
       examinationFormat, 
-      additionalNotes 
+      additionalNotes,
+      imageUrl,
+      imageUrls,
     } = req.body;
 
     // Create the new course object
@@ -38,7 +40,9 @@ exports.create = async (req, res) => {
       minimumEntryRequirements,
       evaluationCriteria,
       examinationFormat,
-      additionalNotes
+      additionalNotes,
+      imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
+      imageUrls,
     });
 
     const savedCourse = await newCourse.save();
@@ -49,7 +53,51 @@ exports.create = async (req, res) => {
   }
 };
 
-// 3. DELETE (Remove a course)
+// 3. UPDATE (Edit an existing course)
+exports.update = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      duration,
+      courseType,
+      category,
+      shortDescription,
+      totalCourseFee,
+      minimumEntryRequirements,
+      evaluationCriteria,
+      examinationFormat,
+      additionalNotes,
+      imageUrl,
+      imageUrls,
+    } = req.body || {};
+
+    const updatePayload = {
+      title,
+      duration,
+      courseType: courseType || category || 'Other Programs',
+      shortDescription,
+      totalCourseFee,
+      minimumEntryRequirements,
+      evaluationCriteria,
+      examinationFormat,
+      additionalNotes,
+      imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
+      imageUrls,
+    };
+
+    const updated = await Course.findByIdAndUpdate(id, updatePayload, { new: true });
+    if (!updated) {
+      return res.status(404).json({ error: 'Course not found' });
+    }
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error('Update Error:', err);
+    return res.status(500).json({ error: 'Failed to update course' });
+  }
+};
+
+// 4. DELETE (Remove a course)
 exports.remove = async (req, res) => {
   try {
     const { id } = req.params;

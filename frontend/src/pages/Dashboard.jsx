@@ -8,6 +8,8 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('course');
   const [courses, setCourses] = useState([]);
   const [events, setEvents] = useState([]);
+  const [editingCourseId, setEditingCourseId] = useState(null);
+  const [editingEventId, setEditingEventId] = useState(null);
 
   // --- FORM STATE ---
   const [courseForm, setCourseForm] = useState({
@@ -26,15 +28,67 @@ function Dashboard() {
     title: '', duration: '', shortDescription: '',
     totalCourseFee: '', minimumEntryRequirements: '',
     additionalNotes: '',
+    imageUrl: '',
+    imageUrls: [],
   });
 
   const [eventForm, setEventForm] = useState({ 
-    title: '', description: '', imageUrl: '', eventDate: '' 
+    title: '', description: '', imageUrl: '', imageUrls: [], eventDate: '' 
   });
 
   const [courseStatus, setCourseStatus] = useState({ submitting: false, success: false, error: '' });
   const [practicalStatus, setPracticalStatus] = useState({ submitting: false, success: false, error: '' });
   const [eventStatus, setEventStatus] = useState({ submitting: false, success: false, error: '' });
+
+  const handleEventImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) {
+      setEventForm((f) => ({ ...f, imageUrl: '', imageUrls: [] }));
+      return;
+    }
+    const urls = [];
+    let loaded = 0;
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        urls.push(reader.result || '');
+        loaded += 1;
+        if (loaded === files.length) {
+          setEventForm((f) => ({
+            ...f,
+            imageUrl: urls[0] || '',
+            imageUrls: urls,
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handlePracticalImageChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) {
+      setPracticalForm((f) => ({ ...f, imageUrl: '', imageUrls: [] }));
+      return;
+    }
+    const urls = [];
+    let loaded = 0;
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        urls.push(reader.result || '');
+        loaded += 1;
+        if (loaded === files.length) {
+          setPracticalForm((f) => ({
+            ...f,
+            imageUrl: urls[0] || '',
+            imageUrls: urls,
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -56,7 +110,7 @@ function Dashboard() {
   }, []);
 
   return (
-    <section className="min-h-screen bg-slate-50 p-6 md:p-10">
+    <section className="min-h-screen bg-slate-50 pt-32 px-6 pb-10 md:px-10">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
@@ -79,20 +133,103 @@ function Dashboard() {
                         {c.courseType || c.category || 'Uncategorized'}
                       </div>
                     </div>
-                    <button 
-                      className="text-xs text-red-600 font-bold hover:underline bg-red-50 px-3 py-1 rounded" 
-                      onClick={async () => {
-                         if(!window.confirm("Delete this course?")) return;
-                         try { 
-                           await apiClient.delete(`/api/courses/${c._id}`); 
-                           setCourses(prev => prev.filter(x => x._id !== c._id)); 
-                         } catch(e){ alert("Failed to delete"); }
-                      }}
-                    >
-                      Delete
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        className="text-xs text-slate-600 font-bold hover:underline bg-slate-100 px-3 py-1 rounded"
+                        onClick={() => {
+                          setActiveTab('course');
+                          setEditingCourseId(c._id);
+                          setCourseForm({
+                            title: c.title || '',
+                            duration: c.duration || '',
+                            courseType: c.courseType || c.category || 'Airline & Aviation Programs',
+                            shortDescription: c.shortDescription || '',
+                            totalCourseFee: c.totalCourseFee || '',
+                            minimumEntryRequirements: c.minimumEntryRequirements || '',
+                            evaluationCriteria: c.evaluationCriteria || '',
+                            examinationFormat: c.examinationFormat || '',
+                            additionalNotes: c.additionalNotes || '',
+                          });
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="text-xs text-red-600 font-bold hover:underline bg-red-50 px-3 py-1 rounded" 
+                        onClick={async () => {
+                           if(!window.confirm("Delete this course?")) return;
+                           try { 
+                             await apiClient.delete(`/api/courses/${c._id}`); 
+                             setCourses(prev => prev.filter(x => x._id !== c._id)); 
+                             if (editingCourseId === c._id) {
+                               setEditingCourseId(null);
+                             }
+                           } catch(e){ alert("Failed to delete"); }
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Existing Events */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-5 border-b border-slate-100">
+                <h3 className="font-bold text-slate-800 text-lg">Existing Events</h3>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                {events.length === 0 ? (
+                  <div className="p-6 text-slate-400 text-sm">No events yet</div>
+                ) : (
+                  events.map((ev) => (
+                    <div key={ev._id} className="px-6 py-4 flex justify-between items-center text-sm">
+                      <div>
+                        <div className="font-bold text-slate-800">{ev.title}</div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          {ev.eventDate ? new Date(ev.eventDate).toLocaleDateString() : 'No date set'}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          className="text-xs text-slate-600 font-bold hover:underline bg-slate-100 px-3 py-1 rounded"
+                          onClick={() => {
+                            setActiveTab('event');
+                            setEditingEventId(ev._id);
+                            setEventForm({
+                              title: ev.title || '',
+                              description: ev.description || '',
+                              imageUrl: ev.imageUrl || '',
+                              imageUrls: ev.imageUrls || [],
+                              eventDate: ev.eventDate ? ev.eventDate.substring(0, 10) : '',
+                            });
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-xs text-red-600 font-bold hover:underline bg-red-50 px-3 py-1 rounded"
+                          onClick={async () => {
+                            if (!window.confirm('Delete this event?')) return;
+                            try {
+                              await apiClient.delete(`/api/events/${ev._id}`);
+                              setEvents((prev) => prev.filter((e) => e._id !== ev._id));
+                              if (editingEventId === ev._id) {
+                                setEditingEventId(null);
+                              }
+                            } catch (e) {
+                              alert('Failed to delete');
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -128,13 +265,38 @@ function Dashboard() {
                     };
 
                     try {
-                      await apiClient.post('/api/courses', payload);
+                      if (editingCourseId) {
+                        await apiClient.put(`/api/courses/${editingCourseId}`, payload);
+                      } else {
+                        await apiClient.post('/api/courses', payload);
+                      }
                       setCourseStatus({ submitting: false, success: true, error: '' });
-                      window.location.reload(); 
+                      setEditingCourseId(null);
+                      setCourseForm({
+                        title: '',
+                        duration: '',
+                        courseType: 'Airline & Aviation Programs',
+                        shortDescription: '',
+                        totalCourseFee: '',
+                        minimumEntryRequirements: '',
+                        evaluationCriteria: '',
+                        examinationFormat: '',
+                        additionalNotes: '',
+                      });
+                      try {
+                        const res = await apiClient.get('/api/courses');
+                        setCourses(res.data.items || []);
+                      } catch (_) {}
                     } catch (err) {
                       setCourseStatus({ submitting: false, success: false, error: err?.response?.data?.message || 'Error publishing' });
                     }
                 }}>
+
+                  {editingCourseId && (
+                    <div className="mb-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded px-2 py-1">
+                      Editing existing course. Save changes or clear the form to add a new one.
+                    </div>
+                  )}
                   
                   <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
                     <label className="block text-xs font-bold text-blue-800 uppercase mb-1">Course Type (Required)</label>
@@ -194,11 +356,17 @@ function Dashboard() {
                   </div>
                   {/* ------------------------------- */}
 
-                  {courseStatus.success && <div className="text-xs text-emerald-600 bg-emerald-50 p-2 rounded">Course Published! Reloading...</div>}
+                  {courseStatus.success && (
+                    <div className="text-xs text-emerald-600 bg-emerald-50 p-2 rounded">
+                      Course saved successfully.
+                    </div>
+                  )}
                   {courseStatus.error && <div className="text-xs text-red-600 bg-red-50 p-2 rounded">{courseStatus.error}</div>}
                   
                   <button type="submit" disabled={courseStatus.submitting} className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 text-sm shadow-lg shadow-blue-600/20">
-                    {courseStatus.submitting ? 'Publishing...' : 'Publish Course'}
+                    {courseStatus.submitting
+                      ? (editingCourseId ? 'Saving changes...' : 'Publishing...')
+                      : (editingCourseId ? 'Update Course' : 'Publish Course')}
                   </button>
                 </form>
               )}
@@ -219,7 +387,20 @@ function Dashboard() {
                   try {
                     await apiClient.post('/api/courses', payload);
                     setPracticalStatus({ submitting: false, success: true, error: '' });
-                    window.location.reload();
+                    setPracticalForm({
+                      title: '',
+                      duration: '',
+                      shortDescription: '',
+                      totalCourseFee: '',
+                      minimumEntryRequirements: '',
+                      additionalNotes: '',
+                      imageUrl: '',
+                      imageUrls: [],
+                    });
+                    try {
+                      const res = await apiClient.get('/api/courses');
+                      setCourses(res.data.items || []);
+                    } catch (_) {}
                   } catch (err) {
                     setPracticalStatus({ submitting: false, success: false, error: 'Error publishing' });
                   }
@@ -240,6 +421,29 @@ function Dashboard() {
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
                     <textarea rows="2" value={practicalForm.shortDescription} onChange={e => setPracticalForm(f => ({...f, shortDescription: e.target.value}))} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm resize-none"></textarea>
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Practical Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handlePracticalImageChange}
+                      className="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                    />
+                    {practicalForm.imageUrls && practicalForm.imageUrls.length > 0 && (
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {practicalForm.imageUrls.map((url, idx) => (
+                          <img
+                            key={idx}
+                            src={url}
+                            alt={`Practical preview ${idx + 1}`}
+                            className="h-20 w-full object-cover rounded-md border border-slate-200"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   
                   <button type="submit" disabled={practicalStatus.submitting} className="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 text-sm shadow-lg shadow-emerald-600/20">
                     {practicalStatus.submitting ? 'Publishing...' : 'Publish Practical'}
@@ -253,18 +457,57 @@ function Dashboard() {
                   e.preventDefault();
                   setEventStatus({ submitting: true, success: false, error: '' });
                   try {
-                    await apiClient.post('/api/events', eventForm);
+                    if (editingEventId) {
+                      await apiClient.put(`/api/events/${editingEventId}`, eventForm);
+                    } else {
+                      await apiClient.post('/api/events', eventForm);
+                    }
                     setEventStatus({ submitting: false, success: true, error: '' });
-                    setEventForm({ title: '', description: '', imageUrl: '', eventDate: '' });
-                    window.location.reload();
+                    setEditingEventId(null);
+                    setEventForm({ title: '', description: '', imageUrl: '', imageUrls: [], eventDate: '' });
+                    try {
+                      const res = await apiClient.get('/api/events');
+                      setEvents(res.data.items || []);
+                    } catch (_) {}
                   } catch (err) {
-                    setEventStatus({ submitting: false, success: false, error: 'Error publishing' });
+                    setEventStatus({
+                      submitting: false,
+                      success: false,
+                      error: err?.response?.data?.message || 'Error publishing',
+                    });
                   }
                 }}>
+                  {editingEventId && (
+                    <div className="mb-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded px-2 py-1">
+                      Editing existing event. Save changes or clear the form to add a new one.
+                    </div>
+                  )}
                    <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Title</label>
                     <input required value={eventForm.title} onChange={e => setEventForm(f => ({...f, title: e.target.value}))} type="text" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
                   </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Images</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleEventImageChange}
+                          className="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                        />
+                        {eventForm.imageUrls && eventForm.imageUrls.length > 0 && (
+                          <div className="mt-2 grid grid-cols-3 gap-2">
+                            {eventForm.imageUrls.map((url, idx) => (
+                              <img
+                                key={idx}
+                                src={url}
+                                alt={`Event preview ${idx + 1}`}
+                                className="h-20 w-full object-cover rounded-md border border-slate-200"
+                              />
+                            ))}
+                          </div>
+                        )}
+                    </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Date</label>
                     <input value={eventForm.eventDate} onChange={e => setEventForm(f => ({...f, eventDate: e.target.value}))} type="date" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
@@ -273,6 +516,11 @@ function Dashboard() {
                   <button type="submit" disabled={eventStatus.submitting} className="w-full py-2.5 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 text-sm shadow-lg shadow-orange-600/20">
                     {eventStatus.submitting ? 'Publishing...' : 'Publish Event'}
                   </button>
+                  {eventStatus.error && (
+                    <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded px-2 py-1">
+                      {eventStatus.error}
+                    </div>
+                  )}
                 </form>
               )}
 

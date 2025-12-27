@@ -132,7 +132,7 @@ exports.createCourse = async (req, res) => {
 
 exports.createEvent = async (req, res) => {
   try {
-    const { title, description, imageUrl, eventDate } = req.body || {};
+    const { title, description, imageUrl, imageUrls, eventDate } = req.body || {};
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
@@ -140,7 +140,8 @@ exports.createEvent = async (req, res) => {
     const event = await Event.create({
       title,
       description,
-      imageUrl,
+      imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
+      imageUrls,
       eventDate: eventDate ? new Date(eventDate) : undefined,
     });
     return res.status(201).json({ id: event._id, createdAt: event.createdAt });

@@ -13,19 +13,9 @@ import TrainingCourses from './pages/TrainingCourses.jsx';
 import CareerSupport from './pages/CareerSupport.jsx';
 import ContactUs from './pages/ContactUs.jsx';
 import ApplyNow from './pages/ApplyNow.jsx';
-import UpcomingEvents from './pages/UpcomingEvents.jsx';
+import UpcomingEvents from './pages/Events.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
-
-// Import Static Diploma Pages (Your Old Custom Pages)
-import CabinCrewDiploma from './pages/CabinCrewDiploma.jsx';
-import GroundOpsDiploma from './pages/GroundOpsDiploma.jsx';
-import TicketingDiploma from './pages/TicketingDiploma.jsx';
-import CargoDiploma from './pages/CargoDiploma.jsx';
-
-// --- THE MISSING PIECE ---
-// Import the Dynamic Course Details Page
-import CourseDetails from './pages/CourseDetails.jsx';
 
 function App() {
   const { theme } = useContext(ThemeContext);
@@ -49,16 +39,6 @@ function App() {
           <Route path="/training" element={<TrainingCourses />} />
           <Route path="/training/courses" element={<TrainingCourses />} />
           
-          {/* --- 1. STATIC ROUTES (Keep these for your specific custom pages) --- */}
-          <Route path="/training/cabin-crew" element={<CabinCrewDiploma />} />
-          <Route path="/training/ground-operations" element={<GroundOpsDiploma />} />
-          <Route path="/training/ticketing-marketing" element={<TicketingDiploma />} />
-          <Route path="/training/cargo-logistics" element={<CargoDiploma />} />
-
-          {/* --- 2. DYNAMIC ROUTE (The Fix!) --- */}
-          {/* This handles ALL new courses added via Dashboard */}
-          <Route path="/training/course/:courseId" element={<CourseDetails />} />
-
           <Route path="/career-support" element={<CareerSupport />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/apply-now" element={<ApplyNow />} />
