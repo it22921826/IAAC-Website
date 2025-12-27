@@ -1,10 +1,61 @@
 const Course = require('../models/Course');
 
+// 1. LIST (Get all courses)
 exports.list = async (req, res) => {
   try {
     const items = await Course.find({}).sort({ createdAt: -1 }).lean();
     res.status(200).json({ items });
   } catch (err) {
     res.status(500).json({ items: [] });
+  }
+};
+
+// 2. CREATE (Add a new course) - THIS WAS MISSING
+exports.create = async (req, res) => {
+  try {
+    // We explicitly look for courseType OR category to be safe
+    const { 
+      title, 
+      duration, 
+      courseType, 
+      category, 
+      shortDescription, 
+      totalCourseFee, 
+      minimumEntryRequirements, 
+      evaluationCriteria, 
+      examinationFormat, 
+      additionalNotes 
+    } = req.body;
+
+    // Create the new course object
+    const newCourse = new Course({
+      title,
+      duration,
+      // If courseType is missing, try 'category', or default to 'Other'
+      courseType: courseType || category || 'Other Programs', 
+      shortDescription,
+      totalCourseFee,
+      minimumEntryRequirements,
+      evaluationCriteria,
+      examinationFormat,
+      additionalNotes
+    });
+
+    const savedCourse = await newCourse.save();
+    res.status(201).json(savedCourse);
+  } catch (err) {
+    console.error("Create Error:", err);
+    res.status(500).json({ error: "Failed to create course" });
+  }
+};
+
+// 3. DELETE (Remove a course)
+exports.remove = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Course.findByIdAndDelete(id);
+    res.status(200).json({ message: "Deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete" });
   }
 };

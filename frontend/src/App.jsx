@@ -5,6 +5,8 @@ import { useAuth } from './hooks/useAuth.js';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import ScrollManager from './components/ScrollManager.jsx';
+
+// Import Pages
 import Home from './pages/Home.jsx';
 import StudentLife from './pages/Studentlife.jsx';
 import TrainingCourses from './pages/TrainingCourses.jsx';
@@ -12,21 +14,24 @@ import CareerSupport from './pages/CareerSupport.jsx';
 import ContactUs from './pages/ContactUs.jsx';
 import ApplyNow from './pages/ApplyNow.jsx';
 import UpcomingEvents from './pages/UpcomingEvents.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import AdminLogin from './pages/AdminLogin.jsx';
+
+// Import Static Diploma Pages (Your Old Custom Pages)
 import CabinCrewDiploma from './pages/CabinCrewDiploma.jsx';
 import GroundOpsDiploma from './pages/GroundOpsDiploma.jsx';
 import TicketingDiploma from './pages/TicketingDiploma.jsx';
 import CargoDiploma from './pages/CargoDiploma.jsx';
-import Dashboard from './pages/Dashboard.jsx';
-import AdminLogin from './pages/AdminLogin.jsx';
+
+// --- THE MISSING PIECE ---
+// Import the Dynamic Course Details Page
+import CourseDetails from './pages/CourseDetails.jsx';
 
 function App() {
   const { theme } = useContext(ThemeContext);
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
-  // FIX: Updated the classes to use standard Tailwind colors
-  // If theme is 'dark', it uses slate-950.
-  // If theme is 'light' (or anything else), it FORCES bg-slate-50 (White/Paper look).
   const appClasses = theme === 'dark'
     ? 'min-h-screen flex flex-col bg-slate-950 text-slate-100'
     : 'min-h-screen flex flex-col bg-slate-50 text-slate-900';
@@ -39,16 +44,27 @@ function App() {
         <Routes>
           <Route path="/" element={<Home user={user} />} />
           <Route path="/student-life" element={<StudentLife />} />
+          
+          {/* Main Training Page */}
           <Route path="/training" element={<TrainingCourses />} />
           <Route path="/training/courses" element={<TrainingCourses />} />
+          
+          {/* --- 1. STATIC ROUTES (Keep these for your specific custom pages) --- */}
           <Route path="/training/cabin-crew" element={<CabinCrewDiploma />} />
           <Route path="/training/ground-operations" element={<GroundOpsDiploma />} />
           <Route path="/training/ticketing-marketing" element={<TicketingDiploma />} />
           <Route path="/training/cargo-logistics" element={<CargoDiploma />} />
+
+          {/* --- 2. DYNAMIC ROUTE (The Fix!) --- */}
+          {/* This handles ALL new courses added via Dashboard */}
+          <Route path="/training/course/:courseId" element={<CourseDetails />} />
+
           <Route path="/career-support" element={<CareerSupport />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/apply-now" element={<ApplyNow />} />
           <Route path="/events/upcoming" element={<UpcomingEvents />} />
+          
+          {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
             path="/admin/dashboard"

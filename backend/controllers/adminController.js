@@ -101,6 +101,7 @@ exports.createCourse = async (req, res) => {
     const {
       title,
       duration,
+      courseType,
       shortDescription,
       totalCourseFee,
       minimumEntryRequirements,
@@ -108,13 +109,14 @@ exports.createCourse = async (req, res) => {
       examinationFormat,
       additionalNotes,
     } = req.body || {};
-    if (!title || !duration) {
-      return res.status(400).json({ message: 'Title and duration are required' });
+    if (!title || !duration || !courseType) {
+      return res.status(400).json({ message: 'Title, duration, and course type are required' });
     }
     const Course = require('../models/Course');
     const course = await Course.create({
       title,
       duration,
+      courseType,
       shortDescription,
       totalCourseFee,
       minimumEntryRequirements,

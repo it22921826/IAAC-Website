@@ -1,543 +1,286 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  Users, 
-  FileText, 
-  Plus, 
-  Search,
-  Eye,
-  Calendar,
-  BookOpen,
-  Image as ImageIcon,
-  UploadCloud
+  Users, FileText, Plus, Search, Eye, Calendar, BookOpen, UploadCloud
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 
 function Dashboard() {
-  // Simple state to toggle between the two forms (Course vs Event)
   const [activeTab, setActiveTab] = useState('course');
-  const [healthStatus, setHealthStatus] = useState(null);
-  const [statsData, setStatsData] = useState(null);
-  const [applicationsData, setApplicationsData] = useState([]);
-  const [courseForm, setCourseForm] = useState({
-    title: '',
-    duration: '',
-    shortDescription: '',
-    totalCourseFee: '',
-    minimumEntryRequirements: '',
-    evaluationCriteria: '',
-    examinationFormat: '',
-    additionalNotes: '',
-  });
-  const [courseStatus, setCourseStatus] = useState({ submitting: false, success: false, error: '' });
-  const [eventForm, setEventForm] = useState({ title: '', description: '', imageUrl: '', eventDate: '' });
-  const [eventStatus, setEventStatus] = useState({ submitting: false, success: false, error: '' });
   const [courses, setCourses] = useState([]);
   const [events, setEvents] = useState([]);
 
+  // --- FORM STATE ---
+  const [courseForm, setCourseForm] = useState({
+    title: '', 
+    duration: '', 
+    courseType: 'Airline & Aviation Programs', 
+    shortDescription: '',
+    totalCourseFee: '', 
+    minimumEntryRequirements: '', 
+    evaluationCriteria: '', 
+    examinationFormat: '', 
+    additionalNotes: '',
+  });
+
+  const [practicalForm, setPracticalForm] = useState({
+    title: '', duration: '', shortDescription: '',
+    totalCourseFee: '', minimumEntryRequirements: '',
+    additionalNotes: '',
+  });
+
+  const [eventForm, setEventForm] = useState({ 
+    title: '', description: '', imageUrl: '', eventDate: '' 
+  });
+
+  const [courseStatus, setCourseStatus] = useState({ submitting: false, success: false, error: '' });
+  const [practicalStatus, setPracticalStatus] = useState({ submitting: false, success: false, error: '' });
+  const [eventStatus, setEventStatus] = useState({ submitting: false, success: false, error: '' });
+
   useEffect(() => {
     let isMounted = true;
-
-    async function checkHealth() {
+    async function fetchData() {
       try {
-        const res = await apiClient.get('/api/health');
-        if (isMounted) {
-          setHealthStatus(res.data);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setHealthStatus({ error: 'Unable to reach backend' });
-        }
-      }
+        const [courseRes, eventRes] = await Promise.allSettled([
+          apiClient.get('/api/courses'),
+          apiClient.get('/api/events')
+        ]);
+
+        if (!isMounted) return;
+        if(courseRes.status === 'fulfilled') setCourses(courseRes.value.data.items || []);
+        if(eventRes.status === 'fulfilled') setEvents(eventRes.value.data.items || []);
+
+      } catch (err) { console.error("Load error", err); }
     }
-
-    checkHealth();
-
-    async function fetchStats() {
-      try {
-        const res = await apiClient.get('/api/admin/stats');
-        if (isMounted) setStatsData(res.data);
-      } catch (err) {
-        if (isMounted) setStatsData(null);
-      }
-    }
-
-    async function fetchApplications() {
-      try {
-        const res = await apiClient.get('/api/admin/applications');
-        if (isMounted) setApplicationsData(res.data.items || []);
-      } catch (err) {
-        if (isMounted) setApplicationsData([]);
-      }
-    }
-
-    async function fetchCourses() {
-      try {
-        const res = await apiClient.get('/api/courses');
-        if (isMounted) setCourses(res.data.items || []);
-      } catch (err) {
-        if (isMounted) setCourses([]);
-      }
-    }
-
-    async function fetchEvents() {
-      try {
-        const res = await apiClient.get('/api/events');
-        if (isMounted) setEvents(res.data.items || []);
-      } catch (err) {
-        if (isMounted) setEvents([]);
-      }
-    }
-
-    fetchStats();
-    fetchApplications();
-    fetchCourses();
-    fetchEvents();
-
-    return () => {
-      isMounted = false;
-    };
+    fetchData();
+    return () => { isMounted = false; };
   }, []);
 
   return (
     <section className="min-h-screen bg-slate-50 p-6 md:p-10">
       <div className="mx-auto max-w-7xl">
-        
-        {/* --- HEADER --- */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-          <p className="text-slate-500 mt-1">Manage applications, courses, and events from one place.</p>
-        </div>
-
-        {/* --- BACKEND / DB STATUS BANNER --- */}
-        {healthStatus && (
-          <div className="mb-6">
-            {healthStatus.error ? (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                Backend status: {healthStatus.error}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex flex-wrap items-center gap-3">
-                <span className="font-semibold">Backend:</span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-xs font-bold">
-                  {healthStatus.status}
-                </span>
-                <span className="text-xs text-emerald-700">
-                  DB: {healthStatus.db}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* --- 1. STATS OVERVIEW (With Daily Count) --- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard 
-            title="Applications Today" 
-            value={statsData?.applicationsToday ?? '–'} 
-            subtext={`Total for ${statsData?.period ?? '–'}`} 
-            Icon={FileText} 
-            color="bg-blue-600"
-          />
-          <StatCard 
-            title="Total Students" 
-            value={statsData?.totalStudents ?? '–'} 
-            subtext="Monthly growth" 
-            Icon={Users} 
-            color="bg-indigo-600"
-          />
-          <StatCard 
-            title="Upcoming Events" 
-            value={statsData?.upcomingEvents ?? '–'} 
-            subtext="Scheduled for this week" 
-            Icon={Calendar} 
-            color="bg-orange-500"
-          />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           
-          {/* --- 2. APPLICANT DETAILS (Left Column - Wider) --- */}
+          {/* LEFT: LISTS */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-slate-800 text-lg">Recent Applications</h3>
-                <div className="relative">
-                  <input type="text" placeholder="Search name..." className="pl-8 pr-3 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500" />
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                </div>
+             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-5 border-b border-slate-100">
+                <h3 className="font-bold text-slate-800 text-lg">Existing Courses</h3>
               </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                      <th className="px-6 py-4 font-semibold">Name</th>
-                      <th className="px-6 py-4 font-semibold">Course Applied</th>
-                      <th className="px-6 py-4 font-semibold">Contact</th>
-                      <th className="px-6 py-4 font-semibold text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-sm">
-                    {applicationsData.length === 0 ? (
-                      <tr>
-                        <td className="px-6 py-6 text-center text-slate-400" colSpan="4">No applications found</td>
-                      </tr>
-                    ) : (
-                      applicationsData.map((a) => (
-                        <TableRow key={a.id} name={a.name} course={a.course} contact={a.contact} onDelete={async ()=>{ try { await apiClient.delete(`/api/admin/applications/${a.id}`); setApplicationsData((arr)=>arr.filter(x=>x.id!==a.id)); } catch(_){} }} />
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="p-4 border-t border-slate-100 bg-slate-50 text-center">
-                <button className="text-sm text-blue-600 font-bold hover:underline">View All Applications</button>
-              </div>
-            </div>
-
-            {/* Manage Courses */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-slate-800 text-lg">Manage Courses</h3>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {courses.length === 0 ? (
-                  <div className="px-6 py-6 text-slate-400 text-sm">No courses</div>
-                ) : (
-                  courses.map((c)=> (
-                    <div key={c._id} className="px-6 py-4 flex justify-between items-center text-sm">
-                      <div>
-                        <div className="font-bold text-slate-800">{c.title}</div>
-                        <div className="text-slate-500">{c.duration}</div>
+              <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                {courses.length === 0 ? <div className="p-6 text-slate-400">No courses yet</div> : courses.map(c => (
+                  <div key={c._id} className="px-6 py-4 flex justify-between items-center text-sm">
+                    <div>
+                      <div className="font-bold text-slate-800">{c.title}</div>
+                      <div className="text-xs text-blue-600 font-bold uppercase mt-1">
+                        {c.courseType || c.category || 'Uncategorized'}
                       </div>
-                      <button className="px-3 py-1.5 text-xs font-bold rounded bg-red-50 text-red-600 hover:bg-red-100" onClick={async ()=>{ try { await apiClient.delete(`/api/admin/courses/${c._id}`); setCourses(arr=>arr.filter(x=>x._id!==c._id)); } catch(_){} }}>Delete</button>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Manage Events */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                <h3 className="font-bold text-slate-800 text-lg">Manage Events</h3>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {events.length === 0 ? (
-                  <div className="px-6 py-6 text-slate-400 text-sm">No events</div>
-                ) : (
-                  events.map((e)=> (
-                    <div key={e._id} className="px-6 py-4 flex justify-between items-center text-sm">
-                      <div>
-                        <div className="font-bold text-slate-800">{e.title}</div>
-                        <div className="text-slate-500">{e.eventDate ? new Date(e.eventDate).toLocaleDateString() : ''}</div>
-                      </div>
-                      <button className="px-3 py-1.5 text-xs font-bold rounded bg-red-50 text-red-600 hover:bg-red-100" onClick={async ()=>{ try { await apiClient.delete(`/api/admin/events/${e._id}`); setEvents(arr=>arr.filter(x=>x._id!==e._id)); } catch(_){} }}>Delete</button>
-                    </div>
-                  ))
-                )}
+                    <button 
+                      className="text-xs text-red-600 font-bold hover:underline bg-red-50 px-3 py-1 rounded" 
+                      onClick={async () => {
+                         if(!window.confirm("Delete this course?")) return;
+                         try { 
+                           await apiClient.delete(`/api/courses/${c._id}`); 
+                           setCourses(prev => prev.filter(x => x._id !== c._id)); 
+                         } catch(e){ alert("Failed to delete"); }
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* --- 3. CONTENT MANAGEMENT (Right Column - Forms) --- */}
+          {/* RIGHT: FORMS */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h3 className="font-bold text-slate-900 mb-6">Quick Actions</h3>
               
-              {/* Tabs */}
               <div className="flex p-1 bg-slate-100 rounded-lg mb-6">
-                <button 
-                  onClick={() => setActiveTab('course')}
-                  className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${activeTab === 'course' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  + Add Course
-                </button>
-                <button 
-                  onClick={() => setActiveTab('event')}
-                  className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${activeTab === 'event' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  + Add Event
-                </button>
+                {['course', 'practical', 'event'].map(tab => (
+                  <button 
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`flex-1 py-2 text-xs font-bold uppercase transition-all ${activeTab === tab ? 'bg-white shadow-sm text-blue-600 rounded-md' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    {tab}
+                  </button>
+                ))}
               </div>
 
-              {/* FORM: ADD COURSE */}
+              {/* 1. ADD COURSE FORM */}
               {activeTab === 'course' && (
-                <form
-                  className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300"
-                  onSubmit={async (e) => {
+                <form className="space-y-4" onSubmit={async (e) => {
                     e.preventDefault();
                     setCourseStatus({ submitting: true, success: false, error: '' });
+                    
+                    const payload = {
+                      ...courseForm,
+                      courseType: courseForm.courseType,
+                      category: courseForm.courseType,
+                      type: courseForm.courseType
+                    };
+
                     try {
-                      await apiClient.post('/api/admin/courses', courseForm);
+                      await apiClient.post('/api/courses', payload);
                       setCourseStatus({ submitting: false, success: true, error: '' });
-                      setCourseForm({
-                        title: '',
-                        duration: '',
-                        shortDescription: '',
-                        totalCourseFee: '',
-                        minimumEntryRequirements: '',
-                        evaluationCriteria: '',
-                        examinationFormat: '',
-                        additionalNotes: '',
-                      });
+                      window.location.reload(); 
                     } catch (err) {
-                      setCourseStatus({
-                        submitting: false,
-                        success: false,
-                        error: err?.response?.data?.message || 'Failed to publish course',
-                      });
+                      setCourseStatus({ submitting: false, success: false, error: err?.response?.data?.message || 'Error publishing' });
                     }
-                  }}
-                >
-                  {/* Main Details (Card Preview) */}
-                  <div className="space-y-3">
-                    <div className="text-[11px] font-semibold text-slate-500 tracking-wide uppercase">
-                      Main Details (Card Preview)
+                }}>
+                  
+                  <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                    <label className="block text-xs font-bold text-blue-800 uppercase mb-1">Course Type (Required)</label>
+                    <select
+                      required
+                      value={courseForm.courseType}
+                      onChange={(e) => setCourseForm(f => ({ ...f, courseType: e.target.value }))}
+                      className="w-full px-3 py-2 rounded-md border border-blue-200 bg-white focus:border-blue-500 outline-none text-sm font-medium text-blue-900"
+                    >
+                      <option value="Airline & Aviation Programs">Airline & Aviation Programs</option>
+                      <option value="Pilot Training Program">Pilot Training Program</option>
+                      <option value="International Airline Diploma">International Airline Diploma</option>
+                      <option value="Other Programs">Other Programs</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Title</label>
+                    <input required value={courseForm.title} onChange={e => setCourseForm(f => ({...f, title: e.target.value}))} type="text" placeholder="e.g. Diploma in Cabin Crew" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
+                    <input value={courseForm.duration} onChange={e => setCourseForm(f => ({...f, duration: e.target.value}))} type="text" placeholder="e.g. 6 Months" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Fee</label>
+                    <input value={courseForm.totalCourseFee} onChange={e => setCourseForm(f => ({...f, totalCourseFee: e.target.value}))} type="text" placeholder="e.g. LKR 100,000" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Short Description</label>
+                    <textarea rows="2" value={courseForm.shortDescription} onChange={e => setCourseForm(f => ({...f, shortDescription: e.target.value}))} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm resize-none"></textarea>
+                  </div>
+
+                  {/* --- RESTORED MISSING FIELDS --- */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Entry Requirements</label>
+                    <textarea rows="3" value={courseForm.minimumEntryRequirements} onChange={e => setCourseForm(f => ({...f, minimumEntryRequirements: e.target.value}))} placeholder="List requirements here..." className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm resize-none"></textarea>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Evaluation</label>
+                      <input value={courseForm.evaluationCriteria} onChange={e => setCourseForm(f => ({...f, evaluationCriteria: e.target.value}))} type="text" placeholder="e.g. Written Exam" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
                     </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Title</label>
-                        <input
-                          value={courseForm.title}
-                          onChange={(e) => setCourseForm((f) => ({ ...f, title: e.target.value }))}
-                          type="text"
-                          placeholder="e.g. Adv. Diploma in Aviation"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
-                        <input
-                          value={courseForm.duration}
-                          onChange={(e) => setCourseForm((f) => ({ ...f, duration: e.target.value }))}
-                          type="text"
-                          placeholder="e.g. 6 Months"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Short Description</label>
-                        <textarea
-                          rows="3"
-                          value={courseForm.shortDescription}
-                          onChange={(e) =>
-                            setCourseForm((f) => ({ ...f, shortDescription: e.target.value }))
-                          }
-                          placeholder="Brief overview shown on course cards..."
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"
-                        ></textarea>
-                      </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Exam Format</label>
+                      <input value={courseForm.examinationFormat} onChange={e => setCourseForm(f => ({...f, examinationFormat: e.target.value}))} type="text" placeholder="e.g. Closed Book" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
                     </div>
                   </div>
 
-                  {/* Detailed Course Information */}
-                  <div className="space-y-3">
-                    <div className="text-[11px] font-semibold text-slate-500 tracking-wide uppercase">
-                      Detailed Course Information
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Total Course Fee
-                        </label>
-                        <input
-                          value={courseForm.totalCourseFee}
-                          onChange={(e) =>
-                            setCourseForm((f) => ({ ...f, totalCourseFee: e.target.value }))
-                          }
-                          type="text"
-                          placeholder="e.g. LKR 250,000 / USD 1,200"
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Minimum Entry Requirements
-                        </label>
-                        <textarea
-                          rows="3"
-                          value={courseForm.minimumEntryRequirements}
-                          onChange={(e) =>
-                            setCourseForm((f) => ({ ...f, minimumEntryRequirements: e.target.value }))
-                          }
-                          placeholder="List key requirements, one per line..."
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"
-                        ></textarea>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                            Evaluation Criteria
-                          </label>
-                          <input
-                            value={courseForm.evaluationCriteria}
-                            onChange={(e) =>
-                              setCourseForm((f) => ({ ...f, evaluationCriteria: e.target.value }))
-                            }
-                            type="text"
-                            placeholder="e.g. Final Written Exam"
-                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                            Examination Format
-                          </label>
-                          <input
-                            value={courseForm.examinationFormat}
-                            onChange={(e) =>
-                              setCourseForm((f) => ({ ...f, examinationFormat: e.target.value }))
-                            }
-                            type="text"
-                            placeholder="e.g. Closed Book, Open Book"
-                            className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-                          Additional Notes / Syllabus Highlights
-                        </label>
-                        <textarea
-                          rows="3"
-                          value={courseForm.additionalNotes}
-                          onChange={(e) =>
-                            setCourseForm((f) => ({ ...f, additionalNotes: e.target.value }))
-                          }
-                          placeholder="Any extra details, key modules, or highlights..."
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"
-                        ></textarea>
-                      </div>
-                    </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Syllabus / Notes</label>
+                    <textarea rows="3" value={courseForm.additionalNotes} onChange={e => setCourseForm(f => ({...f, additionalNotes: e.target.value}))} placeholder="Paste syllabus details..." className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm resize-none"></textarea>
                   </div>
-                  {courseStatus.error && (<div className="rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs px-3 py-2">{courseStatus.error}</div>)}
-                  {courseStatus.success && (<div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs px-3 py-2">Course published.</div>)}
-                  <button className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 text-sm">
-                    <Plus size={16} /> {courseStatus.submitting ? 'Publishing...' : 'Publish Course'}
+                  {/* ------------------------------- */}
+
+                  {courseStatus.success && <div className="text-xs text-emerald-600 bg-emerald-50 p-2 rounded">Course Published! Reloading...</div>}
+                  {courseStatus.error && <div className="text-xs text-red-600 bg-red-50 p-2 rounded">{courseStatus.error}</div>}
+                  
+                  <button type="submit" disabled={courseStatus.submitting} className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 text-sm shadow-lg shadow-blue-600/20">
+                    {courseStatus.submitting ? 'Publishing...' : 'Publish Course'}
                   </button>
                 </form>
               )}
 
-              {/* FORM: ADD EVENT */}
-              {activeTab === 'event' && (
-                <form className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300" onSubmit={async (e)=>{e.preventDefault(); setEventStatus({submitting:true,success:false,error:''}); try { await apiClient.post('/api/admin/events', eventForm); setEventStatus({submitting:false,success:true,error:''}); setEventForm({ title:'', description:'', imageUrl:'', eventDate:''}); } catch(err){ setEventStatus({submitting:false,success:false,error: err?.response?.data?.message || 'Failed to publish event'}); } }}>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Title</label>
-                    <input value={eventForm.title} onChange={(e)=>setEventForm(f=>({...f,title:e.target.value}))} type="text" placeholder="e.g. Graduation Ceremony 2025" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
-                  </div>
+              {/* 2. ADD PRACTICAL FORM */}
+              {activeTab === 'practical' && (
+                <form className="space-y-4" onSubmit={async (e) => {
+                  e.preventDefault();
+                  setPracticalStatus({ submitting: true, success: false, error: '' });
                   
+                  const payload = {
+                    ...practicalForm,
+                    courseType: 'Practical Training',
+                    category: 'Practical Training',
+                    type: 'Practical Training'
+                  };
+
+                  try {
+                    await apiClient.post('/api/courses', payload);
+                    setPracticalStatus({ submitting: false, success: true, error: '' });
+                    window.location.reload();
+                  } catch (err) {
+                    setPracticalStatus({ submitting: false, success: false, error: 'Error publishing' });
+                  }
+                }}>
+                   <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded mb-2 border border-emerald-100">
+                     <strong>Note:</strong> This will automatically appear under the "Practical Training" section.
+                   </div>
+                   <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
+                    <input required value={practicalForm.title} onChange={e => setPracticalForm(f => ({...f, title: e.target.value}))} type="text" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
+                  </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Image</label>
-                    <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 flex flex-col items-center justify-center text-slate-400 gap-3">
-                      <UploadCloud size={32} className="mb-1" />
-                      <span className="text-xs mb-1 text-center">
-                        Upload an image from your device
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-700"
-                        onChange={(e) => {
-                          const file = e.target.files && e.target.files[0];
-                          if (!file) {
-                            setEventForm((f) => ({ ...f, imageUrl: '' }));
-                            return;
-                          }
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            const result = reader.result;
-                            if (typeof result === 'string') {
-                              setEventForm((f) => ({ ...f, imageUrl: result }));
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        }}
-                      />
-                      {eventForm.imageUrl && (
-                        <div className="mt-2 w-full flex flex-col items-center gap-1">
-                          <span className="text-[10px] uppercase tracking-wide text-slate-400">Preview</span>
-                          <div className="h-20 w-full rounded-lg overflow-hidden bg-slate-200">
-                            <img
-                              src={eventForm.imageUrl}
-                              alt="Event preview"
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
+                    <input value={practicalForm.duration} onChange={e => setPracticalForm(f => ({...f, duration: e.target.value}))} type="text" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
-                    <textarea rows="3" value={eventForm.description} onChange={(e)=>setEventForm(f=>({...f,description:e.target.value}))} placeholder="Event details..." className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm resize-none"></textarea>
+                    <textarea rows="2" value={practicalForm.shortDescription} onChange={e => setPracticalForm(f => ({...f, shortDescription: e.target.value}))} className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm resize-none"></textarea>
                   </div>
+                  
+                  <button type="submit" disabled={practicalStatus.submitting} className="w-full py-2.5 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 text-sm shadow-lg shadow-emerald-600/20">
+                    {practicalStatus.submitting ? 'Publishing...' : 'Publish Practical'}
+                  </button>
+                </form>
+              )}
 
+              {/* 3. ADD EVENT FORM */}
+              {activeTab === 'event' && (
+                <form className="space-y-4" onSubmit={async (e) => {
+                  e.preventDefault();
+                  setEventStatus({ submitting: true, success: false, error: '' });
+                  try {
+                    await apiClient.post('/api/events', eventForm);
+                    setEventStatus({ submitting: false, success: true, error: '' });
+                    setEventForm({ title: '', description: '', imageUrl: '', eventDate: '' });
+                    window.location.reload();
+                  } catch (err) {
+                    setEventStatus({ submitting: false, success: false, error: 'Error publishing' });
+                  }
+                }}>
+                   <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Title</label>
+                    <input required value={eventForm.title} onChange={e => setEventForm(f => ({...f, title: e.target.value}))} type="text" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
+                  </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Date</label>
-                    <input value={eventForm.eventDate} onChange={(e)=>setEventForm(f=>({...f,eventDate:e.target.value}))} type="date" className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm" />
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Date</label>
+                    <input value={eventForm.eventDate} onChange={e => setEventForm(f => ({...f, eventDate: e.target.value}))} type="date" className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"/>
                   </div>
-
-                  {eventStatus.error && (<div className="rounded-lg border border-red-200 bg-red-50 text-red-700 text-xs px-3 py-2">{eventStatus.error}</div>)}
-                  {eventStatus.success && (<div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs px-3 py-2">Event published.</div>)}
-                  <button className="w-full py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-sm">
-                    <Calendar size={16} /> {eventStatus.submitting ? 'Publishing...' : 'Publish Event'}
+                  
+                  <button type="submit" disabled={eventStatus.submitting} className="w-full py-2.5 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 text-sm shadow-lg shadow-orange-600/20">
+                    {eventStatus.submitting ? 'Publishing...' : 'Publish Event'}
                   </button>
                 </form>
               )}
 
             </div>
           </div>
-
         </div>
       </div>
     </section>
-  );
-}
-
-// --- Helper Components ---
-
-function StatCard({ title, value, subtext, Icon, color }) {
-  return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-      <div>
-        <p className="text-slate-500 text-sm font-medium">{title}</p>
-        <h3 className="text-3xl font-bold text-slate-900 mt-1">{value}</h3>
-        <p className="text-xs text-slate-400 mt-1">{subtext}</p>
-      </div>
-      <div className={`p-4 rounded-xl text-white ${color} shadow-lg shadow-blue-900/10`}>
-        <Icon size={24} />
-      </div>
-    </div>
-  );
-}
-
-function TableRow({ name, course, contact, onDelete }) {
-  return (
-    <tr className="hover:bg-slate-50/80 transition-colors group">
-      <td className="px-6 py-4 font-bold text-slate-800">{name}</td>
-      <td className="px-6 py-4 text-slate-600">{course}</td>
-      <td className="px-6 py-4 text-slate-500">{contact}</td>
-      <td className="px-6 py-4 text-center">
-        <div className="flex items-center justify-center gap-2">
-          <button className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-bold rounded hover:bg-blue-100 transition-colors">
-            <Eye size={14} /> View
-          </button>
-          {onDelete && (
-            <button onClick={onDelete} className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded hover:bg-red-100 transition-colors">
-              Delete
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
   );
 }
 
