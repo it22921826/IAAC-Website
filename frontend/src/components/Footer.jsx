@@ -55,8 +55,8 @@ function Footer() {
           <div>
             <h4 className="text-white font-bold mb-4 uppercase tracking-wider text-xs">General</h4>
             <ul className="space-y-2">
-              {/* --- RECOMMENDATION ADDED HERE --- */}
-              <FooterLink href="/careers-at-iaac" text="Careers at IAAC" />
+              {/* Career support page link */}
+              <FooterLink href="/career-support" text="Careers at IAAC" />
               
               <FooterLink href="/privacy-policy" text="Privacy Policy" />
               <FooterLink href="/terms" text="Terms of Service" />

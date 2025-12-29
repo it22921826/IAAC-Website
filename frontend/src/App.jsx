@@ -17,6 +17,9 @@ import UpcomingEvents from './pages/Events.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
 import CourseDetails from './pages/CourseDetails.jsx';
+import About from './pages/About.jsx';
+import AcademicStaff from './pages/AcademicStaff.jsx';
+import StudentLogin from './pages/StudentLogin.jsx';
 
 function App() {
   const { theme } = useContext(ThemeContext);
@@ -34,7 +37,10 @@ function App() {
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home user={user} />} />
+          <Route path="/about" element={<About />} />
           <Route path="/student-life" element={<StudentLife />} />
+          <Route path="/academic-staff" element={<AcademicStaff />} />
+          <Route path="/student-login" element={<StudentLogin />} />
           
           {/* Main Training Page */}
           <Route path="/training" element={<TrainingCourses />} />

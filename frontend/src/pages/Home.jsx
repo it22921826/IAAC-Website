@@ -1,51 +1,42 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import HeroSection from '../components/HeroSection';
+
+// --- IMPORTS ---
+import HeroSection from '../components/HeroSection'; // Imports the new Slideshow
 import About from './About.jsx';
+
 import { 
-  Plane, 
-  Users, 
-  Building2, 
-  Ticket, 
-  Package, 
-  TrendingUp, 
-  CheckCircle2, 
-  Target, 
-  Compass 
+  Plane, Users, Building2, Ticket, Package, TrendingUp, 
+  CheckCircle2, Target, Compass 
 } from 'lucide-react';
 
 function Home({ user }) {
-  // Define a reusable fast transition setting
+  // Common transition setting
   const fastTransition = { duration: 0.5, ease: 'easeOut' };
 
   return (
     <>
+      {/* 1. HERO SLIDESHOW (New) */}
       <HeroSection />
 
+      {/* 2. ABOUT SECTION */}
       <About />
 
-      {/* --- 3. OUR COURSES (Specialized Training) --- */}
+      {/* 3. OUR COURSES (Specialized Training) */}
       <motion.section
         className="py-24 bg-slate-50"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.1 }} // Trigger earlier (0.1 instead of 0.2)
+        viewport={{ once: true, amount: 0.1 }}
         variants={{ 
           hidden: { opacity: 0, y: 30 }, 
-          visible: { 
-            opacity: 1, 
-            y: 0, 
-            transition: { ...fastTransition, staggerChildren: 0.08 } // Faster stagger
-          } 
+          visible: { opacity: 1, y: 0, transition: { ...fastTransition, staggerChildren: 0.08 } } 
         }}
       >
         <div className="container mx-auto px-6">
           <motion.div 
             className="text-center max-w-3xl mx-auto mb-16" 
-            variants={{ 
-              hidden: { opacity: 0, y: 20 }, 
-              visible: { opacity: 1, y: 0, transition: fastTransition } 
-            }}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: fastTransition } }}
           >
             <h2 className="text-3xl font-bold text-slate-900">Our Specialized Training</h2>
             <p className="mt-4 text-slate-600 text-lg">
@@ -55,7 +46,7 @@ function Home({ user }) {
 
           <motion.div
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={{ visible: { transition: { staggerChildren: 0.08 } } }} // Much faster grid loading
+            variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
           >
             <CourseCard 
               title="Airline Cabin Crew" 
@@ -91,7 +82,7 @@ function Home({ user }) {
         </div>
       </motion.section>
 
-      {/* --- 4. MISSION & VISION --- */}
+      {/* 4. MISSION & VISION */}
       <motion.section
         className="py-20 bg-white"
         initial="hidden"
@@ -99,11 +90,7 @@ function Home({ user }) {
         viewport={{ once: true, amount: 0.1 }}
         variants={{ 
           hidden: { opacity: 0, y: 30 }, 
-          visible: { 
-            opacity: 1, 
-            y: 0, 
-            transition: { ...fastTransition, staggerChildren: 0.1 } 
-          } 
+          visible: { opacity: 1, y: 0, transition: { ...fastTransition, staggerChildren: 0.1 } } 
         }}
       >
         <div className="container mx-auto px-6 grid md:grid-cols-2 gap-8">
@@ -111,12 +98,9 @@ function Home({ user }) {
           {/* Vision Card */}
           <motion.div
             className="bg-[#1e3a8a] text-white p-10 rounded-3xl relative overflow-hidden shadow-xl shadow-blue-900/20 group"
-            variants={{ 
-              hidden: { opacity: 0, y: 20 }, 
-              visible: { opacity: 1, y: 0, transition: fastTransition } 
-            }}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: fastTransition } }}
             whileHover={{ y: -5, boxShadow: '0px 22px 45px -25px rgba(30, 58, 138, 0.65)' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }} // Snappier hover
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
              <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-blue-500 rounded-full opacity-20 blur-2xl group-hover:opacity-30 transition-opacity"></div>
              <h3 className="text-2xl font-bold mb-4 flex items-center gap-3">
@@ -131,12 +115,9 @@ function Home({ user }) {
           {/* Mission Card */}
           <motion.div
             className="bg-blue-600 text-white p-10 rounded-3xl relative overflow-hidden shadow-xl shadow-blue-600/20 group"
-            variants={{ 
-              hidden: { opacity: 0, y: 20 }, 
-              visible: { opacity: 1, y: 0, transition: fastTransition } 
-            }}
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: fastTransition } }}
             whileHover={{ y: -5, boxShadow: '0px 22px 45px -25px rgba(37, 99, 235, 0.6)' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }} // Snappier hover
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
              <div className="absolute bottom-0 left-0 -ml-10 -mb-10 w-40 h-40 bg-white rounded-full opacity-10 blur-2xl group-hover:opacity-20 transition-opacity"></div>
              <h3 className="text-2xl font-bold mb-4 flex items-center gap-3">
@@ -150,7 +131,7 @@ function Home({ user }) {
         </div>
       </motion.section>
 
-      {/* --- 5. FACULTY & OBJECTIVES --- */}
+      {/* 5. FACULTY & OBJECTIVES */}
       <motion.section
         className="py-20 bg-slate-50"
         initial="hidden"
@@ -158,11 +139,7 @@ function Home({ user }) {
         viewport={{ once: true, amount: 0.1 }}
         variants={{ 
           hidden: { opacity: 0, y: 30 }, 
-          visible: { 
-            opacity: 1, 
-            y: 0, 
-            transition: { ...fastTransition, staggerChildren: 0.1 } 
-          } 
+          visible: { opacity: 1, y: 0, transition: { ...fastTransition, staggerChildren: 0.1 } } 
         }}
       >
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16">
@@ -179,7 +156,6 @@ function Home({ user }) {
               </p>
             </div>
             
-            {/* Quality Policy Box */}
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex gap-4">
               <div className="shrink-0 mt-1">
                 <CheckCircle2 className="w-6 h-6 text-green-600" />
@@ -222,7 +198,7 @@ function Home({ user }) {
   );
 }
 
-// --- Helper Components ---
+// --- HELPER COMPONENTS ---
 
 function CourseCard({ title, Icon, description }) {
   return (
@@ -230,14 +206,10 @@ function CourseCard({ title, Icon, description }) {
       className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm group"
       variants={{
         hidden: { opacity: 0, y: 20 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: { duration: 0.4, ease: 'easeOut' } // Faster Card reveal (0.4s)
-        }
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } }
       }}
       whileHover={{ y: -8, boxShadow: '0px 25px 50px -28px rgba(15, 23, 42, 0.35)' }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }} // Faster hover reaction
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       <div className="mb-6 inline-block p-4 rounded-2xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
         <Icon strokeWidth={1.5} className="w-8 h-8" />
@@ -257,14 +229,10 @@ function FacultyItem({ role, desc }) {
     <motion.div
       className="flex gap-4 p-5 rounded-xl bg-white border border-slate-200 transition-all"
       variants={{
-        hidden: { opacity: 0, x: -20 }, // Slide from left looks faster than up
-        visible: {
-          opacity: 1,
-          x: 0,
-          transition: { duration: 0.35, ease: 'easeOut' } // Very fast list reveal
-        }
+        hidden: { opacity: 0, x: -20 },
+        visible: { opacity: 1, x: 0, transition: { duration: 0.35, ease: 'easeOut' } }
       }}
-      whileHover={{ x: 5, borderColor: 'rgb(37 99 235)' }} // Horizontal nudge on hover
+      whileHover={{ x: 5, borderColor: 'rgb(37 99 235)' }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
       <div className="mt-1 shrink-0">
