@@ -41,6 +41,8 @@ app.use('/api/courses', courseRoutes);
 
 const eventRoutes = require('./routes/events');
 app.use('/api/events', eventRoutes);
+const messageRoutes = require('./routes/messages');
+app.use('/api/messages', messageRoutes);
 app.get('/api/health', (req, res) => {
   const dbState = mongoose.connection.readyState;
 

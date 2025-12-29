@@ -80,6 +80,41 @@ exports.deleteEvent = async (req, res) => {
   }
 };
 
+exports.messages = async (req, res) => {
+  try {
+    const Message = require('../models/Message');
+    const items = await Message.find({})
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    const mapped = items.map((m) => ({
+      id: m._id,
+      name:
+        m.fullName || `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Unknown',
+      email: m.email,
+      phone: m.phone,
+      subject: m.subject || 'No subject',
+      source: m.source || 'other',
+      createdAt: m.createdAt,
+    }));
+
+    return res.status(200).json({ items: mapped });
+  } catch (err) {
+    return res.status(500).json({ items: [] });
+  }
+};
+
+exports.deleteMessage = async (req, res) => {
+  try {
+    const Message = require('../models/Message');
+    await Message.findByIdAndDelete(req.params.id);
+    return res.status(204).send();
+  } catch (err) {
+    return res.status(404).json({ message: 'Message not found' });
+  }
+};
+
 exports.stats = (req, res) => {
   // Example metrics; replace with real queries later
   return res.status(200).json({

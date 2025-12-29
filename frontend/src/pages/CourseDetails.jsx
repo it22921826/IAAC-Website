@@ -46,7 +46,7 @@ function CourseDetails() {
   const renderList = (text) => {
     if (!text) return null;
     return text.split('\n').filter(line => line.trim() !== '').map((line, idx) => (
-      <li key={idx} className="flex items-start gap-3 text-slate-300">
+      <li key={idx} className="flex items-start gap-3 text-slate-900">
         <CheckCircle className="text-blue-500 shrink-0 mt-1" size={18} />
         <span>{line}</span>
       </li>
@@ -125,7 +125,7 @@ function CourseDetails() {
             <div className="bg-blue-600 p-8 rounded-2xl shadow-xl flex flex-col justify-center items-center text-center">
               <h3 className="text-white font-bold text-xl mb-2">Ready to Start?</h3>
               <p className="text-blue-100 text-sm mb-6">Enroll now and secure your spot.</p>
-              <Link to="/contact" className="bg-white text-blue-600 px-6 py-3 rounded-lg font-bold hover:bg-blue-50 w-full">
+              <Link to="/apply-now" className="bg-white text-blue-600 px-6 py-3 rounded-lg font-bold hover:bg-blue-50 w-full">
                 Apply Now
               </Link>
             </div>

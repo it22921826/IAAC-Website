@@ -8,6 +8,8 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('course');
   const [courses, setCourses] = useState([]);
   const [events, setEvents] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [editingCourseId, setEditingCourseId] = useState(null);
   const [editingEventId, setEditingEventId] = useState(null);
 
@@ -94,14 +96,18 @@ function Dashboard() {
     let isMounted = true;
     async function fetchData() {
       try {
-        const [courseRes, eventRes] = await Promise.allSettled([
+        const [courseRes, eventRes, appRes, msgRes] = await Promise.allSettled([
           apiClient.get('/api/courses'),
-          apiClient.get('/api/events')
+          apiClient.get('/api/events'),
+          apiClient.get('/api/admin/applications'),
+          apiClient.get('/api/admin/messages'),
         ]);
 
         if (!isMounted) return;
-        if(courseRes.status === 'fulfilled') setCourses(courseRes.value.data.items || []);
-        if(eventRes.status === 'fulfilled') setEvents(eventRes.value.data.items || []);
+        if (courseRes.status === 'fulfilled') setCourses(courseRes.value.data.items || []);
+        if (eventRes.status === 'fulfilled') setEvents(eventRes.value.data.items || []);
+        if (appRes.status === 'fulfilled') setApplications(appRes.value.data.items || []);
+        if (msgRes.status === 'fulfilled') setMessages(msgRes.value.data.items || []);
 
       } catch (err) { console.error("Load error", err); }
     }
@@ -227,6 +233,85 @@ function Dashboard() {
                           Delete
                         </button>
                       </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Recent Applications */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 text-lg">Recent Applications</h3>
+                <span className="text-xs text-slate-400">Latest 20</span>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                {applications.length === 0 ? (
+                  <div className="p-6 text-slate-400 text-sm">No applications yet</div>
+                ) : (
+                  applications.map((a) => (
+                    <div key={a.id} className="px-6 py-3 flex justify-between items-center text-sm">
+                      <div>
+                        <div className="font-semibold text-slate-800">{a.name}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">{a.course || '—'}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{a.contact}</div>
+                      </div>
+                      <button
+                        className="text-xs text-red-600 font-bold hover:underline bg-red-50 px-3 py-1 rounded"
+                        onClick={async () => {
+                          if (!window.confirm('Delete this application?')) return;
+                          try {
+                            await apiClient.delete(`/api/admin/applications/${a.id}`);
+                            setApplications((prev) => prev.filter((x) => x.id !== a.id));
+                          } catch (e) {
+                            alert('Failed to delete');
+                          }
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Contact & Career Support Messages */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 text-lg">Inbox Messages</h3>
+                <span className="text-xs text-slate-400">Contact & Career Support</span>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                {messages.length === 0 ? (
+                  <div className="p-6 text-slate-400 text-sm">No messages yet</div>
+                ) : (
+                  messages.map((m) => (
+                    <div key={m.id} className="px-6 py-3 flex justify-between items-center text-sm">
+                      <div className="pr-4">
+                        <div className="font-semibold text-slate-800 flex items-center gap-2">
+                          <span>{m.name}</span>
+                          <span className="text-[10px] uppercase tracking-wide rounded-full px-2 py-0.5 bg-slate-100 text-slate-500">
+                            {m.source === 'career-support' ? 'Career Support' : m.source === 'contact' ? 'Contact' : 'Other'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500 mt-0.5">{m.subject}</div>
+                        <div className="text-xs text-slate-400 mt-0.5">{m.email}{m.phone ? ` · ${m.phone}` : ''}</div>
+                      </div>
+                      <button
+                        className="text-xs text-red-600 font-bold hover:underline bg-red-50 px-3 py-1 rounded shrink-0"
+                        onClick={async () => {
+                          if (!window.confirm('Delete this message?')) return;
+                          try {
+                            await apiClient.delete(`/api/admin/messages/${m.id}`);
+                            setMessages((prev) => prev.filter((x) => x.id !== m.id));
+                          } catch (e) {
+                            alert('Failed to delete');
+                          }
+                        }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   ))
                 )}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Briefcase, 
@@ -10,8 +10,41 @@ import {
   GraduationCap,
   HelpCircle
 } from 'lucide-react';
+import apiClient from '../services/apiClient.js';
 
 function CareerSupport() {
+  const [cvFile, setCvFile] = useState(null);
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [status, setStatus] = useState({ submitting: false, success: false, error: '' });
+
+  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.email.trim()) {
+      setStatus({ submitting: false, success: false, error: 'Please enter your email.' });
+      return;
+    }
+    setStatus({ submitting: true, success: false, error: '' });
+    try {
+      await apiClient.post('/api/messages', {
+        fullName: form.name,
+        email: form.email,
+        message: form.message,
+        source: 'career-support',
+      });
+      setStatus({ submitting: false, success: true, error: '' });
+      setForm({ name: '', email: '', message: '' });
+      setCvFile(null);
+    } catch (err) {
+      setStatus({
+        submitting: false,
+        success: false,
+        error: err?.response?.data?.message || 'Failed to send inquiry',
+      });
+    }
+  };
+
   return (
     <>
       {/* --- HERO SECTION --- */}
@@ -187,12 +220,14 @@ function CareerSupport() {
               Quick Inquiry
             </h3>
             
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={submit}>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
                 <input 
                   type="text" 
                   placeholder="Sanuthi Ranaweera"
+                  value={form.name}
+                  onChange={update('name')}
                   className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
                 />
               </div>
@@ -202,6 +237,8 @@ function CareerSupport() {
                 <input 
                   type="email" 
                   placeholder="you@example.com"
+                  value={form.email}
+                  onChange={update('email')}
                   className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
                 />
               </div>
@@ -211,15 +248,56 @@ function CareerSupport() {
                 <textarea 
                   rows="4"
                   placeholder="I am interested in internship opportunities..."
+                  value={form.message}
+                  onChange={update('message')}
                   className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"
                 ></textarea>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
+                  <FileText size={16} className="text-blue-600" />
+                  Upload CV (optional)
+                </label>
+                <label className="block cursor-pointer">
+                  <div className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-slate-50 border border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/40 transition-all">
+                    <span className="text-sm text-slate-600 truncate">
+                      {cvFile ? cvFile.name : 'Choose file (PDF, DOC, DOCX)'}
+                    </span>
+                    <span className="ml-3 inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold bg-blue-600 text-white">
+                      Browse
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files && e.target.files[0];
+                      setCvFile(file || null);
+                    }}
+                  />
+                </label>
+                <p className="mt-1 text-xs text-slate-500">Max size 5MB. PDF format is preferred.</p>
+              </div>
+
+              {status.error && (
+                <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2">
+                  {status.error}
+                </div>
+              )}
+              {status.success && (
+                <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-3 py-2">
+                  Inquiry sent successfully.
+                </div>
+              )}
+
               <button 
-                type="button" 
-                className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg transition-all duration-300 hover:bg-blue-700 hover:scale-105 hover:brightness-110 flex items-center justify-center gap-2"
+                type="submit" 
+                disabled={status.submitting}
+                className="w-full py-3 bg-blue-600 disabled:opacity-60 text-white font-bold rounded-lg transition-all duration-300 hover:bg-blue-700 hover:scale-105 hover:brightness-110 flex items-center justify-center gap-2"
               >
-                Send Message
+                {status.submitting ? 'Sending...' : 'Send Message'}
                 <Send size={18} />
               </button>
             </form>

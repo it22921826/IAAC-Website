@@ -16,6 +16,7 @@ import ApplyNow from './pages/ApplyNow.jsx';
 import UpcomingEvents from './pages/Events.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import AdminLogin from './pages/AdminLogin.jsx';
+import CourseDetails from './pages/CourseDetails.jsx';
 
 function App() {
   const { theme } = useContext(ThemeContext);
@@ -38,6 +39,7 @@ function App() {
           {/* Main Training Page */}
           <Route path="/training" element={<TrainingCourses />} />
           <Route path="/training/courses" element={<TrainingCourses />} />
+          <Route path="/training/course/:courseId" element={<CourseDetails />} />
           
           <Route path="/career-support" element={<CareerSupport />} />
           <Route path="/contact-us" element={<ContactUs />} />

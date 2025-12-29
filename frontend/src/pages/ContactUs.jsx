@@ -1,203 +1,302 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Mail, Clock, Send } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Send, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import apiClient from '../services/apiClient.js';
 
 function ContactUs() {
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    subject: 'General Inquiry',
+    message: '',
+  });
+  const [status, setStatus] = useState({ submitting: false, success: false, error: '' });
+
+  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.email.trim()) {
+      setStatus({ submitting: false, success: false, error: 'Please enter your email.' });
+      return;
+    }
+    setStatus({ submitting: true, success: false, error: '' });
+    try {
+      await apiClient.post('/api/messages', {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone,
+        subject: form.subject,
+        message: form.message,
+        source: 'contact',
+      });
+      setStatus({ submitting: false, success: true, error: '' });
+      setForm({ firstName: '', lastName: '', email: '', phone: '', subject: 'General Inquiry', message: '' });
+    } catch (err) {
+      setStatus({
+        submitting: false,
+        success: false,
+        error: err?.response?.data?.message || 'Failed to send message',
+      });
+    }
+  };
   return (
     <>
       {/* --- HERO SECTION --- */}
       <motion.section
-        className="bg-slate-900 pt-32 pb-16 px-6"
+        className="bg-slate-900 pt-32 pb-20 px-6 relative overflow-hidden"
         initial="hidden"
         animate="visible"
         variants={{
-          hidden: { opacity: 0, y: 32 },
-          visible: {
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.8, ease: [0.16, 0.84, 0.44, 1], when: 'beforeChildren', staggerChildren: 0.12 }
-          }
+          hidden: { opacity: 0 },
+          visible: { opacity: 1, transition: { duration: 0.8 } }
         }}
       >
-        <div className="container mx-auto text-center">
+        {/* Abstract Background Blob */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+        <div className="container mx-auto text-center relative z-10">
           <motion.h1
-            className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4"
-            variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } } }}
+            className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6"
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
           >
-            Contact <span className="text-blue-500">Us</span>
+            Let's Start a <span className="text-blue-500">Conversation</span>
           </motion.h1>
           <motion.p
-            className="text-slate-400 max-w-2xl mx-auto text-lg"
-            variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut', delay: 0.05 } } }}
+            className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed"
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.1 } } }}
           >
-            Get in touch with our team for inquiries about courses, admissions, or any other information.
+            Have questions about admissions, campus life, or academics? We are here to help you find the answers you need.
           </motion.p>
         </div>
       </motion.section>
 
-      {/* --- CONTACT CONTENT SECTION --- */}
-      <motion.section
-        className="py-20 bg-white"
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.25 }}
-        variants={{ hidden: { opacity: 0, y: 40 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut', when: 'beforeChildren', staggerChildren: 0.15 } } }}
-      >
+      {/* --- MAIN CONTENT (Split Layout) --- */}
+      <section className="py-20 bg-slate-50">
         <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16">
+          <div className="grid lg:grid-cols-12 gap-12 lg:gap-20">
 
-            {/* --- LEFT COLUMN: CONTACT INFO & HOURS --- */}
-            <motion.div className="space-y-12" variants={{ hidden: { opacity: 0, y: 32 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut', staggerChildren: 0.12 } } }}>
-              
-              {/* Contact Details Card */}
-              <motion.div className="bg-slate-50 p-8 rounded-3xl shadow-sm border border-slate-100" variants={{ hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } } }}>
-                <h2 className="text-2xl font-bold text-slate-900 mb-8">Get In Touch</h2>
-                <motion.ul className="space-y-6" variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}>
-                  
-                  {/* Address */}
-                  <motion.li className="flex items-start gap-4" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } } }}>
-                    <div className="p-3 bg-white text-blue-600 rounded-xl shadow-sm border border-slate-100">
-                      <MapPin size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 mb-1">Visit Us</h3>
-                      <p className="text-slate-600 leading-relaxed">
-                        49A Siri Dhamma Mawatha,<br />
-                        Colombo 01000,<br />
-                        Sri Lanka
-                      </p>
-                    </div>
-                  </motion.li>
-
-                  {/* Phone */}
-                  <motion.li className="flex items-start gap-4" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', delay: 0.05 } } }}>
-                    <div className="p-3 bg-white text-blue-600 rounded-xl shadow-sm border border-slate-100">
-                      <Phone size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 mb-1">Call Us</h3>
-                      <p className="text-slate-600 leading-relaxed">
-                        <a href="tel:0766763777" className="hover:text-blue-600 transition-colors">
-                          076 676 3777
-                        </a>
-                      </p>
-                    </div>
-                  </motion.li>
-
-                  {/* Email (Added for completeness) */}
-                  <motion.li className="flex items-start gap-4" variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', delay: 0.1 } } }}>
-                    <div className="p-3 bg-white text-blue-600 rounded-xl shadow-sm border border-slate-100">
-                      <Mail size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 mb-1">Email Us</h3>
-                      <p className="text-slate-600 leading-relaxed">
-                        <a href="mailto:info@iaac.lk" className="hover:text-blue-600 transition-colors">
-                          info@iaac.lk
-                        </a>
-                      </p>
-                    </div>
-                  </motion.li>
-                </motion.ul>
-              </motion.div>
-
-              {/* Opening Hours Card */}
-              <motion.div className="bg-white p-8 rounded-3xl shadow-lg shadow-blue-100/50 border border-blue-50" variants={{ hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut', delay: 0.08 } } }}>
-                <div className="flex items-center gap-3 mb-6">
-                  <Clock className="text-blue-600" size={24} />
-                  <h2 className="text-2xl font-bold text-slate-900">Opening Hours</h2>
-                </div>
-                <ul className="space-y-3 text-sm">
-                  <HourItem day="Monday" hours="8:30 AM – 5:00 PM" />
-                  <HourItem day="Tuesday" hours="8:30 AM – 5:00 PM" />
-                  <HourItem day="Wednesday" hours="8:30 AM – 5:00 PM" />
-                  <HourItem day="Thursday" hours="8:30 AM – 5:00 PM" note="(Hours might differ on holidays)" />
-                  <HourItem day="Friday" hours="8:30 AM – 5:00 PM" />
-                  <HourItem day="Saturday" hours="8:30 AM – 5:00 PM" />
-                  <HourItem day="Sunday" hours="8:30 AM – 5:00 PM" />
+            {/* --- LEFT COLUMN: INFO & HOURS (Span 5) --- */}
+            <motion.div 
+              className="lg:col-span-5 space-y-10"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              {/* Info Card */}
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-6">Contact Information</h3>
+                <ul className="space-y-6">
+                  <ContactItem icon={<MapPin size={20} />} title="Visit Us" content={<>49A Siri Dhamma Mawatha,<br/>Colombo 01000, Sri Lanka</>} />
+                  <ContactItem icon={<Phone size={20} />} title="Call Us" content={<a href="tel:0766763777" className="hover:text-blue-600">076 676 3777</a>} />
+                  <ContactItem icon={<Mail size={20} />} title="Email Us" content={<a href="mailto:info@iaac.lk" className="hover:text-blue-600">info@iaac.lk</a>} />
                 </ul>
-              </motion.div>
+              </div>
 
+              {/* Opening Hours */}
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div className="flex items-center gap-2 mb-4 text-slate-900">
+                  <Clock size={20} className="text-blue-600" />
+                  <h4 className="font-bold text-lg">Opening Hours</h4>
+                </div>
+                <ul className="space-y-3 text-sm text-slate-600">
+                  <HourItem day="Mon - Fri" hours="8:30 AM – 5:00 PM" />
+                  <HourItem day="Saturday" hours="8:30 AM – 5:00 PM" />
+                  <HourItem day="Sunday" hours="8:30 AM – 1:00 PM" />
+                </ul>
+              </div>
+
+              {/* Social Links (NEW) */}
+              <div>
+                <h4 className="font-bold text-slate-900 mb-4">Follow Us</h4>
+                <div className="flex gap-4">
+                  <SocialBtn
+                    icon={<Facebook size={20} />}
+                    href="https://www.facebook.com/iaacsl"
+                    label="IAAC on Facebook"
+                  />
+                  <SocialBtn
+                    icon={<Youtube size={20} />}
+                    href="https://www.youtube.com/@internationalairlineaviati4986"
+                    label="IAAC on YouTube"
+                  />
+                  <SocialBtn
+                    icon={<Linkedin size={20} />}
+                    href="https://www.linkedin.com/company/international-airline-aviation-college/posts/?feedView=all"
+                    label="IAAC on LinkedIn"
+                  />
+                  <SocialBtn
+                    icon={<Instagram size={20} />}
+                    href="https://www.instagram.com/iaac_aviation/"
+                    label="IAAC on Instagram"
+                  />
+                </div>
+              </div>
             </motion.div>
 
-            {/* --- RIGHT COLUMN: MAP & CONTACT FORM --- */}
-            <motion.div className="space-y-12" variants={{ hidden: { opacity: 0, y: 32 }, visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut', delayChildren: 0.1, staggerChildren: 0.12 } } }}>
-              
-              {/* Google Map Embed */}
-              <motion.div className="w-full h-80 bg-slate-100 rounded-3xl overflow-hidden shadow-sm border border-slate-200 relative" variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } } }}>
-                <iframe 
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.733102342789!2d79.8685393757562!3d6.922476393077116!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae2593c88232123%3A0x443320626246507!2s49%20A%20Siri%20Dhamma%20Mawatha%2C%20Colombo%2001000!5e0!3m2!1sen!2slk!4v1708500000000!5m2!1sen!2slk"
-                  width="100%" 
-                  height="100%" 
-                  style={{ border: 0 }} 
-                  allowFullScreen="" 
-                  loading="lazy" 
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="IAAC Location Map"
-                  className="absolute inset-0 filter grayscale-[20%] hover:grayscale-0 transition-all"
-                ></iframe>
-              </motion.div>
-
-              {/* Contact Form */}
-              <motion.div
-                className="bg-white p-8 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100"
-                variants={{ hidden: { opacity: 0, y: 26 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut', delay: 0.08 } } }}
-                whileHover={{ y: -8, boxShadow: '0px 28px 55px -30px rgba(15, 23, 42, 0.4)' }}
-                transition={{ type: 'spring', stiffness: 210, damping: 22 }}
-              >
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">Send Us a Message</h2>
-                <form className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">First Name</label>
-                      <input type="text" className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Last Name</label>
-                      <input type="text" className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
-                    </div>
+            {/* --- RIGHT COLUMN: FORM (Span 7) --- */}
+            <motion.div 
+              className="lg:col-span-7"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-slate-200/60 border border-slate-100">
+                <h2 className="text-3xl font-bold text-slate-900 mb-2">Send a Message</h2>
+                <p className="text-slate-500 mb-8">Fill out the form below and our team will get back to you within 24 hours.</p>
+                
+                <form className="space-y-6" onSubmit={submit}>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <InputGroup label="First Name" type="text" placeholder="John" value={form.firstName} onChange={update('firstName')} />
+                    <InputGroup label="Last Name" type="text" placeholder="Doe" value={form.lastName} onChange={update('lastName')} />
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
-                    <input type="email" className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <InputGroup label="Email Address" type="email" placeholder="john@example.com" value={form.email} onChange={update('email')} />
+                    <InputGroup label="Phone Number" type="tel" placeholder="+94 7X XXX XXXX" value={form.phone} onChange={update('phone')} />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-                    <input type="tel" className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all" />
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Subject</label>
+                    <select
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-slate-600"
+                      value={form.subject}
+                      onChange={update('subject')}
+                    >
+                      <option value="General Inquiry">General Inquiry</option>
+                      <option value="Admissions">Admissions</option>
+                      <option value="Course Details">Course Details</option>
+                      <option value="Student Support">Student Support</option>
+                    </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Message</label>
-                    <textarea rows="4" className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Message</label>
+                    <textarea
+                      rows="4"
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all resize-none"
+                      placeholder="How can we help you?"
+                      value={form.message}
+                      onChange={update('message')}
+                    ></textarea>
                   </div>
 
-                  <button type="button" className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg transition-all duration-300 hover:bg-blue-700 hover:scale-105 hover:brightness-110 flex items-center justify-center gap-2">
-                    Send Message
-                    <Send size={18} />
-                  </button>
+                  {status.error && (
+                    <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2">
+                      {status.error}
+                    </div>
+                  )}
+                  {status.success && (
+                    <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-3 py-2">
+                      Message sent successfully.
+                    </div>
+                  )}
+
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={status.submitting}
+                    className="w-full py-4 bg-blue-600 disabled:opacity-60 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                  >
+                    {status.submitting ? 'Sending...' : 'Send Message'} <Send size={18} />
+                  </motion.button>
                 </form>
-              </motion.div>
-
+              </div>
             </motion.div>
+
           </div>
         </div>
-      </motion.section>
+      </section>
+
+      {/* --- MAP SECTION (Full Width) --- */}
+      {/* Moved to bottom for better layout balance */}
+      <section className="h-[400px] w-full bg-slate-200 relative grayscale hover:grayscale-0 transition-all duration-700">
+        <iframe 
+          src="https://www.google.com/maps?q=International+Airline+%26+Aviation+College+-+IAAC+Sri+Lanka&z=17&output=embed" 
+          width="100%" 
+          height="100%" 
+          style={{ border: 0 }} 
+          allowFullScreen="" 
+          loading="lazy" 
+          referrerPolicy="no-referrer-when-downgrade"
+          title="International Airline & Aviation College - IAAC Sri Lanka Map"
+         ></iframe>
+          
+          {/* Map Overlay Card */}
+          <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 bg-white p-4 rounded-xl shadow-xl max-w-xs hidden md:block">
+            <p className="font-bold text-slate-900 text-sm">Find us easily</p>
+            <p className="text-xs text-slate-500 mt-1">View our exact location on Google Maps.</p>
+            <a
+              href="https://maps.app.goo.gl/g2xKKTJh1yMcFdqp8"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-xs font-semibold text-blue-600 hover:underline"
+            >
+              Open in Google Maps
+            </a>
+          </div>
+      </section>
     </>
   );
 }
 
-// --- Helper Component ---
-function HourItem({ day, hours, note }) {
+// --- SUBCOMPONENTS ---
+
+function ContactItem({ icon, title, content }) {
   return (
-    <li className="flex justify-between py-2 border-b border-slate-100 last:border-0">
-      <span className="font-medium text-slate-700 flex items-center gap-1">
-        {day}
-        {note && <span className="text-xs text-yellow-600 font-normal">{note}</span>}
-      </span>
-      <span className="text-slate-600">{hours}</span>
+    <li className="flex items-start gap-4">
+      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shrink-0">
+        {icon}
+      </div>
+      <div>
+        <h4 className="font-bold text-slate-900 text-sm mb-1">{title}</h4>
+        <div className="text-slate-600 text-base leading-relaxed">{content}</div>
+      </div>
     </li>
+  );
+}
+
+function HourItem({ day, hours }) {
+  return (
+    <li className="flex justify-between items-center py-2 border-b border-slate-100 last:border-0">
+      <span className="font-medium text-slate-700">{day}</span>
+      <span className="text-slate-500 font-mono text-xs bg-slate-100 px-2 py-1 rounded">{hours}</span>
+    </li>
+  );
+}
+
+function InputGroup({ label, type, placeholder, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-slate-700 mb-2">{label}</label>
+      <input 
+        type={type} 
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-400" 
+      />
+    </div>
+  );
+}
+
+function SocialBtn({ icon, href, label }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      className="p-3 bg-slate-100 text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all duration-300 transform hover:-translate-y-1"
+    >
+      {icon}
+    </a>
   );
 }
 
