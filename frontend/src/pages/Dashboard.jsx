@@ -18,11 +18,13 @@ function Dashboard() {
   const [applications, setApplications] = useState([]);
   const [messages, setMessages] = useState([]);
   const [staffMembers, setStaffMembers] = useState([]);
+  const [notices, setNotices] = useState([]);
   
   // Editing State
   const [editingCourseId, setEditingCourseId] = useState(null);
   const [editingEventId, setEditingEventId] = useState(null);
   const [editingStaffId, setEditingStaffId] = useState(null);
+  const [editingNoticeId, setEditingNoticeId] = useState(null);
 
   // --- CALENDAR STATE ---
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -49,17 +51,23 @@ function Dashboard() {
     name: '', description: '', imageUrl: '',
   });
 
+  const [noticeForm, setNoticeForm] = useState({
+    title: '', description: '', imageUrl: '',
+  });
+
   // Status State
   const [courseStatus, setCourseStatus] = useState({ submitting: false, success: false, error: '' });
   const [practicalStatus, setPracticalStatus] = useState({ submitting: false, success: false, error: '' });
   const [eventStatus, setEventStatus] = useState({ submitting: false, success: false, error: '' });
   const [staffStatus, setStaffStatus] = useState({ submitting: false, success: false, error: '' });
+  const [noticeStatus, setNoticeStatus] = useState({ submitting: false, success: false, error: '' });
 
   const actionTabs = [
     { value: 'course', label: 'Course' },
     { value: 'practical', label: 'Practical' },
     { value: 'event', label: 'Event' },
     { value: 'staff', label: 'Staff' },
+    { value: 'notice', label: 'Notice' },
   ];
 
   // --- IMAGE HANDLERS ---
@@ -128,15 +136,31 @@ function Dashboard() {
     reader.readAsDataURL(file);
   };
 
+  const handleNoticeImageChange = (e) => {
+    const file = (e.target.files || [])[0];
+    if (!file) {
+      setNoticeForm((f) => ({ ...f, imageUrl: '' }));
+      setNoticeStatus({ submitting: false, success: false, error: '' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNoticeForm((f) => ({ ...f, imageUrl: reader.result || '' }));
+      setNoticeStatus((prev) => ({ ...prev, success: false, error: '' }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   // --- DATA FETCHING ---
   useEffect(() => {
     let isMounted = true;
     async function fetchData() {
       try {
-        const [courseRes, eventRes, staffRes, appRes, msgRes] = await Promise.allSettled([
+        const [courseRes, eventRes, staffRes, noticeRes, appRes, msgRes] = await Promise.allSettled([
           apiClient.get('/api/courses'),
           apiClient.get('/api/events'),
           apiClient.get('/api/staff'),
+          apiClient.get('/api/notices'),
           apiClient.get('/api/admin/applications'),
           apiClient.get('/api/admin/messages'),
         ]);
@@ -145,6 +169,7 @@ function Dashboard() {
         if (courseRes.status === 'fulfilled') setCourses(courseRes.value.data.items || []);
         if (eventRes.status === 'fulfilled') setEvents(eventRes.value.data.items || []);
         if (staffRes.status === 'fulfilled') setStaffMembers(staffRes.value.data.items || []);
+        if (noticeRes.status === 'fulfilled') setNotices(noticeRes.value.data.items || []);
         if (appRes.status === 'fulfilled') setApplications(appRes.value.data.items || []);
         if (msgRes.status === 'fulfilled') setMessages(msgRes.value.data.items || []);
 
@@ -894,6 +919,188 @@ function Dashboard() {
                       : 'Publish Staff Member'}
                   </button>
                 </form>
+              )}
+
+              {/* 5. ADD NOTICE FORM */}
+              {activeTab === 'notice' && (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="px-4 py-3 border-b border-slate-200">
+                      <div className="text-sm font-bold text-slate-800">Existing Notices</div>
+                      <div className="text-xs text-slate-500">Click edit to update a notice.</div>
+                    </div>
+                    <div className="divide-y divide-slate-200 max-h-60 overflow-y-auto">
+                      {notices.length === 0 ? (
+                        <div className="p-4 text-xs text-slate-400">No notices yet</div>
+                      ) : (
+                        notices.map((n) => (
+                          <div key={n._id} className="p-4 flex items-center justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-3 min-w-0">
+                              {n.imageUrl ? (
+                                <img
+                                  src={n.imageUrl}
+                                  alt={n.title}
+                                  className="h-10 w-10 rounded-md object-cover border border-slate-200"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-md bg-slate-100 border border-slate-200" />
+                              )}
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-800 truncate">{n.title}</div>
+                                <div className="text-slate-500 truncate">{n.description}</div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              <button
+                                className="text-xs text-slate-600 font-bold hover:underline bg-slate-100 px-3 py-1 rounded"
+                                onClick={() => {
+                                  setEditingNoticeId(n._id);
+                                  setNoticeForm({
+                                    title: n.title || '',
+                                    description: n.description || '',
+                                    imageUrl: n.imageUrl || '',
+                                  });
+                                  setNoticeStatus({ submitting: false, success: false, error: '' });
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="text-xs text-red-600 font-bold hover:underline bg-red-50 px-3 py-1 rounded"
+                                onClick={async () => {
+                                  if (!window.confirm('Delete this notice?')) return;
+                                  try {
+                                    await apiClient.delete(`/api/notices/${n._id}`);
+                                    setNotices((prev) => prev.filter((x) => x._id !== n._id));
+                                    if (editingNoticeId === n._id) {
+                                      setEditingNoticeId(null);
+                                      setNoticeForm({ title: '', description: '', imageUrl: '' });
+                                    }
+                                  } catch (error) {
+                                    alert('Failed to delete');
+                                  }
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <form
+                    className="space-y-4"
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      setNoticeStatus({ submitting: true, success: false, error: '' });
+
+                      const payload = {
+                        title: noticeForm.title,
+                        description: noticeForm.description,
+                        imageUrl: noticeForm.imageUrl,
+                      };
+
+                      try {
+                        if (editingNoticeId) {
+                          await apiClient.put(`/api/notices/${editingNoticeId}`, payload);
+                        } else {
+                          await apiClient.post('/api/notices', payload);
+                        }
+
+                        setNoticeStatus({ submitting: false, success: true, error: '' });
+                        setEditingNoticeId(null);
+                        setNoticeForm({ title: '', description: '', imageUrl: '' });
+                        try {
+                          const res = await apiClient.get('/api/notices');
+                          setNotices(res.data.items || []);
+                        } catch (_) {}
+                      } catch (err) {
+                        setNoticeStatus({
+                          submitting: false,
+                          success: false,
+                          error: err?.response?.data?.message || 'Error publishing',
+                        });
+                      }
+                    }}
+                  >
+                    {editingNoticeId && (
+                      <div className="mb-2 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded px-2 py-1">
+                        Editing existing notice. Save changes or clear the form to add a new one.
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
+                      <input
+                        required
+                        value={noticeForm.title}
+                        onChange={(e) => {
+                          setNoticeForm((f) => ({ ...f, title: e.target.value }));
+                          setNoticeStatus((prev) => ({ ...prev, success: false, error: '' }));
+                        }}
+                        type="text"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+                      <textarea
+                        rows="3"
+                        value={noticeForm.description}
+                        onChange={(e) => {
+                          setNoticeForm((f) => ({ ...f, description: e.target.value }));
+                          setNoticeStatus((prev) => ({ ...prev, success: false, error: '' }));
+                        }}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm resize-none"
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Notice Image</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleNoticeImageChange}
+                        className="block w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                      />
+                      {noticeForm.imageUrl && (
+                        <div className="mt-3">
+                          <img
+                            src={noticeForm.imageUrl}
+                            alt="Notice preview"
+                            className="h-24 w-full max-w-[220px] rounded-lg object-cover border border-slate-200"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {noticeStatus.success && (
+                      <div className="text-xs text-emerald-600 bg-emerald-50 p-2 rounded">
+                        Notice saved successfully.
+                      </div>
+                    )}
+                    {noticeStatus.error && (
+                      <div className="text-xs text-red-600 bg-red-50 p-2 rounded">{noticeStatus.error}</div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={noticeStatus.submitting}
+                      className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 text-sm shadow-lg shadow-blue-600/20"
+                    >
+                      {noticeStatus.submitting
+                        ? editingNoticeId
+                          ? 'Saving changes...'
+                          : 'Publishing...'
+                        : editingNoticeId
+                        ? 'Update Notice'
+                        : 'Publish Notice'}
+                    </button>
+                  </form>
+                </div>
               )}
 
             </div>

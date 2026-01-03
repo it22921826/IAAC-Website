@@ -1,25 +1,11 @@
-const router = require('express').Router();
-const Event = require('../models/EventModel');
+const express = require('express');
+const eventController = require('../controllers/eventController');
 
-// 1. GET ALL EVENTS
-router.get('/', async (req, res) => {
-  try {
-    const events = await Event.find().sort({ date: 1 }); // Sort by nearest date
-    res.status(200).json(events);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
+const router = express.Router();
 
-// 2. ADD NEW EVENT (Use this in your Admin Dashboard later)
-router.post('/', async (req, res) => {
-  const newEvent = new Event(req.body);
-  try {
-    const savedEvent = await newEvent.save();
-    res.status(200).json(savedEvent);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
+router.get('/', eventController.list);
+router.post('/', eventController.create);
+router.put('/:id', eventController.update);
+router.delete('/:id', eventController.remove);
 
 module.exports = router;

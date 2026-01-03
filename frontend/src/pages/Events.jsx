@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, Clock, MapPin, ChevronRight, ChevronLeft, Search, Loader2 } from 'lucide-react';
+import apiClient from '../services/apiClient.js';
 
 // --- HELPER FUNCTIONS ---
 const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -9,6 +10,7 @@ const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(
 const Events = () => {
   const [events, setEvents] = useState([]); // Empty array initially
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
   const [currentDate, setCurrentDate] = useState(new Date()); // Start at today
   const [selectedDate, setSelectedDate] = useState(null);
@@ -16,25 +18,42 @@ const Events = () => {
 
   // --- 1. FETCH DATA FROM BACKEND ---
   useEffect(() => {
+    let isMounted = true;
     const fetchEvents = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/events');
-        const data = await res.json();
-        
-        // CRITICAL: Convert MongoDB date strings back to JS Date objects
-        const formattedData = data.map(event => ({
-          ...event,
-          date: new Date(event.date) 
-        }));
+        setLoading(true);
+        setError('');
 
+        const res = await apiClient.get('/api/events');
+        const data = res.data;
+        const items = Array.isArray(data) ? data : data?.items;
+
+        const formattedData = (Array.isArray(items) ? items : []).map((event) => {
+          const rawDate = event.eventDate || event.date;
+          const parsed = rawDate ? new Date(rawDate) : null;
+          const date = parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
+          return {
+            ...event,
+            date,
+          };
+        });
+
+        if (!isMounted) return;
         setEvents(formattedData);
-        setLoading(false);
       } catch (err) {
         console.error("Failed to fetch events", err);
+        if (!isMounted) return;
+        setEvents([]);
+        setError(err?.response?.data?.message || 'Failed to load events');
+      } finally {
+        if (!isMounted) return;
         setLoading(false);
       }
     };
     fetchEvents();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // --- CALENDAR LOGIC (Same as before) ---
@@ -53,6 +72,7 @@ const Events = () => {
   // --- FILTER LOGIC (Updated to use 'events' state) ---
   const filteredEvents = events.filter(event => {
     if (filter !== 'All' && event.category !== filter) return false;
+    if (!event.date) return false;
     
     if (selectedDate) {
       return (
@@ -70,6 +90,7 @@ const Events = () => {
 
   const hasEvent = (day) => {
     return events.some(e => 
+      e.date &&
       e.date.getDate() === day && 
       e.date.getMonth() === currentDate.getMonth() &&
       e.date.getFullYear() === currentDate.getFullYear()
@@ -129,6 +150,11 @@ const Events = () => {
         {/* RIGHT: EVENT LIST */}
         <div className="lg:col-span-8">
           <div className="space-y-4">
+            {error && (
+              <div className="text-center py-4 text-red-600 bg-red-50 rounded-xl border border-red-100">
+                {error}
+              </div>
+            )}
             <AnimatePresence mode='popLayout'>
               {filteredEvents.length > 0 ? (
                 filteredEvents.map((event) => (
@@ -150,7 +176,10 @@ const Events = () => {
 
 // --- SINGLE EVENT CARD ---
 function EventCard({ event }) {
-  const dateObj = event.date; // This is now a real Date object thanks to useEffect
+  const dateObj = event.date; // Normalized Date object (or null)
+  if (!dateObj) {
+    return null;
+  }
   const day = dateObj.getDate();
   const month = dateObj.toLocaleString('default', { month: 'short' });
 
@@ -169,8 +198,8 @@ function EventCard({ event }) {
         <h3 className="text-xl font-bold text-slate-900">{event.title}</h3>
         <p className="text-slate-600 text-sm mt-1">{event.description}</p>
         <div className="mt-3 flex gap-4 text-sm text-slate-500">
-          <span className="flex items-center gap-1"><Clock className="w-4" /> {event.time}</span>
-          <span className="flex items-center gap-1"><MapPin className="w-4" /> {event.location}</span>
+          <span className="flex items-center gap-1"><Clock className="w-4" /> {event.time || 'TBA'}</span>
+          <span className="flex items-center gap-1"><MapPin className="w-4" /> {event.location || 'TBA'}</span>
         </div>
       </div>
     </motion.div>

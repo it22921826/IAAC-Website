@@ -9,6 +9,9 @@ const connectDB = require('./config/db');
 
 dotenv.config();
 
+// Fail fast if MongoDB is unavailable (avoid hanging requests)
+mongoose.set('bufferCommands', false);
+
 const app = express();
 
 // Apply essential middleware for security, logging, and parsing
@@ -43,6 +46,8 @@ const eventRoutes = require('./routes/events');
 app.use('/api/events', eventRoutes);
 const staffRoutes = require('./routes/staff');
 app.use('/api/staff', staffRoutes);
+const noticeRoutes = require('./routes/notices');
+app.use('/api/notices', noticeRoutes);
 const messageRoutes = require('./routes/messages');
 app.use('/api/messages', messageRoutes);
 app.get('/api/health', (req, res) => {
@@ -65,13 +70,22 @@ const port = process.env.PORT || 5000;
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(port, () => {
-      console.log(`API running on http://localhost:${port}`);
-    });
   } catch (err) {
-    console.error('Failed to start server', err);
-    process.exit(1);
+    console.error('MongoDB not connected; API will run with limited functionality');
   }
+
+  const server = app.listen(port, () => {
+    console.log(`API running on http://localhost:${port}`);
+  });
+
+  server.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Stop the other process or set PORT to a different value.`);
+      process.exit(1);
+    }
+    console.error('Server error:', err);
+    process.exit(1);
+  });
 };
 
 startServer();

@@ -3,7 +3,9 @@ const Event = require('../models/Event');
 // List all events (public)
 exports.list = async (req, res) => {
   try {
-    const items = await Event.find({}).sort({ eventDate: -1, createdAt: -1 }).lean();
+    const items = await Event.find({})
+      .sort({ eventDate: -1, date: -1, createdAt: -1 })
+      .lean();
     res.status(200).json({ items });
   } catch (err) {
     res.status(500).json({ items: [] });
@@ -24,6 +26,8 @@ exports.create = async (req, res) => {
       imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
       imageUrls,
       eventDate: eventDate ? new Date(eventDate) : undefined,
+      // legacy compatibility
+      date: eventDate ? new Date(eventDate) : undefined,
     });
 
     return res.status(201).json(event);
@@ -45,6 +49,8 @@ exports.update = async (req, res) => {
       imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
       imageUrls,
       eventDate: eventDate ? new Date(eventDate) : undefined,
+      // legacy compatibility
+      date: eventDate ? new Date(eventDate) : undefined,
     };
 
     const updated = await Event.findByIdAndUpdate(id, payload, { new: true });
