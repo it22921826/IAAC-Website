@@ -2,55 +2,48 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
 import { Menu, X, ChevronDown } from 'lucide-react';
-import logo from '/logo.png';
 
 function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
 
-  // Toggle dropdown on mobile
   const toggleDropdown = (name) => {
     setActiveDropdown(activeDropdown === name ? null : name);
   };
 
   return (
-    // Single Row Navbar with transparency
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm h-20 flex items-center transition-all duration-300">
-      <div className="container mx-auto px-6 h-full">
-        <div className="flex items-center justify-between h-full">
-          
-          {/* --- LEFT: LOGO --- */}
-          <Link to="/" className="flex-shrink-0 flex items-center" aria-label="IAAC home">
-            <img 
-              src="/logo.png" 
-              alt="IAAC" 
-              className="h-14 w-auto object-contain" 
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-white/20 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="flex items-center justify-between min-h-[4.5rem]">
+
+          {/* LOGO */}
+          <Link to="/" className="flex items-center gap-2">
+            <img
+              src="/logo.png"
+              alt="IAAC"
+              className="h-9 sm:h-12 w-auto object-contain"
             />
           </Link>
 
-          {/* --- CENTER: MENU LINKS --- */}
-          <div className="hidden lg:flex items-center space-x-6">
+          {/* DESKTOP MENU */}
+          <div className="hidden lg:flex items-center gap-6">
             <NavLink to="/" text="Home" />
             <NavLink to="/about" text="About Us" />
             <NavLink to="/student-life" text="Student Life" />
-            {/* Admin links hidden from public navbar */}
 
-            {/* Programs Dropdown */}
-            <div className="relative group h-20 flex items-center">
+            {/* PROGRAMS DROPDOWN */}
+            <div className="relative group">
               <Link
                 to="/training"
-                className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors"
+                className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-blue-600"
               >
-                Programs
-                <ChevronDown size={16} />
+                Programs <ChevronDown size={16} />
               </Link>
-              <div className="absolute top-full left-0 w-64 bg-[#2a2a2a] text-white rounded-b-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <div className="py-2">
-                  <DropdownItem to={{ pathname: '/training', hash: '#courses' }} text="Training Courses" />
-                  <DropdownItem to={{ pathname: '/training', hash: '#practical' }} text="Practical Training's" />
-                </div>
+
+              <div className="absolute left-0 mt-2 w-64 bg-[#2a2a2a] text-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition">
+                <DropdownItem to={{ pathname: '/training', hash: '#courses' }} text="Training Courses" />
+                <DropdownItem to={{ pathname: '/training', hash: '#practical' }} text="Practical Trainings" />
               </div>
             </div>
 
@@ -59,70 +52,98 @@ function Navbar() {
             <NavLink to="/contact-us" text="Contact Us" />
           </div>
 
-          {/* --- RIGHT: ACTION BUTTONS --- */}
+          {/* DESKTOP ACTION BUTTONS */}
           <div className="hidden lg:flex items-center gap-3">
             <Link
               to="/student-login"
-              className="px-4 py-2 border border-blue-600 text-blue-600 text-sm font-bold rounded-full transition-all duration-300 hover:bg-blue-50 hover:scale-105 whitespace-nowrap"
+              className="px-4 py-2 border border-blue-600 text-blue-600 text-sm font-bold rounded-full hover:bg-blue-50 transition"
             >
               Student Login
             </Link>
             <Link
               to="/apply-now"
-              className="px-5 py-2 bg-blue-600 text-white text-sm font-bold rounded-full transition-all duration-300 hover:bg-blue-700 hover:scale-105 hover:brightness-110 shadow-lg shadow-blue-600/20 whitespace-nowrap"
+              className="px-5 py-2 bg-blue-600 text-white text-sm font-bold rounded-full hover:bg-blue-700 transition shadow"
             >
               Apply Now
             </Link>
           </div>
 
-          {/* --- MOBILE MENU BUTTON --- */}
-          <div className="lg:hidden">
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-slate-700 hover:text-blue-600 focus:outline-none"
-            >
-              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-          </div>
+          {/* MOBILE MENU BUTTON */}
+          <button
+            className="lg:hidden p-2 text-slate-700"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
         </div>
       </div>
 
-      {/* --- MOBILE MENU OVERLAY --- */}
+      {/* MOBILE MENU */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed top-20 left-0 right-0 bottom-0 bg-white/95 backdrop-blur-md border-t border-slate-100 overflow-y-auto pb-20 z-40">
+        <div className="lg:hidden bg-white/95 backdrop-blur-md border-t border-slate-100">
           <div className="px-6 py-6 space-y-4">
-            
-            <MobileLink to="/" text="Home" onNavigate={() => setIsMobileMenuOpen(false)} />
-            <MobileLink to="/about" text="About Us" onNavigate={() => setIsMobileMenuOpen(false)} />
-            <MobileLink to="/student-life" text="Student Life" onNavigate={() => setIsMobileMenuOpen(false)} />
-            {/* Admin mobile link removed */}
-            {/* Admin dashboard link hidden from mobile menu */}
+            <MobileLink to="/" text="Home" close={() => setIsMobileMenuOpen(false)} />
+            <MobileLink to="/about" text="About Us" close={() => setIsMobileMenuOpen(false)} />
+            <MobileLink to="/student-life" text="Student Life" close={() => setIsMobileMenuOpen(false)} />
 
+            {/* MOBILE DROPDOWN */}
             <div>
-              <button 
-                onClick={() => toggleDropdown('training')}
-                className="flex items-center justify-between w-full text-left py-3 text-lg font-medium text-slate-700 border-b border-slate-100"
+              <button
+                onClick={() => toggleDropdown('programs')}
+                className="flex justify-between items-center w-full py-3 text-lg font-medium text-slate-700 border-b"
               >
                 Programs
-                <ChevronDown size={20} className={`transform transition-transform ${activeDropdown === 'training' ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`transition ${activeDropdown === 'programs' ? 'rotate-180' : ''}`}
+                />
               </button>
-              {activeDropdown === 'training' && (
-                <div className="pl-4 py-2 space-y-2 bg-slate-50/50">
-                  <MobileSubLink to={{ pathname: '/training', hash: '#courses' }} text="Training Courses" />
-                  <MobileSubLink to={{ pathname: '/training', hash: '#practical' }} text="Practical Training's" />
+
+              {activeDropdown === 'programs' && (
+                <div className="pl-4 py-2 space-y-2 bg-slate-50 rounded">
+                  <MobileSubLink
+                    to={{ pathname: '/training', hash: '#courses' }}
+                    text="Training Courses"
+                    close={() => {
+                      setIsMobileMenuOpen(false);
+                      setActiveDropdown(null);
+                    }}
+                  />
+                  <MobileSubLink
+                    to={{ pathname: '/training', hash: '#practical' }}
+                    text="Practical Trainings"
+                    close={() => {
+                      setIsMobileMenuOpen(false);
+                      setActiveDropdown(null);
+                    }}
+                  />
                 </div>
               )}
             </div>
 
-            <MobileLink to="/academic-staff" text="Academic Staff" onNavigate={() => setIsMobileMenuOpen(false)} />
-            <MobileLink to="/events/upcoming" text="Events" onNavigate={() => setIsMobileMenuOpen(false)} />
-            <MobileLink to="/contact-us" text="Contact Us" onNavigate={() => setIsMobileMenuOpen(false)} />
-            
-            <div className="pt-4">
-              <Link to="/student-login" className="block w-full text-center mb-3 py-3 border border-blue-600 text-blue-600 font-bold rounded-lg transition-all duration-300 hover:bg-blue-50 hover:scale-105">
+            <MobileLink to="/academic-staff" text="Academic Staff" close={() => setIsMobileMenuOpen(false)} />
+            <MobileLink to="/events/upcoming" text="Events" close={() => setIsMobileMenuOpen(false)} />
+            <MobileLink to="/contact-us" text="Contact Us" close={() => setIsMobileMenuOpen(false)} />
+
+            {/* MOBILE BUTTONS */}
+            <div className="pt-4 space-y-3">
+              <Link
+                to="/student-login"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setActiveDropdown(null);
+                }}
+                className="block text-center py-3 border border-blue-600 text-blue-600 font-bold rounded-lg"
+              >
                 Student Login
               </Link>
-              <Link to="/apply-now" className="block w-full text-center py-3 bg-blue-600 text-white font-bold rounded-lg transition-all duration-300 hover:bg-blue-700 hover:scale-105 hover:brightness-110">
+              <Link
+                to="/apply-now"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setActiveDropdown(null);
+                }}
+                className="block text-center py-3 bg-blue-600 text-white font-bold rounded-lg"
+              >
                 Apply Now
               </Link>
             </div>
@@ -133,11 +154,11 @@ function Navbar() {
   );
 }
 
-// --- HELPER COMPONENTS ---
+/* -------- HELPERS -------- */
 
 function NavLink({ to, text }) {
   return (
-    <Link to={to} className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors whitespace-nowrap">
+    <Link to={to} className="text-sm font-semibold text-slate-700 hover:text-blue-600">
       {text}
     </Link>
   );
@@ -147,28 +168,28 @@ function DropdownItem({ to, text }) {
   return (
     <Link
       to={to}
-      className="block px-6 py-3 text-sm text-slate-300 hover:bg-[#333] hover:text-white transition-colors border-l-2 border-transparent hover:border-blue-500"
+      className="block px-6 py-3 text-sm text-slate-300 hover:bg-[#333] hover:text-white transition"
     >
       {text}
     </Link>
   );
 }
 
-function MobileLink({ to, text, onNavigate }) {
+function MobileLink({ to, text, close }) {
   return (
     <Link
       to={to}
-      onClick={onNavigate}
-      className="block py-3 text-lg font-medium text-slate-700 border-b border-slate-100"
+      onClick={close}
+      className="block py-3 text-lg font-medium text-slate-700 border-b"
     >
       {text}
     </Link>
   );
 }
 
-function MobileSubLink({ to, text }) {
+function MobileSubLink({ to, text, close }) {
   return (
-    <Link to={to} className="block py-2 text-base text-slate-600 hover:text-blue-600">
+    <Link to={to} onClick={close} className="block py-2 text-slate-600 hover:text-blue-600">
       {text}
     </Link>
   );

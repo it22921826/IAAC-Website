@@ -39,7 +39,7 @@ function TrainingCourses() {
 
   return (
     <>
-      <section className="bg-slate-900 pt-[160px] pb-16 px-6">
+      <section className="bg-slate-900 pt-32 md:pt-[160px] pb-16 px-6">
         <div className="container mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
             Training <span className="text-blue-500">Programs</span>

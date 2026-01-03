@@ -7,9 +7,9 @@ function StudentLife() {
     <div className="bg-slate-50 min-h-screen">
       
       {/* --- HERO SECTION --- */}
-      <section className="relative bg-slate-900 pt-[180px] pb-24 px-6 overflow-hidden">
+      <section className="relative bg-slate-900 pt-32 sm:pt-[180px] pb-24 px-6 overflow-hidden">
         {/* Background Decorative Blob */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute top-0 right-0 w-80 h-80 sm:w-[420px] sm:h-[420px] lg:w-[500px] lg:h-[500px] bg-blue-600/20 rounded-full blur-[80px] sm:blur-[90px] lg:blur-[100px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         
         <div className="container mx-auto relative z-10">
           <motion.div

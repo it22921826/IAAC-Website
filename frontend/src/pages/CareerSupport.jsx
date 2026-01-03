@@ -49,7 +49,7 @@ function CareerSupport() {
     <>
       {/* --- HERO SECTION --- */}
       <motion.section
-        className="bg-slate-900 pt-[160px] pb-16 px-6"
+        className="bg-slate-900 pt-32 md:pt-[160px] pb-16 px-6"
         initial="hidden"
         animate="visible"
         variants={{

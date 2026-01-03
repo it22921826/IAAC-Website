@@ -56,7 +56,7 @@ function ContactUs() {
         }}
       >
         {/* Abstract Background Blob */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-80 h-80 sm:w-[500px] sm:h-[500px] lg:w-[600px] lg:h-[600px] bg-blue-600/10 rounded-full blur-[80px] sm:blur-[100px] lg:blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
         <div className="container mx-auto text-center relative z-10">
           <motion.h1

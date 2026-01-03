@@ -3,11 +3,24 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply w-full overflow-x-hidden;
+  }
+
   body {
     /* FIXED: Changed background to Slate-50 (Light Grey/White) */
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply bg-slate-50 text-slate-900 antialiased w-full overflow-x-hidden;
     margin: 0;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  #root {
+    @apply min-h-screen w-full overflow-x-hidden;
+  }
+
+  img,
+  video {
+    @apply max-w-full h-auto;
   }
 }
 
