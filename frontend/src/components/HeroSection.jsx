@@ -42,7 +42,7 @@ function HeroSection() {
     },
     {
       id: 3,
-      name: 'IAAC CENTER',
+      name: 'IAAC CENTRAL',
       icon: MapPin,
       desc: 'Kurunagala ',
       color: 'hover:bg-sky-600 active:bg-sky-700',
@@ -100,7 +100,7 @@ function HeroSection() {
           {/* Description */}
           <p className="text-sm sm:text-base md:text-lg text-slate-200 max-w-xl sm:max-w-2xl leading-relaxed mb-10">
             Join Asia's premier airline training college. We craft professionals
-            for Pilots, Cabin Crew, and Ground Operations with global standards.
+            for Cabin Crew, Cargo & Logistics, and Ground Operations with global standards.
           </p>
         </motion.div>
       </div>

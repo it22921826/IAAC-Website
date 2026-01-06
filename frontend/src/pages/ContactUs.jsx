@@ -43,36 +43,37 @@ function ContactUs() {
       });
     }
   };
+
   return (
     <>
-      {/* --- HERO SECTION --- */}
-      <motion.section
-        className="bg-slate-900 pt-32 pb-20 px-6 relative overflow-hidden"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: { opacity: 1, transition: { duration: 0.8 } }
-        }}
-      >
-        {/* Abstract Background Blob */}
-        <div className="absolute top-0 right-0 w-80 h-80 sm:w-[500px] sm:h-[500px] lg:w-[600px] lg:h-[600px] bg-blue-600/10 rounded-full blur-[80px] sm:blur-[100px] lg:blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+      {/* --- HERO SECTION (Updated to Dark Navy Brand Style) --- */}
+      <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden text-center px-6">
+        
+        {/* Background Glow Effects */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl opacity-50"></div>
+           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl opacity-30"></div>
+        </div>
 
-        <div className="container mx-auto text-center relative z-10">
-          <motion.h1
-            className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6"
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}
+        <div className="relative z-10">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-4xl md:text-6xl font-extrabold text-white mb-6 tracking-tight"
           >
-            Let's Start a <span className="text-blue-500">Conversation</span>
+            Let's Start a <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Conversation</span>
           </motion.h1>
-          <motion.p
-            className="text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed"
-            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay: 0.1 } } }}
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+            className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light"
           >
             Have questions about admissions, campus life, or academics? We are here to help you find the answers you need.
           </motion.p>
         </div>
-      </motion.section>
+      </section>
 
       {/* --- MAIN CONTENT (Split Layout) --- */}
       <section className="py-20 bg-slate-50">
@@ -110,7 +111,7 @@ function ContactUs() {
                 </ul>
               </div>
 
-              {/* Social Links (NEW) */}
+              {/* Social Links */}
               <div>
                 <h4 className="font-bold text-slate-900 mb-4">Follow Us</h4>
                 <div className="flex gap-4">
@@ -215,10 +216,9 @@ function ContactUs() {
       </section>
 
       {/* --- MAP SECTION (Full Width) --- */}
-      {/* Moved to bottom for better layout balance */}
       <section className="h-[400px] w-full bg-slate-200 relative grayscale hover:grayscale-0 transition-all duration-700">
         <iframe 
-          src="https://www.google.com/maps?q=International+Airline+%26+Aviation+College+-+IAAC+Sri+Lanka&z=17&output=embed" 
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.9866635904835!2d79.87037777478297!3d6.892196693106935!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae25a3262372579%3A0x7e584033f2427b0f!2sInternational%20Airline%20%26%20Aviation%20College!5e0!3m2!1sen!2slk!4v1709620000000!5m2!1sen!2slk" 
           width="100%" 
           height="100%" 
           style={{ border: 0 }} 
@@ -227,20 +227,19 @@ function ContactUs() {
           referrerPolicy="no-referrer-when-downgrade"
           title="International Airline & Aviation College - IAAC Sri Lanka Map"
          ></iframe>
-          
-          {/* Map Overlay Card */}
-          <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 bg-white p-4 rounded-xl shadow-xl max-w-xs hidden md:block">
-            <p className="font-bold text-slate-900 text-sm">Find us easily</p>
-            <p className="text-xs text-slate-500 mt-1">View our exact location on Google Maps.</p>
-            <a
-              href="https://maps.app.goo.gl/g2xKKTJh1yMcFdqp8"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 inline-block text-xs font-semibold text-blue-600 hover:underline"
-            >
-              Open in Google Maps
-            </a>
-          </div>
+         
+         <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 bg-white p-4 rounded-xl shadow-xl max-w-xs hidden md:block">
+           <p className="font-bold text-slate-900 text-sm">Find us easily</p>
+           <p className="text-xs text-slate-500 mt-1">View our exact location on Google Maps.</p>
+           <a
+             href="https://maps.app.goo.gl/YourMapLinkHere"
+             target="_blank"
+             rel="noreferrer"
+             className="mt-2 inline-block text-xs font-semibold text-blue-600 hover:underline"
+           >
+             Open in Google Maps
+           </a>
+         </div>
       </section>
     </>
   );

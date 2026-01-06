@@ -54,12 +54,12 @@ function Navbar() {
 
           {/* DESKTOP ACTION BUTTONS */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link
-              to="/student-login"
+            <a
+              href="https://portal.iaacasialms.com/index"
               className="px-4 py-2 border border-blue-600 text-blue-600 text-sm font-bold rounded-full hover:bg-blue-50 transition"
             >
               Student Login
-            </Link>
+            </a>
             <Link
               to="/apply-now"
               className="px-5 py-2 bg-blue-600 text-white text-sm font-bold rounded-full hover:bg-blue-700 transition shadow"
@@ -126,8 +126,8 @@ function Navbar() {
 
             {/* MOBILE BUTTONS */}
             <div className="pt-4 space-y-3">
-              <Link
-                to="/student-login"
+              <a
+                href="https://portal.iaacasialms.com/index"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
                   setActiveDropdown(null);
@@ -135,7 +135,7 @@ function Navbar() {
                 className="block text-center py-3 border border-blue-600 text-blue-600 font-bold rounded-lg"
               >
                 Student Login
-              </Link>
+              </a>
               <Link
                 to="/apply-now"
                 onClick={() => {

@@ -39,17 +39,32 @@ function TrainingCourses() {
 
   return (
     <>
-      <section className="bg-slate-900 pt-32 md:pt-[160px] pb-16 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
-            Training <span className="text-blue-500">Programs</span>
-          </h1>
-          <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-            Comprehensive aviation education combining theoretical excellence with hands-on practical experience.
-          </p>
+      {/* --- HERO SECTION (Updated Colors & Style) --- */}
+      <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden">
+        
+        {/* Background Glow Effects */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl opacity-50"></div>
+           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl opacity-30"></div>
+        </div>
+
+        <div className="container mx-auto px-6 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
+              Diploma <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Courses</span>
+            </h1>
+            <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
+              Comprehensive aviation education combining theoretical excellence with hands-on practical experience.
+            </p>
+          </motion.div>
         </div>
       </section>
 
+      {/* --- COURSE LISTS --- */}
       {Object.keys(coursesByType).length > 0 && (
         <div className="bg-slate-50 border-t border-slate-200">
           {Object.entries(coursesByType).map(([categoryName, courses]) => (
@@ -85,8 +100,6 @@ function TrainingCourses() {
                       title={c.title}
                       Icon={categoryName.includes('Pilot') ? Plane : BookOpen}
                       duration={c.duration || '—'}
-                      // --- THIS IS THE FIX ---
-                      // We now link to the dynamic route using the unique ID
                       to={`/training/course/${c._id}`} 
                       description={c.shortDescription || ''}
                     />
@@ -113,21 +126,21 @@ function CourseCard({ title, Icon, description, duration, to }) {
           transition: { duration: 0.7, ease: [0.16, 0.84, 0.44, 1] }
         }
       }}
-      whileHover={{ y: -10, boxShadow: '0px 25px 50px -25px rgba(37, 99, 235, 0.45)' }}
+      whileHover={{ y: -10, boxShadow: '0px 25px 50px -25px rgba(37, 99, 235, 0.25)' }}
       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
     >
       <div className="flex justify-between items-start mb-6">
-        <div className="p-3 bg-white text-blue-600 rounded-xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
+        <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
           <Icon size={32} strokeWidth={1.5} />
         </div>
-        <span className="px-3 py-1 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wide">
+        <span className="px-3 py-1 bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wide">
           {duration}
         </span>
       </div>
       <h3 className="text-xl font-bold text-slate-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">
         {title}
       </h3>
-      <p className="text-slate-500 leading-relaxed text-sm mb-6">
+      <p className="text-slate-500 leading-relaxed text-sm mb-6 line-clamp-2">
         {description}
       </p>
       <Link to={to} className="flex items-center gap-2 text-sm font-bold text-blue-600 transition-all duration-300 hover:gap-3 hover:brightness-110">
