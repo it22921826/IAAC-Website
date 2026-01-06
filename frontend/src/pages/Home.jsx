@@ -1,181 +1,235 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, ArrowRight, CalendarDays } from 'lucide-react';
+
+// --- IMPORT YOUR COMPONENTS ---
 import HeroSection from '../components/HeroSection';
+import WelcomeToIAAC from '../components/WelcomeToIAAC.jsx';
 import apiClient from '../services/apiClient.js';
 
 /* ---------------- ANIMATION VARIANTS ---------------- */
 const cardVariants = {
-  hidden: { opacity: 0, x: -100 },
+  hidden: { opacity: 0, x: 50 },
   visible: (i) => ({
     opacity: 1,
     x: 0,
-    transition: { duration: 0.6, delay: i * 0.15 },
+    transition: { duration: 0.5, delay: i * 0.1 },
   }),
 };
 
 function Home() {
   const [selectedNotice, setSelectedNotice] = useState(null);
   const [notices, setNotices] = useState([]);
-  const [noticeLoading, setNoticeLoading] = useState(false);
+  const [noticeLoading, setNoticeLoading] = useState(true);
   const [noticeError, setNoticeError] = useState('');
 
+  // --- FETCH NOTICES FROM BACKEND ---
   useEffect(() => {
     let isMounted = true;
 
     async function loadNotices() {
       try {
         setNoticeLoading(true);
-        setNoticeError('');
+        // Ensure this matches your backend route exactly
         const res = await apiClient.get('/api/notices');
+        
+        // Handle different API response structures (array vs { items: [] })
         const items = Array.isArray(res.data) ? res.data : res.data?.items;
-        if (!isMounted) return;
-        setNotices(Array.isArray(items) ? items : []);
+        
+        if (isMounted) {
+          setNotices(Array.isArray(items) ? items : []);
+        }
       } catch (err) {
-        if (!isMounted) return;
-        setNotices([]);
-        setNoticeError(err?.response?.data?.message || 'Failed to load notices');
+        if (isMounted) {
+          console.error("Error loading notices:", err);
+          setNoticeError('Unable to load announcements.');
+        }
       } finally {
-        if (!isMounted) return;
-        setNoticeLoading(false);
+        if (isMounted) setNoticeLoading(false);
       }
     }
 
     loadNotices();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
-
-  const displayNotices = notices;
 
   return (
     <>
-      {/* HERO */}
+      {/* 1. HERO SECTION */}
       <HeroSection />
 
-      {/* ---------------- NOTICE BOARD ---------------- */}
-      <section className="bg-slate-50 py-20 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4">
+      {/* 2. WELCOME TO IAAC */}
+      <WelcomeToIAAC />
+
+      {/* 3. NOTICE BOARD SECTION */}
+      <section className="bg-slate-50 py-20 overflow-hidden min-h-[500px]">
+        <div className="container mx-auto px-6">
 
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
+            transition={{ duration: 0.6 }}
+            className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-600 mb-4">
-              <Bell size={16} />
-              <span className="text-sm font-semibold uppercase tracking-wide">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-600 mb-4 border border-blue-200">
+                <Bell size={14} className="fill-blue-600" />
+                <span className="text-xs font-bold uppercase tracking-wider">Updates & News</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
                 Notice Board
-              </span>
+              </h2>
+              <p className="mt-2 text-slate-500 max-w-lg">
+                Stay updated with the latest announcements, exam schedules, and upcoming events at IAAC.
+              </p>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-              Latest Announcements
-            </h2>
+            
+            {/* Scroll Hint */}
+            <div className="hidden md:flex text-sm text-slate-400 font-medium items-center gap-2">
+              Scroll for more <ArrowRight size={16} />
+            </div>
           </motion.div>
 
-          {/* -------- AUTO-SCROLL HORIZONTAL CAROUSEL -------- */}
+          {/* -------- NOTICES CAROUSEL -------- */}
           <div className="relative">
             {noticeLoading ? (
-              <div className="text-center text-sm text-slate-500 py-10">Loading notices...</div>
+              // Loading State (Skeleton)
+              <div className="flex gap-6 overflow-hidden">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="min-w-[300px] h-[350px] bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+                    <div className="h-40 bg-slate-200 rounded-xl mb-4 animate-pulse"></div>
+                    <div className="h-6 bg-slate-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                    <div className="h-4 bg-slate-200 rounded w-1/2 animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
             ) : noticeError ? (
-              <div className="text-center text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                {noticeError}
+              // Error State
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-2xl border border-dashed border-slate-300">
+                <p className="text-slate-500 mb-2">{noticeError}</p>
               </div>
             ) : notices.length === 0 ? (
-              <div className="text-center text-sm text-slate-500 py-10">No notices published yet.</div>
+              // Empty State
+              <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-slate-100 shadow-sm">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                  <Bell className="text-slate-300" size={32} />
+                </div>
+                <h3 className="text-lg font-bold text-slate-700">No New Announcements</h3>
+                <p className="text-slate-500 text-sm">Check back later for updates.</p>
+              </div>
             ) : (
-              <div className="flex gap-6 overflow-x-auto pb-2">
-                {displayNotices.map((notice, index) => {
-                  const normalizedNotice = {
-                    id: notice._id || notice.id || String(index),
-                    title: notice.title || '',
-                    description: notice.description || '',
-                    image: notice.imageUrl || notice.image || '',
-                  };
+              // Active Notices List
+              <div className="flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                {notices.map((notice, index) => (
+                  <motion.div
+                    key={notice._id || index}
+                    custom={index}
+                    variants={cardVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                    onClick={() => setSelectedNotice(notice)}
+                    className="min-w-[300px] max-w-[300px] md:min-w-[340px] md:max-w-[340px] snap-center bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-slate-100 group flex flex-col h-full"
+                  >
+                    {/* Image */}
+                    <div className="relative h-48 overflow-hidden bg-slate-200">
+                      {notice.imageUrl ? (
+                        <img
+                          src={notice.imageUrl}
+                          alt={notice.title}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300">
+                          <CalendarDays size={48} />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                    </div>
 
-                  return (
-                    <motion.div
-                      key={normalizedNotice.id}
-                      custom={index}
-                      variants={cardVariants}
-                      initial="hidden"
-                      whileInView="visible"
-                      viewport={{ once: true }}
-                      onClick={() => setSelectedNotice(normalizedNotice)}
-                      className="min-w-[300px] max-w-[300px] bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl cursor-pointer transition"
-                    >
-                      {/* Image */}
-                      <div className="relative h-44">
-                        {normalizedNotice.image ? (
-                          <img
-                            src={normalizedNotice.image}
-                            alt={normalizedNotice.title}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-slate-200" />
-                        )}
+                    {/* Content */}
+                    <div className="p-6 flex flex-col flex-grow">
+                      <h3 className="text-lg font-bold text-slate-800 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        {notice.title}
+                      </h3>
+                      <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed mb-4 flex-grow">
+                        {notice.description}
+                      </p>
+                      <div className="pt-4 border-t border-slate-50 flex justify-between items-center mt-auto">
+                        <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Read More</span>
+                        <ArrowRight size={16} className="text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                       </div>
-
-                      {/* Content */}
-                      <div className="p-5">
-                        <h3 className="font-bold text-slate-800 mb-2">
-                          {normalizedNotice.title}
-                        </h3>
-                        <p className="text-sm text-slate-600 line-clamp-3">
-                          {normalizedNotice.description}
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                    </div>
+                  </motion.div>
+                ))}
               </div>
             )}
           </div>
         </div>
       </section>
 
-      {/* ---------------- MODAL POPUP ---------------- */}
+      {/* 3. MODAL POPUP (Details View) */}
       <AnimatePresence>
         {selectedNotice && (
           <motion.div
-            className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4"
+            className="fixed inset-0 z-[60] flex items-center justify-center px-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => setSelectedNotice(null)}
+            />
+
+            {/* Modal Card */}
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl relative"
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative z-10 flex flex-col md:flex-row overflow-hidden"
             >
-              {/* Close Button */}
               <button
                 onClick={() => setSelectedNotice(null)}
-                className="absolute top-3 right-3 p-2 rounded-full bg-white shadow"
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors z-20"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
 
-              {/* Image */}
-              <img
-                src={selectedNotice.image}
-                alt={selectedNotice.title}
-                className="w-full h-56 object-cover"
-              />
+              {/* Modal Image */}
+              {selectedNotice.imageUrl && (
+                <div className="w-full md:w-2/5 h-64 md:h-auto relative shrink-0">
+                  <img
+                    src={selectedNotice.imageUrl}
+                    alt={selectedNotice.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
 
-              {/* Content */}
-              <div className="p-6">
-                <h3 className="text-xl font-extrabold mb-3">
+              {/* Modal Content */}
+              <div className="p-8 md:p-10 flex-grow bg-white">
+                <div className="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wide rounded-md mb-4">
+                  Announcement
+                </div>
+                <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-6 leading-tight">
                   {selectedNotice.title}
                 </h3>
-                <p className="text-slate-600 leading-relaxed">
+                <div className="prose prose-slate prose-sm max-w-none text-slate-600 leading-relaxed whitespace-pre-wrap">
                   {selectedNotice.description}
-                </p>
+                </div>
+                
+                <div className="mt-8 pt-6 border-t border-slate-100 flex justify-end">
+                  <button 
+                    onClick={() => setSelectedNotice(null)}
+                    className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors text-sm"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

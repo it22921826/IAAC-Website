@@ -28,7 +28,7 @@ function HeroSection() {
       id: 1,
       name: 'IAAC CITY',
       icon: Building2,
-      desc: 'Colombo Campus',
+      desc: 'Colombo 10',
       color: 'hover:bg-blue-600 active:bg-blue-700',
       borderColor: 'hover:border-blue-400',
     },
@@ -44,7 +44,7 @@ function HeroSection() {
       id: 3,
       name: 'IAAC CENTER',
       icon: MapPin,
-      desc: 'Kurunagala Branch',
+      desc: 'Kurunagala ',
       color: 'hover:bg-sky-600 active:bg-sky-700',
       borderColor: 'hover:border-sky-400',
     },
@@ -90,10 +90,11 @@ function HeroSection() {
 
           {/* Title */}
           <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-5">
-            Soar Beyond <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-sky-200">
-              The Horizon
+              Best Airline Training College 
             </span>
+            <br />
+            in Asia 
           </h1>
 
           {/* Description */}
@@ -128,10 +129,10 @@ function HeroSection() {
                     <branch.icon size={22} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm sm:text-base text-white tracking-wide">
+                    <h3 className="font-poppins font-bold text-sm sm:text-base text-white tracking-wide">
                       {branch.name}
                     </h3>
-                    <p className="text-[10px] sm:text-xs uppercase tracking-wider text-slate-300">
+                    <p className="font-poppins text-[10px] sm:text-xs uppercase tracking-wider text-slate-300">
                       {branch.desc}
                     </p>
                   </div>

@@ -3,6 +3,10 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        montserrat: ['Montserrat', 'Inter', 'system-ui', 'sans-serif'],
+        poppins: ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
         brand: {
           primary: '#2563EB',

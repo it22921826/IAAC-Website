@@ -9,6 +9,11 @@ const CourseSchema = new mongoose.Schema(
     imageUrls: [{ type: String }],
     shortDescription: { type: String },
     totalCourseFee: { type: String },
+    branchPrices: {
+      iaacCity: { type: String },
+      airportAcademy: { type: String },
+      iaacCenter: { type: String },
+    },
     minimumEntryRequirements: { type: String },
     evaluationCriteria: { type: String },
     examinationFormat: { type: String },

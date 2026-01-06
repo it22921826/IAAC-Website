@@ -21,6 +21,7 @@ exports.create = async (req, res) => {
       category, 
       shortDescription, 
       totalCourseFee, 
+      branchPrices,
       minimumEntryRequirements, 
       evaluationCriteria, 
       examinationFormat, 
@@ -29,6 +30,12 @@ exports.create = async (req, res) => {
       imageUrls,
     } = req.body;
 
+    const derivedTotalCourseFee =
+      totalCourseFee ||
+      branchPrices?.iaacCity ||
+      branchPrices?.airportAcademy ||
+      branchPrices?.iaacCenter;
+
     // Create the new course object
     const newCourse = new Course({
       title,
@@ -36,7 +43,8 @@ exports.create = async (req, res) => {
       // If courseType is missing, try 'category', or default to 'Other'
       courseType: courseType || category || 'Other Programs', 
       shortDescription,
-      totalCourseFee,
+      totalCourseFee: derivedTotalCourseFee,
+      branchPrices,
       minimumEntryRequirements,
       evaluationCriteria,
       examinationFormat,
@@ -64,6 +72,7 @@ exports.update = async (req, res) => {
       category,
       shortDescription,
       totalCourseFee,
+      branchPrices,
       minimumEntryRequirements,
       evaluationCriteria,
       examinationFormat,
@@ -72,12 +81,19 @@ exports.update = async (req, res) => {
       imageUrls,
     } = req.body || {};
 
+    const derivedTotalCourseFee =
+      totalCourseFee ||
+      branchPrices?.iaacCity ||
+      branchPrices?.airportAcademy ||
+      branchPrices?.iaacCenter;
+
     const updatePayload = {
       title,
       duration,
       courseType: courseType || category || 'Other Programs',
       shortDescription,
-      totalCourseFee,
+      totalCourseFee: derivedTotalCourseFee,
+      ...(branchPrices && typeof branchPrices === 'object' ? { branchPrices } : {}),
       minimumEntryRequirements,
       evaluationCriteria,
       examinationFormat,
@@ -86,7 +102,10 @@ exports.update = async (req, res) => {
       imageUrls,
     };
 
-    const updated = await Course.findByIdAndUpdate(id, updatePayload, { new: true });
+    const updated = await Course.findByIdAndUpdate(id, updatePayload, {
+      new: true,
+      runValidators: true,
+    });
     if (!updated) {
       return res.status(404).json({ error: 'Course not found' });
     }

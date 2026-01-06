@@ -6,11 +6,24 @@ import {
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 
+const BRANCHES = [
+  { key: 'iaacCity', label: 'IAAC CITY', sublabel: 'Colombo Campus' },
+  { key: 'airportAcademy', label: 'AIRPORT ACADEMY', sublabel: 'Rathmalana Airport' },
+  { key: 'iaacCenter', label: 'IAAC CENTER', sublabel: 'Kurunagala Branch' },
+];
+
+const normalizePrice = (value) => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value.trim();
+  return String(value).trim();
+};
+
 function CourseDetails() {
   // FIX: We must use 'courseId' to match your App.jsx Route
   const { courseId } = useParams(); 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedBranch, setSelectedBranch] = useState('iaacCity');
 
   useEffect(() => {
     async function fetchCourse() {
@@ -27,6 +40,19 @@ function CourseDetails() {
     }
     fetchCourse();
   }, [courseId]); // FIX: Depend on courseId
+
+  useEffect(() => {
+    if (!course) return;
+    const branchPrices = course.branchPrices && typeof course.branchPrices === 'object' ? course.branchPrices : {};
+
+    // If current selection has no price, auto-pick the first priced branch.
+    const current = normalizePrice(branchPrices?.[selectedBranch]);
+    if (current) return;
+
+    const firstWithPrice = BRANCHES.find((b) => normalizePrice(branchPrices?.[b.key]));
+    const nextBranch = firstWithPrice?.key || 'iaacCity';
+    if (nextBranch !== selectedBranch) setSelectedBranch(nextBranch);
+  }, [course, selectedBranch]);
 
   if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Loading...</div>;
   
@@ -52,6 +78,11 @@ function CourseDetails() {
       </li>
     ));
   };
+
+  const branchPrices = course.branchPrices && typeof course.branchPrices === 'object' ? course.branchPrices : {};
+  const selectedPrice = normalizePrice(branchPrices?.[selectedBranch]);
+  const firstPrice = BRANCHES.map((b) => normalizePrice(branchPrices?.[b.key])).find(Boolean) || '';
+  const feeValue = selectedPrice || firstPrice || normalizePrice(course.totalCourseFee) || 'Contact for Pricing';
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -81,13 +112,35 @@ function CourseDetails() {
       <section className="px-6 -mt-10 mb-20">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <InfoCard 
-              icon={CreditCard} 
-              label="Total Course Fee" 
-              value={course.totalCourseFee || 'Contact for Pricing'} 
-              subtext="Installment plans available"
-            />
+
+            <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl">
+              <div className="flex items-center gap-3 mb-4 text-slate-400">
+                <CreditCard size={24} />
+                <span className="text-xs font-bold uppercase tracking-wider">Course Fee</span>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Select Branch</label>
+                  <select
+                    value={selectedBranch}
+                    onChange={(e) => setSelectedBranch(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm"
+                  >
+                    {BRANCHES.map((b) => (
+                      <option key={b.key} value={b.key}>
+                        {b.label} ({b.sublabel})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">{feeValue}</h3>
+                  <p className="text-sm text-slate-500">Installment plans available</p>
+                </div>
+              </div>
+            </div>
 
             <InfoCard 
               icon={Clock} 
