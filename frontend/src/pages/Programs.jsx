@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookOpen, Plane, Wrench } from 'lucide-react'; 
+import { BookOpen, Plane, Wrench } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 
-function TrainingCourses() {
+function Programs() {
   const [extraCourses, setExtraCourses] = useState([]);
 
   useEffect(() => {
@@ -18,12 +18,14 @@ function TrainingCourses() {
       }
     }
     load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // --- GROUPING LOGIC ---
   const coursesByType = extraCourses.reduce((groups, course) => {
-    const type = course.courseType || 'Other Programs'; 
+    const type = course.courseType || 'Other Programs';
     if (!groups[type]) {
       groups[type] = [];
     }
@@ -41,21 +43,20 @@ function TrainingCourses() {
     <>
       {/* --- HERO SECTION (Updated Colors & Style) --- */}
       <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden">
-        
         {/* Background Glow Effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl opacity-50"></div>
-           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl opacity-30"></div>
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl opacity-50"></div>
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl opacity-30"></div>
         </div>
 
         <div className="container mx-auto px-6 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
           >
             <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
-              Diploma <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Courses</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Programs</span>
             </h1>
             <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-light">
               Comprehensive aviation education combining theoretical excellence with hands-on practical experience.
@@ -64,13 +65,12 @@ function TrainingCourses() {
         </div>
       </section>
 
-      {/* --- COURSE LISTS --- */}
+      {/* --- PROGRAM LISTS --- */}
       {Object.keys(coursesByType).length > 0 && (
         <div className="bg-slate-50 border-t border-slate-200">
           {Object.entries(coursesByType).map(([categoryName, courses]) => (
             <section key={categoryName} className="py-16 border-b border-slate-200 last:border-0">
               <div className="container mx-auto px-6">
-                
                 <motion.div
                   className="flex items-center gap-3 mb-12"
                   initial={{ opacity: 0, y: 24 }}
@@ -78,9 +78,7 @@ function TrainingCourses() {
                   transition={{ duration: 0.7, ease: 'easeOut' }}
                   viewport={{ once: true, amount: 0.2 }}
                 >
-                  <div className="p-3 bg-sky-100 text-sky-600 rounded-xl">
-                    {getCategoryIcon(categoryName)}
-                  </div>
+                  <div className="p-3 bg-sky-100 text-sky-600 rounded-xl">{getCategoryIcon(categoryName)}</div>
                   <div>
                     <h2 className="text-3xl font-bold text-slate-900">{categoryName}</h2>
                     <p className="text-slate-500">Explore our available {categoryName.toLowerCase()}.</p>
@@ -100,7 +98,7 @@ function TrainingCourses() {
                       title={c.title}
                       Icon={categoryName.includes('Pilot') ? Plane : BookOpen}
                       duration={c.duration || '—'}
-                      to={`/training/course/${c._id}`} 
+                      to={`/programs/course/${c._id}`}
                       description={c.shortDescription || ''}
                     />
                   ))}
@@ -123,8 +121,8 @@ function CourseCard({ title, Icon, description, duration, to }) {
         visible: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.7, ease: [0.16, 0.84, 0.44, 1] }
-        }
+          transition: { duration: 0.7, ease: [0.16, 0.84, 0.44, 1] },
+        },
       }}
       whileHover={{ y: -10, boxShadow: '0px 25px 50px -25px rgba(37, 99, 235, 0.25)' }}
       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
@@ -137,17 +135,16 @@ function CourseCard({ title, Icon, description, duration, to }) {
           {duration}
         </span>
       </div>
-      <h3 className="text-xl font-bold text-slate-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">
-        {title}
-      </h3>
-      <p className="text-slate-500 leading-relaxed text-sm mb-6 line-clamp-2">
-        {description}
-      </p>
-      <Link to={to} className="flex items-center gap-2 text-sm font-bold text-blue-600 transition-all duration-300 hover:gap-3 hover:brightness-110">
+      <h3 className="text-xl font-bold text-slate-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">{title}</h3>
+      <p className="text-slate-500 leading-relaxed text-sm mb-6 line-clamp-2">{description}</p>
+      <Link
+        to={to}
+        className="flex items-center gap-2 text-sm font-bold text-blue-600 transition-all duration-300 hover:gap-3 hover:brightness-110"
+      >
         View Curriculum <span aria-hidden="true">&rarr;</span>
       </Link>
     </motion.div>
   );
 }
 
-export default TrainingCourses;
+export default Programs;

@@ -45,7 +45,7 @@ function Dashboard() {
   });
 
   const [eventForm, setEventForm] = useState({ 
-    title: '', description: '', imageUrl: '', imageUrls: [], eventDate: '' 
+    title: '', description: '', location: '', category: 'General', imageUrl: '', imageUrls: [], eventDate: '' 
   });
 
   const [staffForm, setStaffForm] = useState({
@@ -319,7 +319,7 @@ function Dashboard() {
                             <div className="font-semibold text-slate-800 text-sm">{ev.title}</div>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => { setEditingEventId(ev._id); setEventForm({...ev, eventDate: ev.eventDate ? ev.eventDate.substring(0, 10) : ''}); }} className="p-1.5 text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded"><LayoutDashboard size={14} /></button>
+                            <button onClick={() => { setEditingEventId(ev._id); setEventForm({ ...ev, location: ev.location || '', category: ev.category || 'General', eventDate: ev.eventDate ? ev.eventDate.substring(0, 10) : '' }); }} className="p-1.5 text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded"><LayoutDashboard size={14} /></button>
                             <button onClick={async () => { if(window.confirm("Delete?")) { await apiClient.delete(`/api/events/${ev._id}`); setEvents(prev => prev.filter(e => e._id !== ev._id)); }}} className="p-1.5 text-slate-500 hover:text-red-600 bg-slate-50 hover:bg-red-50 rounded"><RefreshCw size={14} className="rotate-45" /></button>
                           </div>
                         </div>
@@ -474,10 +474,18 @@ function Dashboard() {
                 {activeTab === 'event' && (
                   <form className="space-y-4" onSubmit={async (e) => {
                       e.preventDefault(); setEventStatus({ submitting: true, success: false, error: '' });
-                      try { if(editingEventId) await apiClient.put(`/api/events/${editingEventId}`, eventForm); else await apiClient.post('/api/events', eventForm); setEventStatus({ submitting: false, success: true, error: '' }); setEditingEventId(null); setEventForm({ title: '', description: '', imageUrl: '', imageUrls: [], eventDate: '' }); const res = await apiClient.get('/api/events'); setEvents(res.data.items || []); } catch (err) { setEventStatus({ submitting: false, success: false, error: 'Error' }); }
+                      try { if(editingEventId) await apiClient.put(`/api/events/${editingEventId}`, eventForm); else await apiClient.post('/api/events', eventForm); setEventStatus({ submitting: false, success: true, error: '' }); setEditingEventId(null); setEventForm({ title: '', description: '', location: '', category: 'General', imageUrl: '', imageUrls: [], eventDate: '' }); const res = await apiClient.get('/api/events'); setEvents(res.data.items || []); } catch (err) { setEventStatus({ submitting: false, success: false, error: 'Error' }); }
                   }}>
                     <input required placeholder="Event Title" value={eventForm.title} onChange={e => setEventForm(f => ({...f, title: e.target.value}))} className="w-full text-sm border-slate-200 rounded-lg p-2.5"/>
                     <input required type="date" value={eventForm.eventDate} onChange={e => setEventForm(f => ({...f, eventDate: e.target.value}))} className="w-full text-sm border-slate-200 rounded-lg p-2.5"/>
+                    <select value={eventForm.category} onChange={e => setEventForm(f => ({...f, category: e.target.value}))} className="w-full text-sm border-slate-200 rounded-lg p-2.5 bg-slate-50 focus:bg-white transition-colors">
+                      <option value="Academic">Academic</option>
+                      <option value="Workshop">Workshop</option>
+                      <option value="Sports">Sports</option>
+                      <option value="Lecture">Lecture</option>
+                      <option value="General">General</option>
+                    </select>
+                    <input placeholder="Location (e.g. IAAC City Campus)" value={eventForm.location} onChange={e => setEventForm(f => ({...f, location: e.target.value}))} className="w-full text-sm border-slate-200 rounded-lg p-2.5"/>
                     <textarea placeholder="Event Description" rows="3" value={eventForm.description} onChange={e => setEventForm(f => ({...f, description: e.target.value}))} className="w-full text-sm border-slate-200 rounded-lg p-2.5"/>
                     <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center hover:bg-slate-50 transition-colors">
                       <input type="file" multiple accept="image/*" onChange={handleEventImageChange} className="hidden" id="event-file" />

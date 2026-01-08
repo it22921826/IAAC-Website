@@ -15,7 +15,7 @@ function WelcomeToIAAC() {
       {/* --- SECTION 1: INTRO & VIDEO --- */}
       <motion.section
         id="welcome"
-        className="py-20 bg-white scroll-mt-[140px]"
+        className="py-16 bg-white scroll-mt-[140px]"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.2 }}
@@ -115,7 +115,7 @@ function WelcomeToIAAC() {
 
       {/* --- SECTION 2: OUR COURSES --- */}
       <motion.section
-        className="py-24 bg-slate-50"
+        className="py-16 bg-slate-50"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1 }}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shirt, Users, Presentation, Compass, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Shirt, Users, Presentation, CheckCircle2 } from 'lucide-react';
 
 function StudentLife() {
   return (
@@ -90,39 +90,6 @@ function StudentLife() {
 
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* --- SECTION 2: ORIENTATION (Wide Banner) --- */}
-      <section className="px-6 pb-24">
-        <div className="container mx-auto">
-          <motion.div 
-            className="bg-blue-600 rounded-[2.5rem] p-8 md:p-16 text-white relative overflow-hidden text-center"
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            {/* Abstract Shapes */}
-            <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-            <div className="absolute bottom-0 right-0 w-64 h-64 bg-cyan-400/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
-            
-            <div className="relative z-10 max-w-3xl mx-auto">
-              <div className="inline-flex items-center gap-2 bg-blue-500/50 backdrop-blur-sm py-2 px-4 rounded-full border border-blue-400/30 mb-8">
-                <Compass size={18} />
-                <span className="text-sm font-medium">New Student Journey</span>
-              </div>
-              
-              <h2 className="text-3xl md:text-5xl font-bold mb-6">Orientation Program</h2>
-              <p className="text-blue-100 text-lg md:text-xl leading-relaxed mb-8">
-                Your first step into college life. Connect with faculty, meet your future batchmates, and immerse yourself in the IAAC culture before classes even begin.
-              </p>
-              
-              <button className="bg-white text-blue-600 font-bold py-3 px-8 rounded-xl hover:bg-blue-50 transition-colors inline-flex items-center gap-2">
-                View Schedule <ArrowRight size={18} />
-              </button>
-            </div>
-          </motion.div>
         </div>
       </section>
 

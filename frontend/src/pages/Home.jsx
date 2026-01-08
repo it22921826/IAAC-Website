@@ -62,7 +62,7 @@ function Home() {
       <WelcomeToIAAC />
 
       {/* 3. NOTICE BOARD SECTION */}
-      <section className="bg-slate-50 py-20 overflow-hidden min-h-[500px]">
+      <section className="bg-slate-50 py-16 overflow-hidden min-h-[500px]">
         <div className="container mx-auto px-6">
 
           {/* Header */}
@@ -71,7 +71,7 @@ function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6"
+            className="flex flex-col items-center text-center mb-12 gap-4"
           >
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-600 mb-4 border border-blue-200">
@@ -81,7 +81,7 @@ function Home() {
               <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
                 Notice Board
               </h2>
-              <p className="mt-2 text-slate-500 max-w-lg">
+              <p className="mt-2 text-slate-500 max-w-lg mx-auto">
                 Stay updated with the latest announcements, exam schedules, and upcoming events at IAAC.
               </p>
             </div>

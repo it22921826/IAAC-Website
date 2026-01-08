@@ -61,8 +61,8 @@ function CourseDetails() {
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-center px-6">
         <h1 className="text-3xl font-bold text-white mb-4">Course Not Found</h1>
         <p className="text-slate-400 mb-8">This course may have been removed or is unavailable.</p>
-        <Link to="/training" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700">
-          Back to Training Programs
+        <Link to="/programs" className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700">
+          Back to Programs
         </Link>
       </div>
     );
@@ -90,7 +90,7 @@ function CourseDetails() {
       {/* --- 1. HERO SECTION --- */}
       <section className="bg-slate-900 pt-40 pb-20 px-6">
         <div className="container mx-auto max-w-6xl">
-          <Link to="/training" className="inline-flex items-center text-slate-400 hover:text-white mb-6 transition-colors">
+          <Link to="/programs" className="inline-flex items-center text-slate-400 hover:text-white mb-6 transition-colors">
             <ChevronLeft size={20} /> Back to Courses
           </Link>
           

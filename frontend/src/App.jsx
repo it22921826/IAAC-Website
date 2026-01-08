@@ -13,7 +13,7 @@ import Home from './pages/Home.jsx';
 import About from './pages/About.jsx'; // This is now a separate page
 import AcademicStaff from './pages/AcademicStaff.jsx'; // The dynamic staff page
 import StudentLife from './pages/Studentlife.jsx';
-import TrainingCourses from './pages/TrainingCourses.jsx';
+import Programs from './pages/Programs.jsx';
 import CourseDetails from './pages/CourseDetails.jsx';
 import CareerSupport from './pages/CareerSupport.jsx';
 import ContactUs from './pages/ContactUs.jsx';
@@ -49,9 +49,14 @@ function App() {
           <Route path="/student-life" element={<StudentLife />} />
           <Route path="/student-login" element={<StudentLogin />} />
           
-          {/* Training & Courses */}
-          <Route path="/training" element={<TrainingCourses />} />
-          <Route path="/training/courses" element={<TrainingCourses />} />
+          {/* Programs */}
+          <Route path="/programs" element={<Programs />} />
+          <Route path="/programs/courses" element={<Programs />} />
+          <Route path="/programs/course/:courseId" element={<CourseDetails />} />
+
+          {/* Backward-compatible Training URLs */}
+          <Route path="/training" element={<Navigate to="/programs" replace />} />
+          <Route path="/training/courses" element={<Navigate to="/programs/courses" replace />} />
           <Route path="/training/course/:courseId" element={<CourseDetails />} />
           
           {/* Support & Contact */}

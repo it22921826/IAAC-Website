@@ -35,15 +35,15 @@ function Navbar() {
             {/* PROGRAMS DROPDOWN */}
             <div className="relative group">
               <Link
-                to="/training"
+                to="/programs"
                 className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-blue-600"
               >
                 Programs <ChevronDown size={16} />
               </Link>
 
               <div className="absolute left-0 mt-2 w-64 bg-[#2a2a2a] text-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition">
-                <DropdownItem to={{ pathname: '/training', hash: '#courses' }} text="Training Courses" />
-                <DropdownItem to={{ pathname: '/training', hash: '#practical' }} text="Practical Trainings" />
+                <DropdownItem to={{ pathname: '/programs' }} text="Programs" />
+                <DropdownItem to={{ pathname: '/programs' }} text="Practical Trainings" />
               </div>
             </div>
 
@@ -101,15 +101,15 @@ function Navbar() {
               {activeDropdown === 'programs' && (
                 <div className="pl-4 py-2 space-y-2 bg-slate-50 rounded">
                   <MobileSubLink
-                    to={{ pathname: '/training', hash: '#courses' }}
-                    text="Training Courses"
+                    to={{ pathname: '/programs' }}
+                    text="Programs"
                     close={() => {
                       setIsMobileMenuOpen(false);
                       setActiveDropdown(null);
                     }}
                   />
                   <MobileSubLink
-                    to={{ pathname: '/training', hash: '#practical' }}
+                    to={{ pathname: '/programs' }}
                     text="Practical Trainings"
                     close={() => {
                       setIsMobileMenuOpen(false);

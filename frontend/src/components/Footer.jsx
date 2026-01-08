@@ -46,7 +46,7 @@ function Footer() {
               <FooterLink href="/" text="Home" />
               <FooterLink href="/about" text="About Us" />
               <FooterLink href="/student-life" text="Student Life" />
-              <FooterLink href="/training/courses" text="Training Courses" />
+              <FooterLink href="/programs" text="Programs" />
               <FooterLink href="/events/gallery" text="Gallery" />
             </ul>
           </div>

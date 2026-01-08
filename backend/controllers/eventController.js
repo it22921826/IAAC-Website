@@ -15,7 +15,7 @@ exports.list = async (req, res) => {
 // Create a new event (used by admin dashboard via /api/events)
 exports.create = async (req, res) => {
   try {
-    const { title, description, imageUrl, imageUrls, eventDate } = req.body || {};
+    const { title, description, location, category, imageUrl, imageUrls, eventDate } = req.body || {};
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
@@ -23,6 +23,8 @@ exports.create = async (req, res) => {
     const event = await Event.create({
       title,
       description,
+      location,
+      category,
       imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
       imageUrls,
       eventDate: eventDate ? new Date(eventDate) : undefined,
@@ -41,11 +43,13 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, imageUrl, imageUrls, eventDate } = req.body || {};
+    const { title, description, location, category, imageUrl, imageUrls, eventDate } = req.body || {};
 
     const payload = {
       title,
       description,
+      location,
+      category,
       imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
       imageUrls,
       eventDate: eventDate ? new Date(eventDate) : undefined,

@@ -10,7 +10,7 @@ function About() {
   return (
     <>
       {/* --- SECTION 1: HERO - LIFE AT IAAC (New Addition) --- */}
-      <section className="relative pt-40 pb-24 bg-[#0f172a] overflow-hidden">
+      <section className="relative pt-40 pb-16 bg-[#0f172a] overflow-hidden">
         {/* Background Gradient Effect */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl">
            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl opacity-50"></div>
@@ -35,7 +35,7 @@ function About() {
 
       {/* --- SECTION 2: WHO WE ARE (Intro) --- */}
       <motion.section
-        className="py-24 bg-white"
+        className="py-16 bg-white"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1 }}
@@ -83,7 +83,7 @@ function About() {
 
       {/* --- SECTION 3: MISSION & VISION --- */}
       <motion.section
-        className="py-20 bg-slate-50"
+        className="py-16 bg-slate-50"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.1 }}
@@ -129,7 +129,7 @@ function About() {
       </motion.section>
 
       {/* --- SECTION 4: OBJECTIVES --- */}
-      <section className="py-20 bg-white">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <motion.div 
@@ -201,7 +201,7 @@ function About() {
       </section>
 
       {/* --- SECTION 5: FACULTY --- */}
-      <section className="py-24 bg-slate-50">
+      <section className="py-16 bg-slate-50">
         <div className="container mx-auto px-6">
           <motion.div 
             className="text-center max-w-3xl mx-auto mb-16"
@@ -237,7 +237,7 @@ function About() {
       </section>
 
       {/* --- SECTION 6: QMS & QUALITY POLICY --- */}
-      <section className="py-20 bg-slate-900 text-white">
+      <section className="py-16 bg-slate-900 text-white">
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-16">
           <motion.div
             initial={{ opacity: 0, x: -20 }}

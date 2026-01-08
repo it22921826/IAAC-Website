@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar as CalendarIcon, Clock, MapPin, ChevronRight, ChevronLeft, Loader2, Filter } from 'lucide-react';
+import { Calendar as CalendarIcon, MapPin, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 
 const Events = () => {
@@ -9,7 +9,6 @@ const Events = () => {
   const [error, setError] = useState('');
   
   const [currentDate, setCurrentDate] = useState(new Date()); 
-  const [filter, setFilter] = useState('All');
 
   // --- 1. FETCH DATA ---
   useEffect(() => {
@@ -52,17 +51,28 @@ const Events = () => {
   const prevMonth = () => setCurrentDate(new Date(year, currentDate.getMonth() - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, currentDate.getMonth() + 1, 1));
 
-  // --- FILTER LOGIC ---
-  // Filter events for the CURRENTLY SELECTED MONTH
-  const filteredEvents = events.filter(event => {
-    if (filter !== 'All' && event.category !== filter) return false;
-    if (!event.date) return false;
-    
-    return (
-       event.date.getMonth() === currentDate.getMonth() &&
-       event.date.getFullYear() === currentDate.getFullYear()
-    );
-  }).sort((a, b) => a.date - b.date);
+  // Events for the CURRENTLY SELECTED MONTH
+  const monthEvents = events
+    .filter((event) => {
+      if (!event.date) return false;
+      return event.date.getMonth() === currentDate.getMonth() && event.date.getFullYear() === currentDate.getFullYear();
+    })
+    .sort((a, b) => a.date - b.date);
+
+  const eventsByCategory = monthEvents.reduce((groups, event) => {
+    const key = (event.category || 'General').trim() || 'General';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(event);
+    return groups;
+  }, {});
+
+  const orderedCategories = ['Academic', 'Workshop', 'Sports', 'Lecture', 'General'];
+  const categoryKeys = [
+    ...orderedCategories.filter((c) => eventsByCategory[c]?.length),
+    ...Object.keys(eventsByCategory)
+      .filter((c) => !orderedCategories.includes(c))
+      .sort((a, b) => a.localeCompare(b)),
+  ];
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-10 h-10 text-blue-600 animate-spin" /></div>;
 
@@ -100,7 +110,7 @@ const Events = () => {
 
       <div className="container mx-auto px-6 -mt-10 relative z-20">
         
-        {/* --- TOOLBAR (Month Nav & Filter) --- */}
+        {/* --- TOOLBAR (Month Nav) --- */}
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-4 mb-10 flex flex-col md:flex-row items-center justify-between gap-4">
           
           {/* Month Navigation */}
@@ -108,22 +118,6 @@ const Events = () => {
             <button onClick={prevMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-full transition-all text-slate-600"><ChevronLeft className="w-5 h-5" /></button>
             <h2 className="text-lg font-bold text-slate-800 min-w-[140px] text-center">{monthName} {year}</h2>
             <button onClick={nextMonth} className="p-2 hover:bg-white hover:shadow-sm rounded-full transition-all text-slate-600"><ChevronRight className="w-5 h-5" /></button>
-          </div>
-
-          {/* Category Filter (Optional) */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-slate-400" />
-            <select 
-              value={filter} 
-              onChange={(e) => setFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 outline-none font-medium"
-            >
-              <option value="All">All Categories</option>
-              <option value="Academic">Academic</option>
-              <option value="Workshop">Workshop</option>
-              <option value="Sports">Sports</option>
-              <option value="Lecture">Lecture</option>
-            </select>
           </div>
         </div>
 
@@ -136,13 +130,20 @@ const Events = () => {
           )}
 
           <AnimatePresence mode='popLayout'>
-            {filteredEvents.length > 0 ? (
-              <motion.div 
-                layout
-                className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-              >
-                {filteredEvents.map((event) => (
-                  <EventCard key={event._id} event={event} />
+            {monthEvents.length > 0 ? (
+              <motion.div layout className="space-y-10">
+                {categoryKeys.map((category) => (
+                  <section key={category}>
+                    <div className="flex items-end justify-between mb-5">
+                      <h3 className="text-xl md:text-2xl font-extrabold text-slate-900">{category}</h3>
+                      <span className="text-xs font-bold text-slate-400">{eventsByCategory[category].length}</span>
+                    </div>
+                    <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {eventsByCategory[category].map((event) => (
+                        <EventCard key={event._id} event={event} />
+                      ))}
+                    </motion.div>
+                  </section>
                 ))}
               </motion.div>
             ) : (
@@ -208,10 +209,6 @@ function EventCard({ event }) {
 
         {/* Details Footer */}
         <div className="pt-4 border-t border-slate-50 space-y-2.5">
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <Clock className="w-4 h-4 text-blue-400" />
-            <span>{event.time || 'Time TBD'}</span>
-          </div>
           <div className="flex items-center gap-3 text-sm text-slate-600">
             <MapPin className="w-4 h-4 text-red-400" />
             <span>{event.location || 'Location TBD'}</span>
