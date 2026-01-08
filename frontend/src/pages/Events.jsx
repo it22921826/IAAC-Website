@@ -177,6 +177,8 @@ function EventCard({ event }) {
   const month = dateObj.toLocaleString('default', { month: 'short' });
   const weekday = dateObj.toLocaleString('default', { weekday: 'long' });
 
+  const coverImage = event.imageUrl || (Array.isArray(event.imageUrls) && event.imageUrls.length > 0 ? event.imageUrls[0] : '');
+
   return (
     <motion.div
       layout
@@ -190,6 +192,23 @@ function EventCard({ event }) {
       <div className="bg-blue-600 px-6 py-3 flex justify-between items-center text-white">
         <span className="text-xs font-bold uppercase tracking-wider">{weekday}</span>
         <span className="text-xs font-medium opacity-80">{event.category || 'General'}</span>
+      </div>
+
+      {/* Cover Image */}
+      <div className="relative h-48 overflow-hidden bg-slate-200">
+        {coverImage ? (
+          <img
+            src={coverImage}
+            alt={event.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300">
+            <CalendarIcon className="w-10 h-10" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60" />
       </div>
 
       <div className="p-6 flex flex-col flex-grow relative">

@@ -20,13 +20,21 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'Title is required' });
     }
 
+    const cleanedImageUrls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : undefined;
+    const cleanedImageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : imageUrl;
+
     const event = await Event.create({
       title,
       description,
-      location,
-      category,
-      imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
-      imageUrls,
+      location: typeof location === 'string' ? location.trim() : location,
+      category: typeof category === 'string' ? category.trim() : category,
+      imageUrl:
+        cleanedImageUrl
+          ? cleanedImageUrl
+          : Array.isArray(cleanedImageUrls) && cleanedImageUrls.length > 0
+            ? cleanedImageUrls[0]
+            : undefined,
+      imageUrls: cleanedImageUrls,
       eventDate: eventDate ? new Date(eventDate) : undefined,
       // legacy compatibility
       date: eventDate ? new Date(eventDate) : undefined,
@@ -45,19 +53,37 @@ exports.update = async (req, res) => {
     const { id } = req.params;
     const { title, description, location, category, imageUrl, imageUrls, eventDate } = req.body || {};
 
-    const payload = {
-      title,
-      description,
-      location,
-      category,
-      imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
-      imageUrls,
-      eventDate: eventDate ? new Date(eventDate) : undefined,
-      // legacy compatibility
-      date: eventDate ? new Date(eventDate) : undefined,
-    };
+    const cleanedImageUrls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : undefined;
+    const cleanedImageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : imageUrl;
 
-    const updated = await Event.findByIdAndUpdate(id, payload, { new: true });
+    const updatePayload = {};
+    if (title !== undefined) updatePayload.title = title;
+    if (description !== undefined) updatePayload.description = description;
+    if (location !== undefined) {
+      updatePayload.location = typeof location === 'string' ? location.trim() : location;
+    }
+    if (category !== undefined) {
+      updatePayload.category = typeof category === 'string' ? category.trim() : category;
+    }
+    // Don't clear existing images unless non-empty data is provided.
+    if (Array.isArray(cleanedImageUrls) && cleanedImageUrls.length > 0) {
+      updatePayload.imageUrls = cleanedImageUrls;
+    }
+    if (cleanedImageUrl) {
+      updatePayload.imageUrl = cleanedImageUrl;
+    } else if (Array.isArray(cleanedImageUrls) && cleanedImageUrls.length > 0) {
+      updatePayload.imageUrl = cleanedImageUrls[0];
+    }
+    if (eventDate !== undefined) {
+      updatePayload.eventDate = eventDate ? new Date(eventDate) : undefined;
+      // legacy compatibility
+      updatePayload.date = eventDate ? new Date(eventDate) : undefined;
+    }
+
+    const updated = await Event.findByIdAndUpdate(id, updatePayload, {
+      new: true,
+      omitUndefined: true,
+    });
     if (!updated) {
       return res.status(404).json({ message: 'Event not found' });
     }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   Users, FileText, Plus, Search, Eye, Calendar, BookOpen, UploadCloud,
-  ChevronLeft, ChevronRight, RefreshCw, LayoutDashboard, MessageSquare, Briefcase, Bell
+  ChevronLeft, ChevronRight, Trash2, LayoutDashboard, MessageSquare, Briefcase, Bell
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 
@@ -319,8 +319,41 @@ function Dashboard() {
                             <div className="font-semibold text-slate-800 text-sm">{ev.title}</div>
                           </div>
                           <div className="flex gap-2">
-                            <button onClick={() => { setEditingEventId(ev._id); setEventForm({ ...ev, location: ev.location || '', category: ev.category || 'General', eventDate: ev.eventDate ? ev.eventDate.substring(0, 10) : '' }); }} className="p-1.5 text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded"><LayoutDashboard size={14} /></button>
-                            <button onClick={async () => { if(window.confirm("Delete?")) { await apiClient.delete(`/api/events/${ev._id}`); setEvents(prev => prev.filter(e => e._id !== ev._id)); }}} className="p-1.5 text-slate-500 hover:text-red-600 bg-slate-50 hover:bg-red-50 rounded"><RefreshCw size={14} className="rotate-45" /></button>
+                            <button onClick={() => {
+                              setEditingEventId(ev._id);
+                              const existingImageUrls = Array.isArray(ev.imageUrls) ? ev.imageUrls.filter(Boolean) : [];
+                              const existingImageUrl = ev.imageUrl || existingImageUrls[0] || '';
+                              setEventForm({
+                                title: ev.title || '',
+                                description: ev.description || '',
+                                location: ev.location || '',
+                                category: ev.category || 'General',
+                                imageUrl: existingImageUrl,
+                                imageUrls: existingImageUrls.length ? existingImageUrls : (existingImageUrl ? [existingImageUrl] : []),
+                                eventDate: ev.eventDate ? String(ev.eventDate).substring(0, 10) : '',
+                              });
+                            }} className="p-1.5 text-slate-500 hover:text-blue-600 bg-slate-50 hover:bg-blue-50 rounded"><LayoutDashboard size={14} /></button>
+                            <button
+                              type="button"
+                              title="Delete event"
+                              aria-label="Delete event"
+                              onClick={async () => {
+                                if (!window.confirm('Delete this event?')) return;
+                                try {
+                                  await apiClient.delete(`/api/events/${ev._id}`);
+                                  setEvents((prev) => prev.filter((e) => e._id !== ev._id));
+                                } catch (err) {
+                                  setEventStatus((prev) => ({
+                                    ...prev,
+                                    success: false,
+                                    error: err?.response?.data?.message || 'Failed to delete event',
+                                  }));
+                                }
+                              }}
+                              className="p-1.5 text-slate-500 hover:text-red-600 bg-slate-50 hover:bg-red-50 rounded"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -474,7 +507,34 @@ function Dashboard() {
                 {activeTab === 'event' && (
                   <form className="space-y-4" onSubmit={async (e) => {
                       e.preventDefault(); setEventStatus({ submitting: true, success: false, error: '' });
-                      try { if(editingEventId) await apiClient.put(`/api/events/${editingEventId}`, eventForm); else await apiClient.post('/api/events', eventForm); setEventStatus({ submitting: false, success: true, error: '' }); setEditingEventId(null); setEventForm({ title: '', description: '', location: '', category: 'General', imageUrl: '', imageUrls: [], eventDate: '' }); const res = await apiClient.get('/api/events'); setEvents(res.data.items || []); } catch (err) { setEventStatus({ submitting: false, success: false, error: 'Error' }); }
+                      try {
+                        const payload = {
+                          title: eventForm.title,
+                          description: eventForm.description,
+                          location: eventForm.location,
+                          category: eventForm.category,
+                          eventDate: eventForm.eventDate,
+                        };
+
+                        // Avoid wiping images on edit when the admin only changes text fields.
+                        const cleanedImageUrls = Array.isArray(eventForm.imageUrls)
+                          ? eventForm.imageUrls.filter(Boolean)
+                          : [];
+                        const cleanedImageUrl = (eventForm.imageUrl || '').trim();
+                        if (cleanedImageUrl) payload.imageUrl = cleanedImageUrl;
+                        if (cleanedImageUrls.length) payload.imageUrls = cleanedImageUrls;
+
+                        if (editingEventId) await apiClient.put(`/api/events/${editingEventId}`, payload);
+                        else await apiClient.post('/api/events', payload);
+
+                        setEventStatus({ submitting: false, success: true, error: '' });
+                        setEditingEventId(null);
+                        setEventForm({ title: '', description: '', location: '', category: 'General', imageUrl: '', imageUrls: [], eventDate: '' });
+                        const res = await apiClient.get('/api/events');
+                        setEvents(res.data.items || []);
+                      } catch (err) {
+                        setEventStatus({ submitting: false, success: false, error: err?.response?.data?.message || 'Error' });
+                      }
                   }}>
                     <input required placeholder="Event Title" value={eventForm.title} onChange={e => setEventForm(f => ({...f, title: e.target.value}))} className="w-full text-sm border-slate-200 rounded-lg p-2.5"/>
                     <input required type="date" value={eventForm.eventDate} onChange={e => setEventForm(f => ({...f, eventDate: e.target.value}))} className="w-full text-sm border-slate-200 rounded-lg p-2.5"/>

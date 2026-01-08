@@ -13,7 +13,7 @@ const eventSchema = new mongoose.Schema(
     // legacy/optional fields so older content still loads
     date: { type: Date },
     time: { type: String },
-    location: { type: String },
+    location: { type: String, trim: true },
     category: { type: String, default: 'General' },
   },
   { timestamps: true }
