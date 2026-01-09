@@ -11,11 +11,13 @@ exports.create = async (req, res) => {
       gender,
       email,
       phone,
+      whatsapp,
       address,
       program,
+      academy,
     } = req.body || {};
 
-    if (!firstName || !lastName || !email || !phone || !program) {
+    if (!firstName || !lastName || !email || !phone || !program || !academy) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -27,8 +29,10 @@ exports.create = async (req, res) => {
       gender,
       email,
       phone,
+      whatsapp,
       address,
       program,
+      academy,
     });
 
     // Fire-and-forget notification emails (do not block user response)

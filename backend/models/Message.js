@@ -7,8 +7,10 @@ const MessageSchema = new mongoose.Schema(
     fullName: { type: String },
     email: { type: String, required: true },
     phone: { type: String },
+    academy: { type: String },
     subject: { type: String },
     message: { type: String, required: true },
+    isDone: { type: Boolean, default: false },
     source: {
       type: String,
       enum: ['contact', 'career-support', 'other'],

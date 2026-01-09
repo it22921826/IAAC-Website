@@ -24,7 +24,9 @@ function Programs() {
   }, []);
 
   // --- GROUPING LOGIC ---
-  const coursesByType = extraCourses.reduce((groups, course) => {
+  const visibleCourses = extraCourses.filter((c) => c.courseType !== 'Practical Training');
+
+  const coursesByType = visibleCourses.reduce((groups, course) => {
     const type = course.courseType || 'Other Programs';
     if (!groups[type]) {
       groups[type] = [];

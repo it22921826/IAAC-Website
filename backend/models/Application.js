@@ -9,8 +9,11 @@ const ApplicationSchema = new mongoose.Schema(
     gender: { type: String, enum: ['Male', 'Female', 'Other'], required: false },
     email: { type: String, required: true },
     phone: { type: String, required: true },
+    whatsapp: { type: String, required: false },
     address: { type: String, required: false },
     program: { type: String, required: true },
+    academy: { type: String, required: true },
+    isDone: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

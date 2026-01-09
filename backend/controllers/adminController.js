@@ -43,6 +43,15 @@ exports.applications = async (req, res) => {
       name: `${a.firstName} ${a.lastName}`.trim(),
       course: a.program,
       contact: a.phone,
+      email: a.email,
+      whatsapp: a.whatsapp,
+      academy: a.academy,
+      dob: a.dob,
+      nic: a.nic,
+      gender: a.gender,
+      address: a.address,
+      createdAt: a.createdAt,
+      isDone: !!a.isDone,
     }));
     return res.status(200).json({ items: mapped });
   } catch (err) {
@@ -50,9 +59,35 @@ exports.applications = async (req, res) => {
   }
 };
 
+exports.markApplicationDone = async (req, res) => {
+  try {
+    const Application = require('../models/Application');
+    const updated = await Application.findByIdAndUpdate(
+      req.params.id,
+      { $set: { isDone: true } },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    return res.status(200).json({ id: updated._id, isDone: !!updated.isDone });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to update application' });
+  }
+};
+
 exports.deleteApplication = async (req, res) => {
   try {
     const Application = require('../models/Application');
+    const doc = await Application.findById(req.params.id).lean();
+    if (!doc) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+    if (doc.isDone) {
+      return res.status(403).json({ message: 'Application is locked (done)' });
+    }
     await Application.findByIdAndDelete(req.params.id);
     return res.status(204).send();
   } catch (err) {
@@ -94,9 +129,12 @@ exports.messages = async (req, res) => {
         m.fullName || `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Unknown',
       email: m.email,
       phone: m.phone,
+      academy: m.academy,
       subject: m.subject || 'No subject',
+      message: m.message,
       source: m.source || 'other',
       createdAt: m.createdAt,
+      isDone: !!m.isDone,
     }));
 
     return res.status(200).json({ items: mapped });
@@ -105,9 +143,35 @@ exports.messages = async (req, res) => {
   }
 };
 
+exports.markMessageDone = async (req, res) => {
+  try {
+    const Message = require('../models/Message');
+    const updated = await Message.findByIdAndUpdate(
+      req.params.id,
+      { $set: { isDone: true } },
+      { new: true }
+    ).lean();
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    return res.status(200).json({ id: updated._id, isDone: !!updated.isDone });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to update message' });
+  }
+};
+
 exports.deleteMessage = async (req, res) => {
   try {
     const Message = require('../models/Message');
+    const doc = await Message.findById(req.params.id).lean();
+    if (!doc) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+    if (doc.isDone) {
+      return res.status(403).json({ message: 'Message is locked (done)' });
+    }
     await Message.findByIdAndDelete(req.params.id);
     return res.status(204).send();
   } catch (err) {
