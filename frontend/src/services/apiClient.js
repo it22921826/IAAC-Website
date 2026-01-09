@@ -1,9 +1,13 @@
 import axios from 'axios';
 
+// Default to backend dev server if VITE_API_URL is not provided
+const DEFAULT_BASE = 'http://localhost:5000/api';
+const configuredBase = (import.meta.env && import.meta.env.VITE_API_URL) || DEFAULT_BASE;
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: configuredBase,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 15000,
 });
 
 apiClient.interceptors.request.use((config) => {

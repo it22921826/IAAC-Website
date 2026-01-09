@@ -67,6 +67,13 @@ function ApplyNow() {
     }
     setStatus({ submitting: true, success: false, error: '' });
     try {
+<<<<<<< HEAD
+      const res = await apiClient.post('/api/applications', form);
+      // Defensive: treat any 2xx as success
+      if (!res || (res.status < 200 || res.status >= 300)) {
+        throw new Error('Unexpected response from server');
+      }
+=======
       const fullName = (form.fullName || '').trim();
       const parts = fullName.split(/\s+/).filter(Boolean);
       const firstName = parts[0] || '-';
@@ -87,9 +94,16 @@ function ApplyNow() {
       };
 
       await apiClient.post('/api/applications', payload);
+>>>>>>> 05ab208bb4facf583eb27c1e331e1e7b0773a955
       setStatus({ submitting: false, success: true, error: '' });
     } catch (err) {
+<<<<<<< HEAD
+      const serverMessage = err?.response?.data?.message;
+      const networkMessage = err?.message;
+      setStatus({ submitting: false, success: false, error: serverMessage || networkMessage || 'Failed to submit application' });
+=======
       setStatus({ submitting: false, success: false, error: 'Submission failed. Please try again.' });
+>>>>>>> 05ab208bb4facf583eb27c1e331e1e7b0773a955
     }
   };
 
