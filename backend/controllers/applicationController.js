@@ -1,4 +1,5 @@
 const Application = require('../models/Application');
+const { sendApplicationNotifications } = require('../config/email');
 
 exports.create = async (req, res) => {
   try {
@@ -30,7 +31,14 @@ exports.create = async (req, res) => {
       program,
     });
 
-    return res.status(201).json({ id: app._id, createdAt: app.createdAt });
+    // Fire-and-forget notification emails (do not block user response)
+    try {
+      const { sent, failed, previews } = await sendApplicationNotifications(app);
+      return res.status(201).json({ id: app._id, createdAt: app.createdAt, notifications: { sent, failed, previews } });
+    } catch (notifyErr) {
+      // If notifications fail, still acknowledge application creation
+      return res.status(201).json({ id: app._id, createdAt: app.createdAt, notifications: { sent: 0, failed: 3, previews: [] } });
+    }
   } catch (err) {
     return res.status(500).json({ message: 'Failed to submit application' });
   }

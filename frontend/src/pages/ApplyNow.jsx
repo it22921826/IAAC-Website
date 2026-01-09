@@ -55,12 +55,18 @@ function ApplyNow() {
     }
     setStatus({ submitting: true, success: false, error: '' });
     try {
-      await apiClient.post('/api/applications', form);
+      const res = await apiClient.post('/api/applications', form);
+      // Defensive: treat any 2xx as success
+      if (!res || (res.status < 200 || res.status >= 300)) {
+        throw new Error('Unexpected response from server');
+      }
       setStatus({ submitting: false, success: true, error: '' });
       setForm({ firstName: '', lastName: '', dob: '', nic: '', gender: '', email: '', phone: '', address: '', program: '' });
       setErrors({});
     } catch (err) {
-      setStatus({ submitting: false, success: false, error: err?.response?.data?.message || 'Failed to submit application' });
+      const serverMessage = err?.response?.data?.message;
+      const networkMessage = err?.message;
+      setStatus({ submitting: false, success: false, error: serverMessage || networkMessage || 'Failed to submit application' });
     }
   };
   return (

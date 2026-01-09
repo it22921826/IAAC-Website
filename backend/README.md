@@ -71,3 +71,27 @@ Include `Authorization: Bearer <token>` in requests. The frontend stores the tok
 - `POST /api/applications` — Body: application form fields. Saves an application.
 - `GET /api/courses` — Returns list of published courses.
 - `GET /api/events` — Returns list of published events.
+
+## Email Notifications
+
+- New applications will trigger notification emails to up to three recipients.
+- Configure SMTP and recipients via environment variables:
+
+   ```env
+   SMTP_HOST=smtp.example.com
+   SMTP_PORT=587
+   SMTP_SECURE=false
+   SMTP_USER=notifications@example.com
+   SMTP_PASS=replace_with_app_password_or_smtp_password
+   FROM_EMAIL=notifications@example.com
+   NOTIFY_EMAILS=admin@example.com,registrar@example.com,counselor@example.com
+   EMAIL_DEBUG=true
+   EMAIL_TEST_MODE=true
+   # SMTP_ALLOW_SELF_SIGNED=false
+   ```
+
+- Notes:
+   - Use an SMTP provider (e.g., Gmail with App Password, Outlook, SendGrid, etc.). For development, set `EMAIL_TEST_MODE=true` to use Ethereal test mail and get preview URLs in API responses.
+   - `NOTIFY_EMAILS` is a comma-separated list; only the first three are used.
+   - If SMTP is not configured, the application will still be saved but emails will not be sent.
+   - Set `EMAIL_DEBUG=true` to log SMTP verification and per-recipient errors to the server console for troubleshooting.
