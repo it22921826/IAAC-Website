@@ -71,6 +71,7 @@ Include `Authorization: Bearer <token>` in requests. The frontend stores the tok
 - `POST /api/applications` — Body: application form fields. Saves an application.
 - `GET /api/courses` — Returns list of published courses.
 - `GET /api/events` — Returns list of published events.
+ - `POST /api/chat` — Body: `{ messages: [{ role: 'user'|'assistant', content: string }] }`. Returns `{ reply }`.
 
 ## Email Notifications
 
@@ -95,3 +96,22 @@ Include `Authorization: Bearer <token>` in requests. The frontend stores the tok
    - `NOTIFY_EMAILS` is a comma-separated list; only the first three are used.
    - If SMTP is not configured, the application will still be saved but emails will not be sent.
    - Set `EMAIL_DEBUG=true` to log SMTP verification and per-recipient errors to the server console for troubleshooting.
+
+## AI Chat Setup
+
+The chatbot widget in the frontend calls `POST /api/chat`, which forwards to OpenAI. To enable it:
+
+1. Create or edit `.env` in the `backend` folder and set:
+
+   ```env
+   OPENAI_API_KEY=sk-your_key_here
+   # Optional
+   OPENAI_MODEL=gpt-4o-mini
+   # OPENAI_BASE_URL=https://api.openai.com/v1
+   ```
+
+2. Restart the backend server after changes.
+
+Troubleshooting:
+- If you see "Server missing OPENAI_API_KEY" in the chat widget, the backend process doesn't have `OPENAI_API_KEY` set. Confirm `.env` is populated and the server restarted.
+- Network errors may appear as a generic connection error in the widget; check the backend logs for details.

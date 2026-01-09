@@ -1,5 +1,7 @@
-const https = require('https');
-const http = require('http');
+const Course = require('../models/Course');
+const Event = require('../models/Event');
+const Notice = require('../models/Notice');
+const Staff = require('../models/Staff');
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -22,45 +24,6 @@ function readJson(req) {
   });
 }
 
-function postJson(url, headers, body, opts = {}) {
-  return new Promise((resolve, reject) => {
-    const u = new URL(url);
-    const client = u.protocol === 'http:' ? http : https;
-    const timeoutMs = Number(opts.timeoutMs || 20000);
-
-    const req = client.request(
-      {
-        method: 'POST',
-        hostname: u.hostname,
-        port: u.port || (u.protocol === 'http:' ? 80 : 443),
-        path: u.pathname + u.search,
-        headers,
-      },
-      (res) => {
-        let raw = '';
-        res.on('data', (chunk) => (raw += chunk));
-        res.on('end', () => {
-          let json;
-          try {
-            json = raw ? JSON.parse(raw) : {};
-          } catch {
-            return reject(new Error('Invalid JSON response'));
-          }
-          resolve({ status: res.statusCode || 0, json });
-        });
-      }
-    );
-
-    req.setTimeout(timeoutMs, () => {
-      req.destroy(new Error('Upstream request timed out'));
-    });
-
-    req.on('error', reject);
-    req.write(JSON.stringify(body));
-    req.end();
-  });
-}
-
 function normalizeMessages(input) {
   if (!Array.isArray(input)) return [];
   const allowedRoles = new Set(['user', 'assistant']);
@@ -77,60 +40,78 @@ function normalizeMessages(input) {
   return trimmed.slice(-12);
 }
 
+async function replyCourses() {
+  const courses = await Course.find({}, { title: 1, duration: 1 }).sort({ title: 1 }).limit(10).lean();
+  if (!courses.length) return 'Our course catalog is currently being updated. Please check back soon or contact IAAC.';
+  const lines = courses.map((c) => `• ${c.title}${c.duration ? ` — ${c.duration}` : ''}`);
+  return `Here are some IAAC programs:
+${lines.join('\n')}
+For full details, visit the Programs section.`;
+}
+
+async function replyEvents() {
+  const now = new Date();
+  const events = await Event.find({ $or: [{ eventDate: { $gte: now } }, { date: { $gte: now } }] })
+    .sort({ eventDate: 1 })
+    .limit(5)
+    .lean();
+  if (!events.length) return 'There are no upcoming events at the moment. Please check the Events page for updates.';
+  const fmt = (d) => (d ? new Date(d).toLocaleDateString() : 'TBA');
+  const lines = events.map((e) => `• ${e.title} — ${fmt(e.eventDate || e.date)}`);
+  return `Upcoming IAAC events:
+${lines.join('\n')}`;
+}
+
+async function replyNotices() {
+  const notices = await Notice.find({}).sort({ createdAt: -1 }).limit(5).lean();
+  if (!notices.length) return 'No recent notices available right now.';
+  const lines = notices.map((n) => `• ${n.title}`);
+  return `Latest notices:
+${lines.join('\n')}`;
+}
+
+async function replyContact() {
+  const staff = await Staff.find({ email: { $exists: true, $ne: '' } }, { name: 1, email: 1 })
+    .sort({ createdAt: -1 })
+    .limit(3)
+    .lean();
+  const envEmails = (process.env.NOTIFY_EMAILS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  const emails = [process.env.FROM_EMAIL, ...envEmails, ...staff.map((s) => s.email)].filter(Boolean);
+  if (!emails.length) return 'You can reach IAAC through the Contact page for phone and email details.';
+  const unique = Array.from(new Set(emails)).slice(0, 3);
+  return `Contact IAAC via email: ${unique.join(', ')}. For phone numbers and addresses, see the Contact page.`;
+}
+
+async function replyApply() {
+  return 'To apply, open the Apply Now page and submit the form with your details and preferred program. Our team will contact you with next steps.';
+}
+
+async function handleQuery(q) {
+  const t = q.toLowerCase();
+  const has = (...words) => words.every((w) => t.includes(w));
+  const any = (...words) => words.some((w) => t.includes(w));
+
+  if (any('course', 'program', 'offer')) return replyCourses();
+  if (any('event', 'workshop', 'seminar')) return replyEvents();
+  if (any('notice', 'announcement', 'update')) return replyNotices();
+  if (any('apply', 'admission', 'enroll', 'register')) return replyApply();
+  if (any('contact', 'email', 'phone')) return replyContact();
+
+  return 'I can help with courses, admissions, contact details, and events. Try asking: "What courses do you offer?" or "How do I apply?"';
+}
+
 exports.chat = async (req, res) => {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ message: 'Server missing OPENAI_API_KEY' });
-    }
-
-    // If express.json parsed it, use req.body; otherwise read JSON (defensive).
     const body = req.body && typeof req.body === 'object' ? req.body : await readJson(req);
     const messages = normalizeMessages(body.messages);
-
-    if (messages.length === 0) {
-      return res.status(400).json({ message: 'messages is required' });
-    }
-
-    const baseUrl = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
-    const url = `${baseUrl}/chat/completions`;
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-
-    const system = {
-      role: 'system',
-      content:
-        'You are IAAC (International Airline & Aviation College) website assistant. ' +
-        'Answer concisely and helpfully about IAAC programs, admissions, campuses/academies, contact, and events. ' +
-        'If you are unsure, say you are not sure and suggest contacting IAAC. ' +
-        'Do not ask for sensitive information. Refuse requests involving harm or wrongdoing.',
-    };
-
-    const payload = {
-      model,
-      temperature: 0.2,
-      messages: [system, ...messages],
-    };
-
-    const headers = {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    };
-
-    const { status, json } = await postJson(url, headers, payload, { timeoutMs: 20000 });
-
-    if (status < 200 || status >= 300) {
-      const detail =
-        (json && json.error && (json.error.message || json.error.type)) ||
-        (typeof json === 'string' ? json : null) ||
-        'Chat request failed';
-      return res.status(502).json({ message: detail });
-    }
-
-    const reply = json?.choices?.[0]?.message?.content;
-    if (!reply || typeof reply !== 'string') {
-      return res.status(502).json({ message: 'No reply returned' });
-    }
-
+    if (messages.length === 0) return res.status(400).json({ message: 'messages is required' });
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+    const q = lastUser?.content || '';
+    const reply = await handleQuery(q);
     return res.status(200).json({ reply });
   } catch (err) {
     const msg = err && typeof err.message === 'string' ? err.message : 'Chat failed';

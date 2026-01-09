@@ -3,16 +3,23 @@ const cors = require('cors');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const dotenv = require('dotenv');
+const path = require('path');
 const mongoose = require('mongoose');
 
 const connectDB = require('./config/db');
 
-dotenv.config();
+// Always load .env from the backend folder regardless of CWD
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Fail fast if MongoDB is unavailable (avoid hanging requests)
 mongoose.set('bufferCommands', false);
 
 const app = express();
+
+// Informative warning if AI chat is not configured
+if (!process.env.OPENAI_API_KEY) {
+  console.warn('[warn] OPENAI_API_KEY is not set. /api/chat will return an error until configured.');
+}
 
 // Apply essential middleware for security, logging, and parsing
 app.use(helmet());
