@@ -10,11 +10,13 @@ exports.create = async (req, res) => {
       gender,
       email,
       phone,
+      whatsapp,
       address,
       program,
+      academy,
     } = req.body || {};
 
-    if (!firstName || !lastName || !email || !phone || !program) {
+    if (!firstName || !lastName || !email || !phone || !program || !academy) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -26,8 +28,10 @@ exports.create = async (req, res) => {
       gender,
       email,
       phone,
+      whatsapp,
       address,
       program,
+      academy,
     });
 
     return res.status(201).json({ id: app._id, createdAt: app.createdAt });

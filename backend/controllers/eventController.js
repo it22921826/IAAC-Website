@@ -15,7 +15,7 @@ exports.list = async (req, res) => {
 // Create a new event (used by admin dashboard via /api/events)
 exports.create = async (req, res) => {
   try {
-    const { title, description, location, category, imageUrl, imageUrls, eventDate } = req.body || {};
+    const { title, description, imageUrl, imageUrls, eventDate } = req.body || {};
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
@@ -26,8 +26,6 @@ exports.create = async (req, res) => {
     const event = await Event.create({
       title,
       description,
-      location: typeof location === 'string' ? location.trim() : location,
-      category: typeof category === 'string' ? category.trim() : category,
       imageUrl:
         cleanedImageUrl
           ? cleanedImageUrl
@@ -51,7 +49,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, location, category, imageUrl, imageUrls, eventDate } = req.body || {};
+    const { title, description, imageUrl, imageUrls, eventDate } = req.body || {};
 
     const cleanedImageUrls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : undefined;
     const cleanedImageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : imageUrl;
@@ -59,12 +57,6 @@ exports.update = async (req, res) => {
     const updatePayload = {};
     if (title !== undefined) updatePayload.title = title;
     if (description !== undefined) updatePayload.description = description;
-    if (location !== undefined) {
-      updatePayload.location = typeof location === 'string' ? location.trim() : location;
-    }
-    if (category !== undefined) {
-      updatePayload.category = typeof category === 'string' ? category.trim() : category;
-    }
     // Don't clear existing images unless non-empty data is provided.
     if (Array.isArray(cleanedImageUrls) && cleanedImageUrls.length > 0) {
       updatePayload.imageUrls = cleanedImageUrls;

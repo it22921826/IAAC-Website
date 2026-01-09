@@ -9,6 +9,7 @@ function ContactUs() {
     lastName: '',
     email: '',
     phone: '',
+    academy: '',
     subject: 'General Inquiry',
     message: '',
   });
@@ -22,6 +23,10 @@ function ContactUs() {
       setStatus({ submitting: false, success: false, error: 'Please enter your email.' });
       return;
     }
+    if (!form.academy) {
+      setStatus({ submitting: false, success: false, error: 'Please select the academy/campus.' });
+      return;
+    }
     setStatus({ submitting: true, success: false, error: '' });
     try {
       await apiClient.post('/api/messages', {
@@ -29,12 +34,13 @@ function ContactUs() {
         lastName: form.lastName,
         email: form.email,
         phone: form.phone,
+        academy: form.academy,
         subject: form.subject,
         message: form.message,
         source: 'contact',
       });
       setStatus({ submitting: false, success: true, error: '' });
-      setForm({ firstName: '', lastName: '', email: '', phone: '', subject: 'General Inquiry', message: '' });
+      setForm({ firstName: '', lastName: '', email: '', phone: '', academy: '', subject: 'General Inquiry', message: '' });
     } catch (err) {
       setStatus({
         submitting: false,
@@ -160,6 +166,21 @@ function ContactUs() {
                   <div className="grid md:grid-cols-2 gap-6">
                     <InputGroup label="Email Address" type="email" placeholder="john@example.com" value={form.email} onChange={update('email')} />
                     <InputGroup label="Phone Number" type="tel" placeholder="+94 7X XXX XXXX" value={form.phone} onChange={update('phone')} />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Select Academy / Campus</label>
+                    <select
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-slate-600"
+                      value={form.academy}
+                      onChange={update('academy')}
+                      required
+                    >
+                      <option value="">Select</option>
+                      <option value="IAAC City Campus">IAAC City Campus</option>
+                      <option value="Airport Academy">Airport Academy</option>
+                      <option value="Kurunegala Center">Kurunegala Center</option>
+                    </select>
                   </div>
 
                   <div>

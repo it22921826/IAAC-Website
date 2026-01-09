@@ -3,7 +3,7 @@ const Message = require('../models/Message');
 // Public: create a new message (Contact Us, Career Support, etc.)
 exports.create = async (req, res) => {
   try {
-    const { firstName, lastName, fullName, email, phone, subject, message, source } = req.body || {};
+    const { firstName, lastName, fullName, email, phone, academy, subject, message, source } = req.body || {};
 
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
@@ -15,6 +15,7 @@ exports.create = async (req, res) => {
       fullName,
       email,
       phone,
+      academy,
       subject,
       message,
       source: source || 'other',

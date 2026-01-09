@@ -1,283 +1,433 @@
 import React, { useState } from 'react';
 import apiClient from '../services/apiClient.js';
 import { 
-  FileText, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  BookOpen, 
-  CheckCircle2, 
-  Send,
-  Calendar
+  User, MapPin, Phone, Mail, BookOpen, CheckCircle2, 
+  ChevronRight, ChevronLeft, Send, GraduationCap, Calendar 
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function ApplyNow() {
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    dob: '',
-    nic: '',
-    gender: '',
-    email: '',
-    phone: '',
-    address: '',
-    program: '',
-  });
-  const [errors, setErrors] = useState({});
+  const [currentStep, setCurrentStep] = useState(1);
   const [status, setStatus] = useState({ submitting: false, success: false, error: '' });
 
-  const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
-  const validate = () => {
-    const newErrors = {};
+  // --- FORM STATE ---
+  const [form, setForm] = useState({
+    // Step 1: Personal
+    title: 'Mr',
+    fullName: '',
+    nic: '',
+    dob: '',
+    gender: 'Male',
+    address: '',
+    mobile: '',
+    whatsapp: '',
+    email: '',
+    
+    // Step 2: Education & Parent
+    school: '',
+    olYear: '',
+    olResults: { math: '', english: '', science: '', history: '', religion: '', language: '' },
+    parentName: '',
+    parentPhone: '',
 
-    if (!form.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!form.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!form.dob) newErrors.dob = 'Date of birth is required';
-    if (!form.nic.trim()) newErrors.nic = 'NIC / Passport number is required';
-    if (!form.gender) newErrors.gender = 'Please select your gender';
+    // Step 3: Course & Terms
+    course: '',
+    academy: '',
+    referral: '',
+    agreed: false
+  });
 
-    if (!form.email.trim()) newErrors.email = 'Email address is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'Enter a valid email address';
+  const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+  const updateNested = (category, field) => (e) => setForm({ 
+    ...form, 
+    [category]: { ...form[category], [field]: e.target.value } 
+  });
 
-    if (!form.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!form.address.trim()) newErrors.address = 'Home address is required';
+  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
-    if (!form.program) newErrors.program = 'Please select a program';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
   const submit = async () => {
-    if (!validate()) {
-      setStatus({ submitting: false, success: false, error: 'Please fix the highlighted fields.' });
+    if (!form.agreed) {
+      setStatus({ submitting: false, success: false, error: 'Please agree to the terms.' });
+      return;
+    }
+    if (!form.academy) {
+      setStatus({ submitting: false, success: false, error: 'Please select the academy/campus.' });
       return;
     }
     setStatus({ submitting: true, success: false, error: '' });
     try {
-      await apiClient.post('/api/applications', form);
+      const fullName = (form.fullName || '').trim();
+      const parts = fullName.split(/\s+/).filter(Boolean);
+      const firstName = parts[0] || '-';
+      const lastName = parts.slice(1).join(' ') || '-';
+
+      const payload = {
+        firstName,
+        lastName,
+        dob: form.dob || undefined,
+        nic: form.nic || undefined,
+        gender: form.gender || undefined,
+        email: form.email,
+        phone: form.mobile,
+        whatsapp: form.whatsapp || undefined,
+        address: form.address || undefined,
+        program: form.course,
+        academy: form.academy,
+      };
+
+      await apiClient.post('/api/applications', payload);
       setStatus({ submitting: false, success: true, error: '' });
-      setForm({ firstName: '', lastName: '', dob: '', nic: '', gender: '', email: '', phone: '', address: '', program: '' });
-      setErrors({});
     } catch (err) {
-      setStatus({ submitting: false, success: false, error: err?.response?.data?.message || 'Failed to submit application' });
+      setStatus({ submitting: false, success: false, error: 'Submission failed. Please try again.' });
     }
   };
+
   return (
-    <>
-      {/* --- HERO SECTION --- */}
-      <section className="bg-slate-900 pt-32 pb-16 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
-            Apply for <span className="text-blue-500">2025 Intake</span>
+    <div className="bg-slate-50 min-h-screen pb-20">
+      
+      {/* --- HERO HEADER --- */}
+      <section className="bg-[#0f172a] pt-32 pb-24 px-6 text-center relative overflow-hidden">
+        <div className="relative z-10 max-w-3xl mx-auto">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4">
+            Student Application
           </h1>
-          <p className="text-slate-400 max-w-2xl mx-auto text-lg">
-            Take the first step towards your career in aviation. Fill out the form below to start your admission process.
+          <p className="text-slate-400 text-lg">
+            Start your journey with IAAC. Please fill in the details below.
           </p>
         </div>
       </section>
 
-      {/* --- APPLICATION CONTENT --- */}
-      <section className="py-20 bg-slate-50">
-        <div className="container mx-auto px-6 grid lg:grid-cols-3 gap-12">
+      {/* --- MAIN FORM CONTAINER --- */}
+      <div className="container mx-auto px-4 -mt-12 relative z-20">
+        <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+          
+          {/* PROGRESS BAR */}
+          <div className="bg-slate-50 border-b border-slate-100 p-6 md:p-8">
+            <div className="flex items-center justify-between max-w-2xl mx-auto relative">
+              {/* Line Background */}
+              <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 -z-0 rounded-full"></div>
+              
+              {/* Line Fill */}
+              <motion.div 
+                className="absolute top-1/2 left-0 h-1 bg-blue-600 -z-0 rounded-full"
+                initial={{ width: '0%' }}
+                animate={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }}
+                transition={{ duration: 0.5 }}
+              />
 
-          {/* --- LEFT COLUMN: FORM --- */}
-          <div className="lg:col-span-2">
-            <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100">
-              <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-100">
-                <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                  <FileText size={24} />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Online Application Form</h2>
-                  <p className="text-slate-500 text-sm">Please fill in all required fields accurately.</p>
-                </div>
-              </div>
-
-              <form className="space-y-8" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-                
-                {/* 1. Personal Information */}
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <User size={18} className="text-blue-500" /> Personal Information
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <InputField label="First Name" placeholder="Sanuthi" value={form.firstName} onChange={update('firstName')} error={errors.firstName} />
-                    <InputField label="Last Name" placeholder="Ranaweera" value={form.lastName} onChange={update('lastName')} error={errors.lastName} />
-                    <InputField label="Date of Birth" type="date" value={form.dob} onChange={update('dob')} error={errors.dob} />
-                    <InputField label="NIC / Passport Number" placeholder="123456789V" value={form.nic} onChange={update('nic')} error={errors.nic} />
-                    
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
-                      <div className="flex gap-6 mt-2">
-                        <RadioOption name="gender" label="Male" checked={form.gender==='Male'} onChange={() => setForm((f)=>({...f, gender:'Male'}))} />
-                        <RadioOption name="gender" label="Female" checked={form.gender==='Female'} onChange={() => setForm((f)=>({...f, gender:'Female'}))} />
-                      </div>
-                      {errors.gender && <p className="mt-1 text-xs text-red-600">{errors.gender}</p>}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Contact Details */}
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <MapPin size={18} className="text-blue-500" /> Contact Details
-                  </h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <InputField label="Email Address" type="email" placeholder="student@example.com" icon={Mail} value={form.email} onChange={update('email')} error={errors.email} />
-                    <InputField label="Phone Number" type="tel" placeholder="071 234 5678" icon={Phone} value={form.phone} onChange={update('phone')} error={errors.phone} />
-                    <div className="md:col-span-2">
-                      <InputField label="Home Address" placeholder="No. 123, Street Name, City" value={form.address} onChange={update('address')} error={errors.address} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Course Selection */}
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <BookOpen size={18} className="text-blue-500" /> Course Interest
-                  </h3>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Select Program</label>
-                    <select value={form.program} onChange={update('program')} className={`w-full px-4 py-3 rounded-lg bg-slate-50 border ${errors.program ? 'border-red-500' : 'border-slate-200'} focus:border-blue-500 outline-none transition-all appearance-none`}>
-                      <option value="" disabled>Choose a course...</option>
-                      <option value="cabin-crew">Diploma in Airline Cabin Crew</option>
-                      <option value="ground-ops">Diploma in Airport Ground Operations</option>
-                      <option value="ticketing">Diploma in Ticketing & Reservations</option>
-                      <option value="cargo">Diploma in Air Cargo & Logistics</option>
-                      <option value="pilot-ppl">Pilot Training - PPL</option>
-                      <option value="pilot-cpl">Pilot Training - CPL/IR</option>
-                    </select>
-                    {errors.program && <p className="mt-1 text-xs text-red-600">{errors.program}</p>}
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <div className="pt-4 border-t border-slate-100">
-                  {status.error && (
-                    <div className="mb-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm px-3 py-2">{status.error}</div>
-                  )}
-                  {status.success && (
-                    <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 text-sm px-3 py-2">Application submitted successfully.</div>
-                  )}
-                  <button type="submit" disabled={status.submitting} className="w-full py-4 bg-blue-600 disabled:opacity-60 text-white font-bold text-lg rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all flex items-center justify-center gap-2">
-                    {status.submitting ? 'Submitting...' : 'Submit Application'}
-                    <Send size={20} />
-                  </button>
-                  <p className="text-center text-xs text-slate-400 mt-4">
-                    By submitting this form, you agree to our Terms of Service and Privacy Policy.
-                  </p>
-                </div>
-
-              </form>
+              {/* Step 1 Bubble */}
+              <StepBubble step={1} current={currentStep} label="Personal" icon={User} />
+              {/* Step 2 Bubble */}
+              <StepBubble step={2} current={currentStep} label="Education" icon={GraduationCap} />
+              {/* Step 3 Bubble */}
+              <StepBubble step={3} current={currentStep} label="Finish" icon={CheckCircle2} />
             </div>
           </div>
 
-          {/* --- RIGHT COLUMN: INFO & STEPS --- */}
-          <div className="space-y-8">
-            
-            {/* Admission Steps */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-              <h3 className="text-xl font-bold text-slate-900 mb-6">Admission Steps</h3>
-              <div className="space-y-6">
-                <StepItem number="1" title="Submit Application" desc="Fill out this online form with accurate details." />
-                <StepItem number="2" title="Counselor Call" desc="Our admissions team will contact you for a brief discussion." />
-                <StepItem number="3" title="Interview" desc="Attend a friendly interview to assess your aptitude." />
-                <StepItem number="4" title="Enrollment" desc="Pay the registration fee and start your journey!" />
-              </div>
-            </div>
+          {/* FORM CONTENT AREA */}
+          <div className="p-6 md:p-10 min-h-[400px]">
+            <AnimatePresence mode='wait'>
+              
+              {/* --- STEP 1: PERSONAL INFO --- */}
+              {currentStep === 1 && (
+                <motion.div 
+                  key="step1"
+                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                  className="space-y-6 max-w-3xl mx-auto"
+                >
+                  <h3 className="text-xl font-bold text-slate-800 mb-6">Personal Information</h3>
+                  
+                  <div className="grid md:grid-cols-4 gap-5">
+                    <div className="md:col-span-1">
+                      <Label text="Title" />
+                      <select value={form.title} onChange={update('title')} className="input-field">
+                        <option>Mr</option><option>Ms</option><option>Mrs</option>
+                      </select>
+                    </div>
+                    <div className="md:col-span-3">
+                      <Label text="Full Name" />
+                      <input type="text" placeholder="Your Full Name" value={form.fullName} onChange={update('fullName')} className="input-field" />
+                    </div>
+                  </div>
 
-            {/* Requirements Box */}
-            <div className="bg-blue-600 text-white p-8 rounded-3xl relative overflow-hidden">
-               <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
-               
-               <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                 <CheckCircle2 size={20} /> Requirements
-               </h3>
-               <ul className="space-y-3 text-blue-50 text-sm">
-                 <li className="flex gap-3 items-start">
-                   <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
-                   <span>Minimum of 6 Passes in G.C.E O/L (including English & Math)</span>
-                 </li>
-                 <li className="flex gap-3 items-start">
-                   <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
-                   <span>Age between 17 - 28 years</span>
-                 </li>
-                 <li className="flex gap-3 items-start">
-                   <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
-                   <span>Good command of English</span>
-                 </li>
-                 <li className="flex gap-3 items-start">
-                   <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-300 shrink-0"></span>
-                   <span>Pleasing personality & grooming</span>
-                 </li>
-               </ul>
-            </div>
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <Label text="NIC / Passport" />
+                      <input type="text" placeholder="Identity Number" value={form.nic} onChange={update('nic')} className="input-field" />
+                    </div>
+                    <div>
+                      <Label text="Date of Birth" />
+                      <input type="date" value={form.dob} onChange={update('dob')} className="input-field" />
+                    </div>
+                  </div>
 
-            {/* Help Contact */}
-            <div className="text-center p-6">
-              <p className="text-slate-500 text-sm mb-2">Need help applying?</p>
-              <a href="tel:0766763777" className="text-blue-600 font-bold hover:underline">
-                Call Admissions: 076 676 3777
-              </a>
-            </div>
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <Label text="Mobile Number" />
+                      <input type="tel" placeholder="077 123 4567" value={form.mobile} onChange={update('mobile')} className="input-field" />
+                    </div>
+                    <div>
+                      <Label text="Email Address" />
+                      <input type="email" placeholder="you@example.com" value={form.email} onChange={update('email')} className="input-field" />
+                    </div>
+                  </div>
 
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <Label text="WhatsApp Number" />
+                      <input type="tel" placeholder="077 123 4567" value={form.whatsapp} onChange={update('whatsapp')} className="input-field" />
+                    </div>
+                    <div />
+                  </div>
+
+                  <div>
+                    <Label text="Home Address" />
+                    <textarea rows="2" placeholder="Your permanent address" value={form.address} onChange={update('address')} className="input-field"></textarea>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* --- STEP 2: EDUCATION & PARENT --- */}
+              {currentStep === 2 && (
+                <motion.div 
+                  key="step2"
+                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                  className="space-y-8 max-w-3xl mx-auto"
+                >
+                  {/* Education Section */}
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                      <GraduationCap className="text-blue-600" size={24}/> Educational Background
+                    </h3>
+                    <div className="grid md:grid-cols-3 gap-5 mb-5">
+                      <div className="md:col-span-2">
+                        <Label text="School Attended" />
+                        <input type="text" placeholder="School Name" value={form.school} onChange={update('school')} className="input-field" />
+                      </div>
+                      <div>
+                        <Label text="O/L Year" />
+                        <input type="text" placeholder="2023" value={form.olYear} onChange={update('olYear')} className="input-field" />
+                      </div>
+                    </div>
+
+                    {/* O/L Grid */}
+                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-4">G.C.E O/L Results</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <ResultSelect subject="Mathematics" value={form.olResults.math} onChange={updateNested('olResults', 'math')} />
+                        <ResultSelect subject="English" value={form.olResults.english} onChange={updateNested('olResults', 'english')} />
+                        <ResultSelect subject="Science" value={form.olResults.science} onChange={updateNested('olResults', 'science')} />
+                        <ResultSelect subject="History" value={form.olResults.history} onChange={updateNested('olResults', 'history')} />
+                        <ResultSelect subject="Religion" value={form.olResults.religion} onChange={updateNested('olResults', 'religion')} />
+                        <ResultSelect subject="Language" value={form.olResults.language} onChange={updateNested('olResults', 'language')} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Parent Section */}
+                  <div className="pt-4 border-t border-slate-100">
+                    <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                      <User className="text-blue-600" size={24}/> Parent / Guardian
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-5">
+                      <div>
+                        <Label text="Guardian Name" />
+                        <input type="text" placeholder="Parent's Name" value={form.parentName} onChange={update('parentName')} className="input-field" />
+                      </div>
+                      <div>
+                        <Label text="Contact Number" />
+                        <input type="tel" placeholder="Parent's Mobile" value={form.parentPhone} onChange={update('parentPhone')} className="input-field" />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* --- STEP 3: COURSE & FINISH --- */}
+              {currentStep === 3 && (
+                <motion.div 
+                  key="step3"
+                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                  className="space-y-8 max-w-3xl mx-auto"
+                >
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-800 mb-6">Select Your Course</h3>
+
+                    <div className="mb-6">
+                      <Label text="Select Academy / Campus" />
+                      <select value={form.academy} onChange={update('academy')} className="input-field">
+                        <option value="">Select</option>
+                        <option value="IAAC City Campus">IAAC City Campus</option>
+                        <option value="Airport Academy">Airport Academy</option>
+                        <option value="Kurunegala Center">Kurunegala Center</option>
+                      </select>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {[
+                        'Diploma in Airline Cabin Crew',
+                        'Diploma in Airport Ground Ops',
+                        'Diploma in Ticketing & Reservations',
+                        'Diploma in Air Cargo & Logistics',
+                      ].map((c) => (
+                        <CourseCard 
+                          key={c} 
+                          label={c} 
+                          selected={form.course === c} 
+                          onClick={() => setForm({...form, course: c})} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                    <label className="flex items-start gap-4 cursor-pointer group">
+                      <div className="relative flex items-center">
+                        <input type="checkbox" checked={form.agreed} onChange={(e) => setForm({...form, agreed: e.target.checked})} className="peer sr-only" />
+                        <div className="w-6 h-6 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all"></div>
+                        <CheckCircle2 size={16} className="absolute text-white opacity-0 peer-checked:opacity-100 left-1 top-1 transition-all" />
+                      </div>
+                      <div className="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">
+                        <span className="font-bold block mb-1">Declaration</span>
+                        I certify that the information provided is true and correct.
+                      </div>
+                    </label>
+                  </div>
+
+                  {status.success && (
+                    <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="bg-green-50 text-green-700 p-4 rounded-xl text-center font-bold border border-green-200">
+                      🎉 Application Submitted Successfully! We will contact you soon.
+                    </motion.div>
+                  )}
+                  {status.error && (
+                    <div className="bg-red-50 text-red-600 p-3 rounded-xl text-center text-sm border border-red-200">
+                      {status.error}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+            </AnimatePresence>
+          </div>
+
+          {/* NAVIGATION BUTTONS */}
+          <div className="p-6 md:p-8 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+            {currentStep > 1 ? (
+              <button onClick={prevStep} className="flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800 transition-colors px-4 py-2">
+                <ChevronLeft size={20} /> Back
+              </button>
+            ) : (
+              <div></div> // Spacer
+            )}
+
+            {currentStep < 3 ? (
+              <button onClick={nextStep} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 transition-all flex items-center gap-2">
+                Continue <ChevronRight size={20} />
+              </button>
+            ) : (
+              <button 
+                onClick={submit} 
+                disabled={status.submitting || status.success}
+                className={`px-10 py-3 rounded-xl font-bold shadow-lg transition-all flex items-center gap-2
+                  ${status.success ? 'bg-green-600 text-white cursor-default' : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-blue-600/30'}
+                  ${status.submitting ? 'opacity-70 cursor-wait' : ''}
+                `}
+              >
+                {status.submitting ? 'Sending...' : status.success ? 'Sent' : 'Submit Application'} 
+                {!status.success && <Send size={20} />}
+              </button>
+            )}
           </div>
 
         </div>
-      </section>
+      </div>
+    </div>
+  );
+}
+
+// --- HELPER COMPONENTS ---
+
+function Label({ text }) {
+  return <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 ml-1">{text}</label>;
+}
+
+function StepBubble({ step, current, label, icon: Icon }) {
+  const active = step === current;
+  const completed = step < current;
+  
+  return (
+    <div className="relative z-10 flex flex-col items-center gap-2">
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-2
+        ${active ? 'bg-blue-600 border-blue-600 text-white scale-110 shadow-lg shadow-blue-200' : 
+          completed ? 'bg-blue-600 border-blue-600 text-white' : 
+          'bg-white border-slate-200 text-slate-300'}
+      `}>
+        {completed ? <CheckCircle2 size={20} /> : <Icon size={18} />}
+      </div>
+      <span className={`text-xs font-bold transition-colors duration-300 ${active || completed ? 'text-slate-800' : 'text-slate-300'}`}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function ResultSelect({ subject, value, onChange }) {
+  return (
+    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">{subject}</label>
+      <select 
+        value={value} 
+        onChange={onChange} 
+        className="w-full bg-transparent text-sm font-bold text-slate-800 outline-none cursor-pointer"
+      >
+        <option value="">Grade</option>
+        <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="S">S</option><option value="W">W</option>
+      </select>
+    </div>
+  );
+}
+
+function CourseCard({ label, selected, onClick }) {
+  return (
+    <div 
+      onClick={onClick}
+      className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 relative overflow-hidden
+      ${selected ? 'border-blue-600 bg-blue-50 shadow-md' : 'border-slate-100 bg-white hover:border-blue-200'}`}
+    >
+      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selected ? 'border-blue-600' : 'border-slate-300'}`}>
+        {selected && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
+      </div>
+      <span className={`font-bold text-sm ${selected ? 'text-blue-800' : 'text-slate-600'}`}>{label}</span>
+    </div>
+  );
+}
+
+// Global CSS via style tag for inputs (keeps JSX clean)
+const styles = `
+  .input-field {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: #f8fafc; /* slate-50 */
+    border: 1px solid #e2e8f0; /* slate-200 */
+    border-radius: 12px;
+    color: #1e293b; /* slate-800 */
+    font-weight: 500;
+    transition: all 0.2s;
+    outline: none;
+  }
+  .input-field:focus {
+    border-color: #3b82f6; /* blue-500 */
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  }
+`;
+
+export default function ApplyNowWithStyles() {
+  return (
+    <>
+      <style>{styles}</style>
+      <ApplyNow />
     </>
   );
 }
-
-// --- Helper Components ---
-
-function InputField({ label, type = "text", placeholder, icon: Icon, value, onChange, error }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
-      <div className="relative">
-        <input 
-          type={type} 
-          placeholder={placeholder}
-          value={value}
-          onChange={onChange}
-          className={`w-full px-4 py-3 rounded-lg bg-slate-50 border ${error ? 'border-red-500' : 'border-slate-200'} focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all ${Icon ? 'pl-10' : ''}`}
-        />
-        {Icon && <Icon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />}
-      </div>
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-    </div>
-  );
-}
-
-function RadioOption({ name, label, checked, onChange }) {
-  return (
-    <label className="flex items-center gap-2 cursor-pointer">
-      <input
-        type="radio"
-        name={name}
-        checked={checked}
-        onChange={onChange}
-        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-      />
-      <span className="text-slate-700">{label}</span>
-    </label>
-  );
-}
-
-function StepItem({ number, title, desc }) {
-  return (
-    <div className="flex gap-4">
-      <div className="shrink-0 w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold flex items-center justify-center border border-blue-100">
-        {number}
-      </div>
-      <div>
-        <h4 className="font-bold text-slate-900 text-sm">{title}</h4>
-        <p className="text-xs text-slate-500 mt-1 leading-relaxed">{desc}</p>
-      </div>
-    </div>
-  );
-}
-
-export default ApplyNow;

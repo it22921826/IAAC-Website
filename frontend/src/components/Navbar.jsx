@@ -43,7 +43,7 @@ function Navbar() {
 
               <div className="absolute left-0 mt-2 w-64 bg-[#2a2a2a] text-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition">
                 <DropdownItem to={{ pathname: '/programs' }} text="Programs" />
-                <DropdownItem to={{ pathname: '/programs' }} text="Practical Trainings" />
+                <DropdownItem to={{ pathname: '/programs/practical-trainings' }} text="Practical Trainings" />
               </div>
             </div>
 
@@ -109,7 +109,7 @@ function Navbar() {
                     }}
                   />
                   <MobileSubLink
-                    to={{ pathname: '/programs' }}
+                    to={{ pathname: '/programs/practical-trainings' }}
                     text="Practical Trainings"
                     close={() => {
                       setIsMobileMenuOpen(false);
