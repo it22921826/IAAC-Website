@@ -18,7 +18,27 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      // Allow non-browser clients (no Origin header)
+      if (!origin) return callback(null, true);
+
+      const envOrigin = process.env.FRONTEND_URL;
+      const allowList = new Set(
+        [
+          envOrigin,
+          'http://localhost:5173',
+          'http://127.0.0.1:5173',
+          'http://localhost:3000',
+          'http://127.0.0.1:3000',
+        ].filter(Boolean)
+      );
+
+      // Allow any localhost/127.0.0.1 port during development
+      const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+      if (isLocalhost || allowList.has(origin)) return callback(null, true);
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
     credentials: true,
   })
 );
@@ -50,6 +70,10 @@ const noticeRoutes = require('./routes/notices');
 app.use('/api/notices', noticeRoutes);
 const messageRoutes = require('./routes/messages');
 app.use('/api/messages', messageRoutes);
+
+const chatRoutes = require('./routes/chat');
+app.use('/api/chat', chatRoutes);
+
 app.get('/api/health', (req, res) => {
   const dbState = mongoose.connection.readyState;
 

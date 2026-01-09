@@ -7,6 +7,7 @@ import { useAuth } from './hooks/useAuth.js';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import ScrollManager from './components/ScrollManager.jsx'; // Ensures page scrolls to top on navigation
+import ChatbotWidget from './components/ChatbotWidget.jsx';
 
 // --- PAGES ---
 import Home from './pages/Home.jsx';
@@ -77,6 +78,8 @@ function App() {
           />
         </Routes>
       </main>
+
+      <ChatbotWidget />
 
       <Footer />
     </div>

@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import apiClient from '../services/apiClient.js';
 import { 
   User, MapPin, Phone, Mail, BookOpen, CheckCircle2, 
   ChevronRight, ChevronLeft, Send, GraduationCap, Calendar 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 function ApplyNow() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [status, setStatus] = useState({ submitting: false, success: false, error: '' });
+
+  useEffect(() => {
+    if (!status.success) return;
+    const t = setTimeout(() => {
+      navigate('/', { replace: true });
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [status.success, navigate]);
 
   // --- FORM STATE ---
   const [form, setForm] = useState({
