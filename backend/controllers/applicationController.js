@@ -4,6 +4,9 @@ const { sendApplicationNotifications } = require('../config/email');
 exports.create = async (req, res) => {
   try {
     const {
+      // Personal
+      title,
+      fullName,
       firstName,
       lastName,
       dob,
@@ -13,8 +16,16 @@ exports.create = async (req, res) => {
       phone,
       whatsapp,
       address,
+      // Education & Guardian
+      school,
+      olYear,
+      olResults,
+      parentName,
+      parentPhone,
+      // Program
       program,
       academy,
+      referral,
     } = req.body || {};
 
     if (!firstName || !lastName || !email || !phone || !program || !academy) {
@@ -22,6 +33,9 @@ exports.create = async (req, res) => {
     }
 
     const app = await Application.create({
+      // Personal
+      title,
+      fullName,
       firstName,
       lastName,
       dob: dob ? new Date(dob) : undefined,
@@ -31,8 +45,16 @@ exports.create = async (req, res) => {
       phone,
       whatsapp,
       address,
+      // Education & Guardian
+      school,
+      olYear,
+      olResults,
+      parentName,
+      parentPhone,
+      // Program
       program,
       academy,
+      referral,
     });
 
     // Fire-and-forget notification emails (do not block user response)

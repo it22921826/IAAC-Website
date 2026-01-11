@@ -58,29 +58,31 @@ function Dashboard() {
 
   useEffect(() => {
     let isMounted = true;
-    async function fetchData() {
-      try {
-        const [courseRes, eventRes, staffRes, noticeRes, appRes, msgRes] = await Promise.allSettled([
-          apiClient.get('/api/courses'),
-          apiClient.get('/api/events'),
-          apiClient.get('/api/staff'),
-          apiClient.get('/api/notices'),
-          apiClient.get('/api/admin/applications'),
-          apiClient.get('/api/admin/messages'),
-        ]);
+    // Use individual non-blocking requests so critical data renders ASAP
+    const cancelers = [];
 
-        if (!isMounted) return;
-        if (courseRes.status === 'fulfilled') setCourses(courseRes.value.data.items || []);
-        if (eventRes.status === 'fulfilled') setEvents(eventRes.value.data.items || []);
-        if (staffRes.status === 'fulfilled') setStaffMembers(staffRes.value.data.items || []);
-        if (noticeRes.status === 'fulfilled') setNotices(noticeRes.value.data.items || []);
-        if (appRes.status === 'fulfilled') setApplications(appRes.value.data.items || []);
-        if (msgRes.status === 'fulfilled') setMessages(msgRes.value.data.items || []);
+    const get = (url, onSuccess) => {
+      const controller = new AbortController();
+      cancelers.push(controller);
+      apiClient.get(url, { signal: controller.signal })
+        .then((res) => { if (isMounted) onSuccess(res?.data?.items || []); })
+        .catch(() => {});
+    };
 
-      } catch (err) { console.error("Load error", err); }
-    }
-    fetchData();
-    return () => { isMounted = false; };
+    // Priority: admin data first
+    get('/api/admin/applications', (items) => setApplications(items));
+    get('/api/admin/messages', (items) => setMessages(items));
+
+    // Secondary: content lists (do not block rendering)
+    get('/api/courses', (items) => setCourses(items));
+    get('/api/events', (items) => setEvents(items));
+    get('/api/staff', (items) => setStaffMembers(items));
+    get('/api/notices', (items) => setNotices(items));
+
+    return () => {
+      isMounted = false;
+      cancelers.forEach((c) => c.abort());
+    };
   }, []);
 
   // --- CALENDAR LOGIC ---
@@ -495,6 +497,189 @@ function Dashboard() {
     </div>
   );
 
+  // --- VIEW: COURSES ---
+  const renderCourses = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center px-2">
+        <h3 className="font-bold text-slate-800 text-2xl">Courses</h3>
+        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
+          {courses.length} Total
+        </span>
+      </div>
+
+      {courses.length === 0 ? (
+        <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
+          No courses available.
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map((c) => (
+            <div key={c._id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
+              <div className="flex items-start justify-between mb-4">
+                <h4 className="font-bold text-lg text-slate-900 truncate">{c.title}</h4>
+                <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-indigo-100">{c.courseType}</span>
+              </div>
+              <p className="text-sm text-slate-600 mb-2">Duration: <span className="font-bold text-slate-800">{c.duration}</span></p>
+              {c.shortDescription && <p className="text-sm text-slate-600 mb-3 line-clamp-3">{c.shortDescription}</p>}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {c.totalCourseFee && <div className="bg-slate-50 border border-slate-200 rounded-lg p-2"><span className="text-slate-500">Total Fee</span><div className="font-bold text-slate-800">{c.totalCourseFee}</div></div>}
+                {c.branchPrices?.iaacCity && <div className="bg-slate-50 border border-slate-200 rounded-lg p-2"><span className="text-slate-500">City Campus</span><div className="font-bold text-slate-800">{c.branchPrices.iaacCity}</div></div>}
+                {c.branchPrices?.airportAcademy && <div className="bg-slate-50 border border-slate-200 rounded-lg p-2"><span className="text-slate-500">Airport Academy</span><div className="font-bold text-slate-800">{c.branchPrices.airportAcademy}</div></div>}
+                {c.branchPrices?.iaacCenter && <div className="bg-slate-50 border border-slate-200 rounded-lg p-2"><span className="text-slate-500">IAAC Center</span><div className="font-bold text-slate-800">{c.branchPrices.iaacCenter}</div></div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // --- VIEW: PRACTICAL TRAININGS ---
+  const renderPractical = () => {
+    const trainings = courses.filter((c) => c.courseType === 'Practical Training');
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center px-2">
+          <h3 className="font-bold text-slate-800 text-2xl">Practical Trainings</h3>
+          <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
+            {trainings.length} Total
+          </span>
+        </div>
+
+        {trainings.length === 0 ? (
+          <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
+            No practical trainings available.
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {trainings.map((t) => (
+              <div key={t._id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
+                <div className="flex items-start justify-between mb-2">
+                  <h4 className="font-bold text-lg text-slate-900 truncate">{t.title}</h4>
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-emerald-100">Practical</span>
+                </div>
+                <p className="text-sm text-slate-600 mb-2">Duration: <span className="font-bold text-slate-800">{t.duration}</span></p>
+                {t.shortDescription && <p className="text-sm text-slate-600 mb-3 line-clamp-3">{t.shortDescription}</p>}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {t.totalCourseFee && <div className="bg-slate-50 border border-slate-200 rounded-lg p-2"><span className="text-slate-500">Total Fee</span><div className="font-bold text-slate-800">{t.totalCourseFee}</div></div>}
+                  {t.branchPrices?.airportAcademy && <div className="bg-slate-50 border border-slate-200 rounded-lg p-2"><span className="text-slate-500">Airport Academy</span><div className="font-bold text-slate-800">{t.branchPrices.airportAcademy}</div></div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // --- VIEW: EVENTS ---
+  const renderEvents = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center px-2">
+        <h3 className="font-bold text-slate-800 text-2xl">Events</h3>
+        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
+          {events.length} Total
+        </span>
+      </div>
+
+      {events.length === 0 ? (
+        <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
+          No events available.
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((e) => (
+            <div key={e._id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
+              {e.imageUrl && (
+                <img src={e.imageUrl} alt={e.title} className="w-full h-40 object-cover rounded-2xl mb-3 border border-slate-100" />
+              )}
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-lg text-slate-900 truncate">{e.title}</h4>
+                {e.eventDate && (
+                  <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-blue-100">
+                    {new Date(e.eventDate).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              {e.description && <p className="text-sm text-slate-600 line-clamp-3">{e.description}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // --- VIEW: STAFF ---
+  const renderStaff = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center px-2">
+        <h3 className="font-bold text-slate-800 text-2xl">Staff</h3>
+        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
+          {staffMembers.length} Total
+        </span>
+      </div>
+
+      {staffMembers.length === 0 ? (
+        <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
+          No staff members available.
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {staffMembers.map((s) => (
+            <div key={s._id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
+              <div className="flex items-start gap-4">
+                {s.imageUrl && (
+                  <img src={s.imageUrl} alt={s.name} className="w-16 h-16 object-cover rounded-xl border border-slate-200" />
+                )}
+                <div className="flex-1">
+                  <h4 className="font-bold text-lg text-slate-900 truncate">{s.name}</h4>
+                  <div className="text-xs text-slate-500">{s.role || s.category || 'Staff'}</div>
+                  {s.email && <div className="text-xs text-slate-600 mt-1">{s.email}</div>}
+                </div>
+              </div>
+              {s.description && <p className="text-sm text-slate-600 mt-3 line-clamp-3">{s.description}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  // --- VIEW: NOTICES ---
+  const renderNotices = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center px-2">
+        <h3 className="font-bold text-slate-800 text-2xl">Notices</h3>
+        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
+          {notices.length} Total
+        </span>
+      </div>
+
+      {notices.length === 0 ? (
+        <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
+          No notices available.
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {notices.map((n) => (
+            <div key={n._id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
+              <div className="flex items-start justify-between mb-2">
+                <h4 className="font-bold text-lg text-slate-900 truncate">{n.title}</h4>
+                <span className="text-[10px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-slate-200">
+                  {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '—'}
+                </span>
+              </div>
+              {n.imageUrl && (
+                <img src={n.imageUrl} alt={n.title} className="w-full h-32 object-cover rounded-2xl mb-3 border border-slate-100" />
+              )}
+              {n.description && <p className="text-sm text-slate-600 line-clamp-3">{n.description}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
       
@@ -540,13 +725,11 @@ function Dashboard() {
           {activeTab === 'application' && renderApplications()}
           {activeTab === 'message' && renderMessages()}
           
-          {/* Reuse logic for other tabs (Courses, Events, etc.) */}
-          {['course', 'practical', 'event', 'staff', 'notice'].includes(activeTab) && (
-            <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed">
-              <p>Content for <strong>{activeTab}</strong> goes here.</p>
-              <p className="text-sm">(Re-paste your Course/Event/Staff code block here if needed)</p>
-            </div>
-          )}
+          {activeTab === 'course' && renderCourses()}
+          {activeTab === 'practical' && renderPractical()}
+          {activeTab === 'event' && renderEvents()}
+          {activeTab === 'staff' && renderStaff()}
+          {activeTab === 'notice' && renderNotices()}
 
         </div>
       </main>

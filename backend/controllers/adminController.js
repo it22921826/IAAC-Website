@@ -39,18 +39,40 @@ exports.applications = async (req, res) => {
       .limit(20)
       .lean();
     const mapped = items.map((a) => ({
+      // identifiers
       id: a._id,
-      name: `${a.firstName} ${a.lastName}`.trim(),
-      course: a.program,
-      contact: a.phone,
-      email: a.email,
-      whatsapp: a.whatsapp,
-      academy: a.academy,
+      createdAt: a.createdAt,
+
+      // personal
+      fullName: a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim(),
+      name: `${a.firstName || ''} ${a.lastName || ''}`.trim(),
+      title: a.title,
       dob: a.dob,
       nic: a.nic,
       gender: a.gender,
+
+      // contact
+      email: a.email,
+      mobile: a.phone,
+      contact: a.phone,
+      whatsapp: a.whatsapp,
+      homeAddress: a.address,
       address: a.address,
-      createdAt: a.createdAt,
+
+      // education & guardian
+      school: a.school,
+      olYear: a.olYear,
+      olResults: a.olResults,
+      parentName: a.parentName,
+      parentPhone: a.parentPhone,
+
+      // program
+      course: a.program,
+      courseApplied: a.program,
+      academy: a.academy,
+      referral: a.referral,
+
+      // admin state
       isDone: !!a.isDone,
     }));
     return res.status(200).json({ items: mapped });

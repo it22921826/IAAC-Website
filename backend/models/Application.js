@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 
 const ApplicationSchema = new mongoose.Schema(
   {
+    // Personal
+    title: { type: String, required: false },
+    fullName: { type: String, required: false },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     dob: { type: Date, required: false },
@@ -11,8 +14,20 @@ const ApplicationSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     whatsapp: { type: String, required: false },
     address: { type: String, required: false },
+
+    // Education & Guardian
+    school: { type: String, required: false },
+    olYear: { type: String, required: false },
+    olResults: { type: mongoose.Schema.Types.Mixed, required: false },
+    parentName: { type: String, required: false },
+    parentPhone: { type: String, required: false },
+
+    // Program selection
     program: { type: String, required: true },
     academy: { type: String, required: true },
+    referral: { type: String, required: false },
+
+    // Admin processing
     isDone: { type: Boolean, default: false },
   },
   { timestamps: true }
