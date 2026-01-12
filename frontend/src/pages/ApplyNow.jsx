@@ -82,6 +82,11 @@ function ApplyNow() {
         phone: form.mobile,
         whatsapp: form.whatsapp || undefined,
         address: form.address || undefined,
+        school: form.school || undefined,
+        olYear: form.olYear || undefined,
+        olResults: form.olResults || undefined,
+        parentName: form.parentName || undefined,
+        parentPhone: form.parentPhone || undefined,
         program: form.course,
         academy: form.academy,
       };

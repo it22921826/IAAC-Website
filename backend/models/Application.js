@@ -11,6 +11,14 @@ const ApplicationSchema = new mongoose.Schema(
     phone: { type: String, required: true },
     whatsapp: { type: String, required: false },
     address: { type: String, required: false },
+
+    // Education & Guardian (captured from Apply Now)
+    school: { type: String, required: false },
+    olYear: { type: String, required: false },
+    olResults: { type: mongoose.Schema.Types.Mixed, required: false },
+    parentName: { type: String, required: false },
+    parentPhone: { type: String, required: false },
+
     program: { type: String, required: true },
     academy: { type: String, required: true },
     isDone: { type: Boolean, default: false },

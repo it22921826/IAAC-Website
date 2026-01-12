@@ -13,6 +13,11 @@ exports.create = async (req, res) => {
       phone,
       whatsapp,
       address,
+      school,
+      olYear,
+      olResults,
+      parentName,
+      parentPhone,
       program,
       academy,
     } = req.body || {};
@@ -31,6 +36,11 @@ exports.create = async (req, res) => {
       phone,
       whatsapp,
       address,
+      school,
+      olYear,
+      olResults,
+      parentName,
+      parentPhone,
       program,
       academy,
     });

@@ -50,6 +50,11 @@ exports.applications = async (req, res) => {
       nic: a.nic,
       gender: a.gender,
       address: a.address,
+      school: a.school,
+      olYear: a.olYear,
+      olResults: a.olResults,
+      parentName: a.parentName,
+      parentPhone: a.parentPhone,
       createdAt: a.createdAt,
       isDone: !!a.isDone,
     }));
@@ -62,9 +67,15 @@ exports.applications = async (req, res) => {
 exports.markApplicationDone = async (req, res) => {
   try {
     const Application = require('../models/Application');
+    const existing = await Application.findById(req.params.id).lean();
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
     const updated = await Application.findByIdAndUpdate(
       req.params.id,
-      { $set: { isDone: true } },
+      { $set: { isDone: !existing.isDone } },
       { new: true }
     ).lean();
 
