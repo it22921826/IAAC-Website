@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { 
   Users, FileText, Calendar, BookOpen, UploadCloud,
-  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin
+  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -97,6 +97,89 @@ function Dashboard() {
   const safeText = (value) => {
     if (value === null || value === undefined) return '-';
     return String(value).trim() || '-';
+  };
+
+  // --- COURSES: EDIT/DELETE ---
+  const openEditCourse = (course) => {
+    if (!course?._id) return;
+    setEditingCourseId(course._id);
+    setCourseForm({
+      title: course.title || '',
+      duration: course.duration || '',
+      courseType: course.courseType || '',
+      shortDescription: course.shortDescription || '',
+      totalCourseFee: course.totalCourseFee || '',
+      branchPrices: {
+        iaacCity: course.branchPrices?.iaacCity || '',
+        airportAcademy: course.branchPrices?.airportAcademy || '',
+        iaacCenter: course.branchPrices?.iaacCenter || '',
+      },
+      minimumEntryRequirements: course.minimumEntryRequirements || '',
+      evaluationCriteria: course.evaluationCriteria || '',
+      examinationFormat: course.examinationFormat || '',
+      additionalNotes: course.additionalNotes || '',
+      imageUrl: course.imageUrl || '',
+    });
+  };
+
+  const closeEditCourse = () => {
+    setEditingCourseId(null);
+    setCourseForm({});
+  };
+
+  const updateCourseForm = (patch) => {
+    setCourseForm((prev) => ({ ...prev, ...patch }));
+  };
+
+  const updateBranchPrice = (key, value) => {
+    setCourseForm((prev) => ({
+      ...prev,
+      branchPrices: { ...(prev.branchPrices || {}), [key]: value },
+    }));
+  };
+
+  const saveCourseEdits = async () => {
+    if (!editingCourseId) return;
+    const payload = {
+      title: (courseForm.title || '').trim(),
+      duration: (courseForm.duration || '').trim(),
+      courseType: (courseForm.courseType || '').trim(),
+      shortDescription: (courseForm.shortDescription || '').trim() || undefined,
+      totalCourseFee: (courseForm.totalCourseFee || '').trim() || undefined,
+      branchPrices: {
+        iaacCity: (courseForm.branchPrices?.iaacCity || '').trim() || undefined,
+        airportAcademy: (courseForm.branchPrices?.airportAcademy || '').trim() || undefined,
+        iaacCenter: (courseForm.branchPrices?.iaacCenter || '').trim() || undefined,
+      },
+      minimumEntryRequirements: (courseForm.minimumEntryRequirements || '').trim() || undefined,
+      evaluationCriteria: (courseForm.evaluationCriteria || '').trim() || undefined,
+      examinationFormat: (courseForm.examinationFormat || '').trim() || undefined,
+      additionalNotes: (courseForm.additionalNotes || '').trim() || undefined,
+      imageUrl: (courseForm.imageUrl || '').trim() || undefined,
+    };
+
+    // If all branchPrices are empty, don't send it.
+    const bp = payload.branchPrices;
+    if (!bp.iaacCity && !bp.airportAcademy && !bp.iaacCenter) {
+      delete payload.branchPrices;
+    }
+
+    const res = await apiClient.put(`/api/courses/${editingCourseId}`, payload);
+    const updated = res?.data;
+    if (updated?._id) {
+      setCourses((prev) => prev.map((c) => (String(c._id) === String(updated._id) ? updated : c)));
+    }
+    closeEditCourse();
+  };
+
+  const deleteCourseById = async (id) => {
+    if (!id) return;
+    if (!window.confirm('Delete this course?')) return;
+    await apiClient.delete(`/api/courses/${id}`);
+    setCourses((prev) => prev.filter((c) => String(c._id) !== String(id)));
+    if (String(editingCourseId) === String(id)) {
+      closeEditCourse();
+    }
   };
 
   // --- HELPER: APPLICATION FIELD NORMALIZATION ---
@@ -528,9 +611,36 @@ function Dashboard() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((c) => (
             <div key={c._id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
-              <div className="flex items-start justify-between mb-4">
-                <h4 className="font-bold text-lg text-slate-900 truncate">{c.title}</h4>
-                <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-indigo-100">{c.courseType}</span>
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="min-w-0 flex-1">
+                  <h4 className="font-bold text-lg text-slate-900 leading-snug whitespace-normal break-words">
+                    {c.title}
+                  </h4>
+                  <div className="mt-2">
+                    <span className="inline-flex text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-indigo-100">
+                      {c.courseType}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => openEditCourse(c)}
+                    className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    title="Edit course"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteCourseById(c._id)}
+                    className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    title="Delete course"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
               <p className="text-sm text-slate-600 mb-2">Duration: <span className="font-bold text-slate-800">{c.duration}</span></p>
               {c.shortDescription && <p className="text-sm text-slate-600 mb-3 line-clamp-3">{c.shortDescription}</p>}
@@ -567,9 +677,36 @@ function Dashboard() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {trainings.map((t) => (
               <div key={t._id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
-                <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-bold text-lg text-slate-900 truncate">{t.title}</h4>
-                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-emerald-100">Practical</span>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-bold text-lg text-slate-900 leading-snug whitespace-normal break-words">
+                      {t.title}
+                    </h4>
+                    <div className="mt-2">
+                      <span className="inline-flex text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-emerald-100">
+                        Practical
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => openEditCourse(t)}
+                      className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      title="Edit course"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteCourseById(t._id)}
+                      className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      title="Delete course"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
                 <p className="text-sm text-slate-600 mb-2">Duration: <span className="font-bold text-slate-800">{t.duration}</span></p>
                 {t.shortDescription && <p className="text-sm text-slate-600 mb-3 line-clamp-3">{t.shortDescription}</p>}
@@ -835,6 +972,182 @@ function Dashboard() {
                   className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors flex items-center gap-2"
                 >
                   <FileText size={16}/> Print Application
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- COURSE EDIT MODAL --- */}
+      <AnimatePresence>
+        {editingCourseId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            onClick={closeEditCourse}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">Edit Course</h2>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">ID: {editingCourseId}</p>
+                </div>
+                <button onClick={closeEditCourse} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                  <X size={24} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
+                    <input
+                      value={courseForm.title || ''}
+                      onChange={(e) => updateCourseForm({ title: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                      placeholder="Course title"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Type</label>
+                    <input
+                      value={courseForm.courseType || ''}
+                      onChange={(e) => updateCourseForm({ courseType: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                      placeholder="AIRLINE & AVIATION PROGRAMS"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
+                    <input
+                      value={courseForm.duration || ''}
+                      onChange={(e) => updateCourseForm({ duration: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                      placeholder="06 to 08 Months (Part Time)"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Total Course Fee</label>
+                    <input
+                      value={courseForm.totalCourseFee || ''}
+                      onChange={(e) => updateCourseForm({ totalCourseFee: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                      placeholder="LKR 100,000"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Image URL (optional)</label>
+                    <input
+                      value={courseForm.imageUrl || ''}
+                      onChange={(e) => updateCourseForm({ imageUrl: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Short Description</label>
+                  <textarea
+                    value={courseForm.shortDescription || ''}
+                    onChange={(e) => updateCourseForm({ shortDescription: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                    placeholder="A short summary shown on cards"
+                  />
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+                  <div className="text-sm font-bold text-slate-800 mb-3">Branch Prices (optional)</div>
+                  <div className="grid md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-1">City Campus</label>
+                      <input
+                        value={courseForm.branchPrices?.iaacCity || ''}
+                        onChange={(e) => updateBranchPrice('iaacCity', e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:border-blue-500 outline-none text-sm"
+                        placeholder="LKR 80,000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Airport Academy</label>
+                      <input
+                        value={courseForm.branchPrices?.airportAcademy || ''}
+                        onChange={(e) => updateBranchPrice('airportAcademy', e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:border-blue-500 outline-none text-sm"
+                        placeholder="LKR 90,000"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 uppercase mb-1">IAAC Center</label>
+                      <input
+                        value={courseForm.branchPrices?.iaacCenter || ''}
+                        onChange={(e) => updateBranchPrice('iaacCenter', e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:border-blue-500 outline-none text-sm"
+                        placeholder="LKR 80,000"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Minimum Entry Requirements</label>
+                    <textarea
+                      value={courseForm.minimumEntryRequirements || ''}
+                      onChange={(e) => updateCourseForm({ minimumEntryRequirements: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Evaluation Criteria</label>
+                    <textarea
+                      value={courseForm.evaluationCriteria || ''}
+                      onChange={(e) => updateCourseForm({ evaluationCriteria: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Examination Format</label>
+                    <textarea
+                      value={courseForm.examinationFormat || ''}
+                      onChange={(e) => updateCourseForm({ examinationFormat: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Additional Notes</label>
+                    <textarea
+                      value={courseForm.additionalNotes || ''}
+                      onChange={(e) => updateCourseForm({ additionalNotes: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => deleteCourseById(editingCourseId)}
+                  className="px-5 py-2.5 bg-white border border-red-200 text-red-700 rounded-xl font-bold text-sm hover:bg-red-50 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={saveCourseEdits}
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
                 </button>
               </div>
             </motion.div>

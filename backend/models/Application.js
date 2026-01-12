@@ -15,21 +15,14 @@ const ApplicationSchema = new mongoose.Schema(
     whatsapp: { type: String, required: false },
     address: { type: String, required: false },
 
-<<<<<<< HEAD
-    // Education & Guardian (captured from Apply Now)
-=======
     // Education & Guardian
->>>>>>> 2a73e64d87c9b76a49fdfee2e4c021c1e913c970
     school: { type: String, required: false },
     olYear: { type: String, required: false },
     olResults: { type: mongoose.Schema.Types.Mixed, required: false },
     parentName: { type: String, required: false },
     parentPhone: { type: String, required: false },
 
-<<<<<<< HEAD
-=======
     // Program selection
->>>>>>> 2a73e64d87c9b76a49fdfee2e4c021c1e913c970
     program: { type: String, required: true },
     academy: { type: String, required: true },
     referral: { type: String, required: false },
