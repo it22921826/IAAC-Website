@@ -31,6 +31,7 @@ exports.me = (req, res) => {
   return res.status(200).json({ user: req.user });
 };
 
+// --- FIXED FUNCTION ---
 exports.applications = async (req, res) => {
   try {
     const Application = require('../models/Application');
@@ -38,24 +39,42 @@ exports.applications = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(20)
       .lean();
+      
     const mapped = items.map((a) => ({
+      // identifiers
       id: a._id,
-      name: `${a.firstName} ${a.lastName}`.trim(),
-      course: a.program,
-      contact: a.phone,
-      email: a.email,
-      whatsapp: a.whatsapp,
-      academy: a.academy,
+      createdAt: a.createdAt,
+
+      // personal
+      fullName: a.fullName || `${a.firstName || ''} ${a.lastName || ''}`.trim(),
+      name: `${a.firstName || ''} ${a.lastName || ''}`.trim(),
+      title: a.title,
       dob: a.dob,
       nic: a.nic,
       gender: a.gender,
+
+      // contact
+      email: a.email,
+      mobile: a.phone,
+      contact: a.phone,
+      whatsapp: a.whatsapp,
+      homeAddress: a.address,
       address: a.address,
+
+      // education & guardian
       school: a.school,
       olYear: a.olYear,
       olResults: a.olResults,
       parentName: a.parentName,
       parentPhone: a.parentPhone,
-      createdAt: a.createdAt,
+
+      // program
+      course: a.program,
+      courseApplied: a.program,
+      academy: a.academy,
+      referral: a.referral,
+
+      // admin state
       isDone: !!a.isDone,
     }));
     return res.status(200).json({ items: mapped });
@@ -191,7 +210,6 @@ exports.deleteMessage = async (req, res) => {
 };
 
 exports.stats = (req, res) => {
-  // Example metrics; replace with real queries later
   return res.status(200).json({
     applicationsToday: 12,
     totalStudents: 1240,

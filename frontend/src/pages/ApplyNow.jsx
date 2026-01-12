@@ -73,6 +73,9 @@ function ApplyNow() {
       const lastName = parts.slice(1).join(' ') || '-';
 
       const payload = {
+        // Personal
+        title: form.title,
+        fullName: form.fullName,
         firstName,
         lastName,
         dob: form.dob || undefined,
@@ -82,13 +85,24 @@ function ApplyNow() {
         phone: form.mobile,
         whatsapp: form.whatsapp || undefined,
         address: form.address || undefined,
+<<<<<<< HEAD
+=======
+
+        // Education & Guardian
+>>>>>>> 2a73e64d87c9b76a49fdfee2e4c021c1e913c970
         school: form.school || undefined,
         olYear: form.olYear || undefined,
         olResults: form.olResults || undefined,
         parentName: form.parentName || undefined,
         parentPhone: form.parentPhone || undefined,
+<<<<<<< HEAD
+=======
+
+        // Program
+>>>>>>> 2a73e64d87c9b76a49fdfee2e4c021c1e913c970
         program: form.course,
         academy: form.academy,
+        referral: form.referral || undefined,
       };
 
       await apiClient.post('/api/applications', payload);
