@@ -306,6 +306,21 @@ function ApplyNow() {
                     </div>
                   </div>
 
+                  <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <Label text="Student Counselor Code (Optional)" />
+                    <select value={form.referral} onChange={update('referral')} className="input-field">
+                      <option value="">General Office (No counselor)</option>
+                      <option value="C001">Rochini</option>
+                      <option value="C002">Dulani</option>
+                      <option value="C003">Abhishek</option>
+                      <option value="C004">Vishwani</option>
+                      <option value="C005">Michelle</option>
+                    </select>
+                    <p className="text-xs text-slate-500 mt-2">
+                      If a counselor guided you, select their name. Otherwise keep “General Office”.
+                    </p>
+                  </div>
+
                   <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
                     <label className="flex items-start gap-4 cursor-pointer group">
                       <div className="relative flex items-center">

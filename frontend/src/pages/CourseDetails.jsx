@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { 
   Clock, CreditCard, BookOpen, Calendar, 
-  CheckCircle, AlertCircle, FileText, ChevronLeft 
+  CheckCircle, FileText, ChevronLeft 
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 
 const BRANCHES = [
-  { key: 'iaacCity', label: 'IAAC CITY', sublabel: 'Colombo Campus' },
-  { key: 'airportAcademy', label: 'AIRPORT ACADEMY', sublabel: 'Rathmalana Airport' },
-  { key: 'iaacCenter', label: 'IAAC CENTER', sublabel: 'Kurunagala Branch' },
+  { key: 'iaacCity', label: 'IAAC City Campus' },
+  { key: 'airportAcademy', label: 'Airport Academy' },
+  { key: 'iaacCenter', label: 'Kurunegala Center' },
 ];
 
 const normalizePrice = (value) => {
@@ -21,9 +21,9 @@ const normalizePrice = (value) => {
 function CourseDetails() {
   // FIX: We must use 'courseId' to match your App.jsx Route
   const { courseId } = useParams(); 
+  const [searchParams] = useSearchParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedBranch, setSelectedBranch] = useState('iaacCity');
 
   useEffect(() => {
     async function fetchCourse() {
@@ -40,19 +40,6 @@ function CourseDetails() {
     }
     fetchCourse();
   }, [courseId]); // FIX: Depend on courseId
-
-  useEffect(() => {
-    if (!course) return;
-    const branchPrices = course.branchPrices && typeof course.branchPrices === 'object' ? course.branchPrices : {};
-
-    // If current selection has no price, auto-pick the first priced branch.
-    const current = normalizePrice(branchPrices?.[selectedBranch]);
-    if (current) return;
-
-    const firstWithPrice = BRANCHES.find((b) => normalizePrice(branchPrices?.[b.key]));
-    const nextBranch = firstWithPrice?.key || 'iaacCity';
-    if (nextBranch !== selectedBranch) setSelectedBranch(nextBranch);
-  }, [course, selectedBranch]);
 
   if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Loading...</div>;
   
@@ -80,9 +67,17 @@ function CourseDetails() {
   };
 
   const branchPrices = course.branchPrices && typeof course.branchPrices === 'object' ? course.branchPrices : {};
-  const selectedPrice = normalizePrice(branchPrices?.[selectedBranch]);
-  const firstPrice = BRANCHES.map((b) => normalizePrice(branchPrices?.[b.key])).find(Boolean) || '';
-  const feeValue = selectedPrice || firstPrice || normalizePrice(course.totalCourseFee) || 'Contact for Pricing';
+  const requestedBranch = (searchParams.get('branch') || '').trim();
+  const branchKey = BRANCHES.some((b) => b.key === requestedBranch) ? requestedBranch : '';
+
+  const selectedBranchLabel = branchKey ? BRANCHES.find((b) => b.key === branchKey)?.label : '';
+  const selectedBranchPrice = branchKey ? normalizePrice(branchPrices?.[branchKey]) : '';
+  const anyBranchPrice = Object.values(branchPrices).map((v) => normalizePrice(v)).find(Boolean) || '';
+
+  // If branch is explicitly selected, show ONLY that branch price (no fallback to totalCourseFee).
+  const feeValue = branchKey
+    ? (selectedBranchPrice || 'Contact for Pricing')
+    : (normalizePrice(course.totalCourseFee) || anyBranchPrice || 'Contact for Pricing');
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -121,23 +116,10 @@ function CourseDetails() {
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Select Branch</label>
-                  <select
-                    value={selectedBranch}
-                    onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-sm"
-                  >
-                    {BRANCHES.map((b) => (
-                      <option key={b.key} value={b.key}>
-                        {b.label} ({b.sublabel})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
                   <h3 className="text-xl font-bold text-white mb-1">{feeValue}</h3>
-                  <p className="text-sm text-slate-500">Installment plans available</p>
+                  <p className="text-sm text-slate-500">
+                    {selectedBranchLabel ? `Selected branch: ${selectedBranchLabel}` : 'Installment plans available'}
+                  </p>
                 </div>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Plane, Building2, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 /* ---------------- SLIDESHOW CONFIG ---------------- */
 const heroImages = [
@@ -13,6 +14,7 @@ const SLIDE_DURATION = 5000;
 
 function HeroSection() {
   const [index, setIndex] = useState(0);
+  const navigate = useNavigate();
 
   /* Auto slide */
   useEffect(() => {
@@ -27,6 +29,7 @@ function HeroSection() {
     {
       id: 1,
       name: 'IAAC CITY',
+      branchKey: 'iaacCity',
       icon: Building2,
       desc: 'Colombo 10',
       color: 'hover:bg-blue-600 active:bg-blue-700',
@@ -35,6 +38,7 @@ function HeroSection() {
     {
       id: 2,
       name: 'AIRPORT ACADEMY',
+      branchKey: 'airportAcademy',
       icon: Plane,
       desc: 'Rathmalana Airport',
       color: 'hover:bg-purple-600 active:bg-purple-700',
@@ -43,6 +47,7 @@ function HeroSection() {
     {
       id: 3,
       name: 'IAAC CENTRAL',
+      branchKey: 'iaacCenter',
       icon: MapPin,
       desc: 'Kurunagala ',
       color: 'hover:bg-sky-600 active:bg-sky-700',
@@ -116,6 +121,8 @@ function HeroSection() {
           {branches.map((branch) => (
             <button
               key={branch.id}
+              type="button"
+              onClick={() => navigate(`/programs?branch=${encodeURIComponent(branch.branchKey)}`)}
               className={`group relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 p-4 sm:p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 ${branch.borderColor}`}
             >
               {/* Hover Fill */}
