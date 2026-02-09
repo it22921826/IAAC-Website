@@ -12,12 +12,15 @@ exports.list = async (_req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { name, description, imageUrl } = req.body || {};
+    const { name, subject, description, imageUrl, imageData } = req.body || {};
     if (!name) {
       return res.status(400).json({ message: 'Name is required' });
     }
 
-    const staff = await Staff.create({ name, description, imageUrl });
+    // imageData is a base64 data-URI sent from the dashboard file picker
+    const finalImage = imageData || imageUrl || undefined;
+
+    const staff = await Staff.create({ name, subject, description, imageUrl: finalImage });
     return res.status(201).json(staff);
   } catch (err) {
     console.error('Create staff error:', err);
@@ -28,11 +31,21 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, imageUrl } = req.body || {};
+    const { name, subject, description, imageUrl, imageData } = req.body || {};
+
+    const updatePayload = {};
+    if (name !== undefined) updatePayload.name = name;
+    if (subject !== undefined) updatePayload.subject = subject;
+    if (description !== undefined) updatePayload.description = description;
+    if (imageData) {
+      updatePayload.imageUrl = imageData;
+    } else if (imageUrl !== undefined) {
+      updatePayload.imageUrl = imageUrl;
+    }
 
     const updated = await Staff.findByIdAndUpdate(
       id,
-      { name, description, imageUrl },
+      updatePayload,
       { new: true }
     );
 

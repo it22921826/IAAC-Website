@@ -36,14 +36,16 @@ function Navbar() {
             <div className="relative group">
               <Link
                 to="/programs"
-                className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-blue-600"
+                className="flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-blue-600 py-2"
               >
                 Programs <ChevronDown size={16} />
               </Link>
 
-              <div className="absolute left-0 mt-2 w-64 bg-[#2a2a2a] text-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition">
-                <DropdownItem to={{ pathname: '/programs' }} text="Programs" />
-                <DropdownItem to={{ pathname: '/programs/practical-trainings' }} text="Practical Trainings" />
+              <div className="absolute left-0 top-full pt-1 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                <div className="bg-[#2a2a2a] text-white rounded-lg shadow-xl py-1">
+                  <DropdownItem to={{ pathname: '/programs' }} text="Programs" />
+                  <DropdownItem to={{ pathname: '/programs/practical-trainings' }} text="Practical Trainings" />
+                </div>
               </div>
             </div>
 

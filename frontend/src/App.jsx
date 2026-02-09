@@ -17,6 +17,7 @@ import StudentLife from './pages/Studentlife.jsx';
 import Programs from './pages/Programs.jsx';
 import PracticalTrainings from './pages/PracticalTrainings.jsx';
 import CourseDetails from './pages/CourseDetails.jsx';
+import SessionDetails from './pages/SessionDetails.jsx';
 import CareerSupport from './pages/CareerSupport.jsx';
 import ContactUs from './pages/ContactUs.jsx';
 import ApplyNow from './pages/ApplyNow.jsx';
@@ -55,6 +56,7 @@ function App() {
           <Route path="/programs" element={<Programs />} />
           <Route path="/programs/courses" element={<Programs />} />
           <Route path="/programs/practical-trainings" element={<PracticalTrainings />} />
+          <Route path="/programs/session/:sessionId" element={<SessionDetails />} />
           <Route path="/programs/course/:courseId" element={<CourseDetails />} />
 
           {/* Backward-compatible Training URLs */}

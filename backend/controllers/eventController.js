@@ -15,13 +15,14 @@ exports.list = async (req, res) => {
 // Create a new event (used by admin dashboard via /api/events)
 exports.create = async (req, res) => {
   try {
-    const { title, description, imageUrl, imageUrls, eventDate } = req.body || {};
+    const { title, description, imageUrl, imageData, imageUrls, eventDate } = req.body || {};
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
 
     const cleanedImageUrls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : undefined;
-    const cleanedImageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : imageUrl;
+    // imageData is a base64 data-URI sent from the dashboard file picker
+    const cleanedImageUrl = imageData || (typeof imageUrl === 'string' ? imageUrl.trim() : imageUrl);
 
     const event = await Event.create({
       title,
@@ -49,10 +50,11 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, imageUrl, imageUrls, eventDate } = req.body || {};
+    const { title, description, imageUrl, imageData, imageUrls, eventDate } = req.body || {};
 
     const cleanedImageUrls = Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : undefined;
-    const cleanedImageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : imageUrl;
+    // imageData is a base64 data-URI sent from the dashboard file picker
+    const cleanedImageUrl = imageData || (typeof imageUrl === 'string' ? imageUrl.trim() : imageUrl);
 
     const updatePayload = {};
     if (title !== undefined) updatePayload.title = title;

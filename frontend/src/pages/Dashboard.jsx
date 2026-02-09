@@ -1,11 +1,35 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { 
   Users, FileText, Calendar, BookOpen, UploadCloud,
-  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil
+  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil, Plus
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
+
+const createEmptyCourseForm = (defaults = {}) => ({
+  title: '',
+  duration: '',
+  courseType: '',
+  shortDescription: '',
+  totalCourseFee: '',
+  branchPrices: {
+    iaacCity: '',
+    airportAcademy: '',
+    iaacCenter: '',
+  },
+  minimumEntryRequirements: '',
+  evaluationCriteria: '',
+  examinationFormat: '',
+  additionalNotes: '',
+  sessionDetails: '',
+  imageUrl: '',
+  imageData: '',
+  imagePreview: '',
+  imageUrlsInput: '',
+  galleryImages: [],
+  ...defaults,
+});
 
 // --- CALENDAR HELPERS ---
 const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -37,13 +61,25 @@ function Dashboard() {
 
   // Forms State
   const [courseForm, setCourseForm] = useState({});
-  const [practicalForm, setPracticalForm] = useState({});
+  const [practicalForm, setPracticalForm] = useState(createEmptyCourseForm({ courseType: 'Practical Training' }));
   const [eventForm, setEventForm] = useState({});
   const [staffForm, setStaffForm] = useState({});
   const [noticeForm, setNoticeForm] = useState({});
-
-  // Status State
-  const [status, setStatus] = useState({ submitting: false, success: false, error: '' });
+  const [newCourseForm, setNewCourseForm] = useState(createEmptyCourseForm());
+  const [newPracticalForm, setNewPracticalForm] = useState(createEmptyCourseForm({ courseType: 'Practical Training' }));
+  const [showNewCourseForm, setShowNewCourseForm] = useState(false);
+  const [showNewPracticalForm, setShowNewPracticalForm] = useState(false);
+  const [showNewEventForm, setShowNewEventForm] = useState(false);
+  const [newEventForm, setNewEventForm] = useState({ title: '', description: '', eventDate: '', imageData: '', imagePreview: '' });
+  const [showNewStaffForm, setShowNewStaffForm] = useState(false);
+  const [newStaffForm, setNewStaffForm] = useState({ name: '', subject: '', description: '', imageData: '', imagePreview: '' });
+  const [courseCreateStatus, setCourseCreateStatus] = useState({ submitting: false, success: false, error: '' });
+  const [practicalCreateStatus, setPracticalCreateStatus] = useState({ submitting: false, success: false, error: '' });
+  const [eventCreateStatus, setEventCreateStatus] = useState({ submitting: false, success: false, error: '' });
+  const [staffCreateStatus, setStaffCreateStatus] = useState({ submitting: false, success: false, error: '' });
+  const [showNewNoticeForm, setShowNewNoticeForm] = useState(false);
+  const [newNoticeForm, setNewNoticeForm] = useState({ title: '', description: '', imageData: '', imagePreview: '' });
+  const [noticeCreateStatus, setNoticeCreateStatus] = useState({ submitting: false, success: false, error: '' });
 
   // Navigation Items
   const navItems = [
@@ -118,7 +154,12 @@ function Dashboard() {
       evaluationCriteria: course.evaluationCriteria || '',
       examinationFormat: course.examinationFormat || '',
       additionalNotes: course.additionalNotes || '',
+      sessionDetails: course.sessionDetails || '',
       imageUrl: course.imageUrl || '',
+      imageData: '',
+      imagePreview: course.imageUrl || '',
+      imageUrlsInput: Array.isArray(course.imageUrls) ? course.imageUrls.join('\n') : '',
+      galleryImages: Array.isArray(course.imageUrls) ? course.imageUrls : [],
     });
   };
 
@@ -138,31 +179,69 @@ function Dashboard() {
     }));
   };
 
-  const saveCourseEdits = async () => {
-    if (!editingCourseId) return;
+  const updateNewCourseForm = (patch) => {
+    setNewCourseForm((prev) => ({ ...prev, ...patch }));
+  };
+
+  const updateNewBranchPrice = (key, value) => {
+    setNewCourseForm((prev) => ({
+      ...prev,
+      branchPrices: { ...(prev.branchPrices || {}), [key]: value },
+    }));
+  };
+
+  const resetNewCourseForm = () => {
+    setNewCourseForm(createEmptyCourseForm());
+    setCourseCreateStatus({ submitting: false, success: false, error: '' });
+  };
+
+  const resetNewPracticalForm = () => {
+    setNewPracticalForm(createEmptyCourseForm({ courseType: 'Practical Training' }));
+    setPracticalCreateStatus({ submitting: false, success: false, error: '' });
+  };
+
+  const parseImageUrls = (input) => {
+    if (!input) return undefined;
+    const parts = String(input)
+      .split(/\n|,/) // allow newline or comma
+      .map((x) => x.trim())
+      .filter(Boolean);
+    return parts.length ? parts : undefined;
+  };
+
+  const buildCoursePayload = (form) => {
     const payload = {
-      title: (courseForm.title || '').trim(),
-      duration: (courseForm.duration || '').trim(),
-      courseType: (courseForm.courseType || '').trim(),
-      shortDescription: (courseForm.shortDescription || '').trim() || undefined,
-      totalCourseFee: (courseForm.totalCourseFee || '').trim() || undefined,
+      title: (form.title || '').trim(),
+      duration: (form.duration || '').trim(),
+      courseType: (form.courseType || '').trim(),
+      shortDescription: (form.shortDescription || '').trim() || undefined,
+      totalCourseFee: (form.totalCourseFee || '').trim() || undefined,
       branchPrices: {
-        iaacCity: (courseForm.branchPrices?.iaacCity || '').trim() || undefined,
-        airportAcademy: (courseForm.branchPrices?.airportAcademy || '').trim() || undefined,
-        iaacCenter: (courseForm.branchPrices?.iaacCenter || '').trim() || undefined,
+        iaacCity: (form.branchPrices?.iaacCity || '').trim() || undefined,
+        airportAcademy: (form.branchPrices?.airportAcademy || '').trim() || undefined,
+        iaacCenter: (form.branchPrices?.iaacCenter || '').trim() || undefined,
       },
-      minimumEntryRequirements: (courseForm.minimumEntryRequirements || '').trim() || undefined,
-      evaluationCriteria: (courseForm.evaluationCriteria || '').trim() || undefined,
-      examinationFormat: (courseForm.examinationFormat || '').trim() || undefined,
-      additionalNotes: (courseForm.additionalNotes || '').trim() || undefined,
-      imageUrl: (courseForm.imageUrl || '').trim() || undefined,
+      minimumEntryRequirements: (form.minimumEntryRequirements || '').trim() || undefined,
+      evaluationCriteria: (form.evaluationCriteria || '').trim() || undefined,
+      examinationFormat: (form.examinationFormat || '').trim() || undefined,
+      additionalNotes: (form.additionalNotes || '').trim() || undefined,
+      sessionDetails: (form.sessionDetails || '').trim() || undefined,
+      imageData: form.imageData || undefined,
+      imageUrl: (!form.imageData && form.imageUrl) ? (form.imageUrl || '').trim() || undefined : undefined,
+      imageUrls: (form.galleryImages && form.galleryImages.length > 0) ? form.galleryImages : parseImageUrls(form.imageUrlsInput),
     };
 
-    // If all branchPrices are empty, don't send it.
     const bp = payload.branchPrices;
     if (!bp.iaacCity && !bp.airportAcademy && !bp.iaacCenter) {
       delete payload.branchPrices;
     }
+
+    return payload;
+  };
+
+  const saveCourseEdits = async () => {
+    if (!editingCourseId) return;
+    const payload = buildCoursePayload(courseForm);
 
     const res = await apiClient.put(`/api/courses/${editingCourseId}`, payload);
     const updated = res?.data;
@@ -172,6 +251,64 @@ function Dashboard() {
     closeEditCourse();
   };
 
+  const createCourse = async () => {
+    const payload = buildCoursePayload(newCourseForm);
+    if (!payload.title || !payload.duration || !payload.courseType) {
+      setCourseCreateStatus({ submitting: false, success: false, error: 'Title, course type, and duration are required.' });
+      return;
+    }
+
+    setCourseCreateStatus({ submitting: true, success: false, error: '' });
+    try {
+      const res = await apiClient.post('/api/courses', payload);
+      const created = res?.data;
+      if (created?._id) {
+        setCourses((prev) => [created, ...prev]);
+        setCourseCreateStatus({ submitting: false, success: true, error: '' });
+        resetNewCourseForm();
+        setShowNewCourseForm(false);
+      } else {
+        setCourseCreateStatus({ submitting: false, success: false, error: 'Course was not created.' });
+      }
+    } catch (err) {
+      const errorMessage = err?.response?.data?.error || 'Failed to create course';
+      setCourseCreateStatus({ submitting: false, success: false, error: errorMessage });
+    }
+  };
+
+  const createPractical = async () => {
+    const description = (newPracticalForm.shortDescription || '').trim();
+    if (!description && (!newPracticalForm.galleryImages || newPracticalForm.galleryImages.length === 0)) {
+      setPracticalCreateStatus({ submitting: false, success: false, error: 'Please add a description or at least one image.' });
+      return;
+    }
+
+    setPracticalCreateStatus({ submitting: true, success: false, error: '' });
+    try {
+      const payload = {
+        title: 'Practical Session',
+        duration: '-',
+        courseType: 'Practical Training',
+        shortDescription: description || undefined,
+        imageData: newPracticalForm.imageData || undefined,
+        imageUrls: (newPracticalForm.galleryImages && newPracticalForm.galleryImages.length > 0) ? newPracticalForm.galleryImages : undefined,
+      };
+      const res = await apiClient.post('/api/courses', payload);
+      const created = res?.data;
+      if (created?._id) {
+        setCourses((prev) => [created, ...prev]);
+        setPracticalCreateStatus({ submitting: false, success: true, error: '' });
+        resetNewPracticalForm();
+        setShowNewPracticalForm(false);
+      } else {
+        setPracticalCreateStatus({ submitting: false, success: false, error: 'Practical was not created.' });
+      }
+    } catch (err) {
+      const errorMessage = err?.response?.data?.error || 'Failed to create practical';
+      setPracticalCreateStatus({ submitting: false, success: false, error: errorMessage });
+    }
+  };
+
   const deleteCourseById = async (id) => {
     if (!id) return;
     if (!window.confirm('Delete this course?')) return;
@@ -179,6 +316,343 @@ function Dashboard() {
     setCourses((prev) => prev.filter((c) => String(c._id) !== String(id)));
     if (String(editingCourseId) === String(id)) {
       closeEditCourse();
+    }
+  };
+
+  // --- EVENTS: EDIT/DELETE ---
+  const openEditEvent = (event) => {
+    if (!event?._id) return;
+    setEditingEventId(event._id);
+    setEventForm({
+      title: event.title || '',
+      description: event.description || '',
+      eventDate: event.eventDate ? new Date(event.eventDate).toISOString().split('T')[0] : '',
+      imageUrl: event.imageUrl || '',
+      imageData: '',
+      imagePreview: event.imageUrl || '',
+    });
+  };
+
+  const closeEditEvent = () => {
+    setEditingEventId(null);
+    setEventForm({});
+  };
+
+  const updateEventForm = (patch) => {
+    setEventForm((prev) => ({ ...prev, ...patch }));
+  };
+
+  const saveEventEdits = async () => {
+    if (!editingEventId) return;
+    const payload = {
+      title: (eventForm.title || '').trim(),
+      description: (eventForm.description || '').trim() || undefined,
+      eventDate: eventForm.eventDate || undefined,
+      imageData: eventForm.imageData || undefined,
+      imageUrl: (!eventForm.imageData && eventForm.imageUrl) ? eventForm.imageUrl : undefined,
+    };
+    try {
+      const res = await apiClient.put(`/api/events/${editingEventId}`, payload);
+      const updated = res?.data;
+      if (updated?._id) {
+        setEvents((prev) => prev.map((ev) => (String(ev._id) === String(updated._id) ? updated : ev)));
+      }
+      closeEditEvent();
+    } catch (err) {
+      console.error('Failed to update event', err);
+    }
+  };
+
+  const deleteEventById = async (id) => {
+    if (!id) return;
+    if (!window.confirm('Delete this event?')) return;
+    try {
+      await apiClient.delete(`/api/events/${id}`);
+      setEvents((prev) => prev.filter((ev) => String(ev._id) !== String(id)));
+      if (String(editingEventId) === String(id)) {
+        closeEditEvent();
+      }
+    } catch (err) {
+      console.error('Failed to delete event', err);
+    }
+  };
+
+  // --- EVENTS: CREATE ---
+  const resetNewEventForm = () => {
+    setNewEventForm({ title: '', description: '', eventDate: '', imageData: '', imagePreview: '' });
+    setEventCreateStatus({ submitting: false, success: false, error: '' });
+  };
+
+  // --- FILE TO BASE64 HELPER ---
+  const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  // --- IMAGE UPLOAD HANDLERS ---
+  const handleEventImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setEventCreateStatus({ submitting: false, success: false, error: 'Image must be under 5 MB.' });
+      return;
+    }
+    const base64 = await fileToBase64(file);
+    setNewEventForm((p) => ({ ...p, imageData: base64, imagePreview: base64 }));
+  };
+
+  const handleEventEditImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    const base64 = await fileToBase64(file);
+    setEventForm((p) => ({ ...p, imageData: base64, imagePreview: base64 }));
+  };
+
+  const handleNoticeImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setNoticeCreateStatus({ submitting: false, success: false, error: 'Image must be under 5 MB.' });
+      return;
+    }
+    const base64 = await fileToBase64(file);
+    setNewNoticeForm((p) => ({ ...p, imageData: base64, imagePreview: base64 }));
+  };
+
+  const handleNoticeEditImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    const base64 = await fileToBase64(file);
+    setNoticeForm((p) => ({ ...p, imageData: base64, imagePreview: base64 }));
+  };
+
+  const handleCourseImageUpload = async (e, setter) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    const base64 = await fileToBase64(file);
+    setter((p) => ({ ...p, imageData: base64, imagePreview: base64 }));
+  };
+
+  const handleCourseGalleryUpload = async (e, setter) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const base64Arr = await Promise.all(files.filter(f => f.size <= 5 * 1024 * 1024).map(fileToBase64));
+    setter((p) => {
+      const existing = p.galleryImages || [];
+      return { ...p, galleryImages: [...existing, ...base64Arr] };
+    });
+  };
+
+  const handleStaffImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setStaffCreateStatus({ submitting: false, success: false, error: 'Image must be under 5 MB.' });
+      return;
+    }
+    const base64 = await fileToBase64(file);
+    setNewStaffForm((p) => ({ ...p, imageData: base64, imagePreview: base64 }));
+  };
+
+  // --- STAFF: CREATE ---
+  const resetNewStaffForm = () => {
+    setNewStaffForm({ name: '', subject: '', description: '', imageData: '', imagePreview: '' });
+    setStaffCreateStatus({ submitting: false, success: false, error: '' });
+  };
+
+  const createStaff = async () => {
+    const name = (newStaffForm.name || '').trim();
+    if (!name) {
+      setStaffCreateStatus({ submitting: false, success: false, error: 'Lecturer name is required.' });
+      return;
+    }
+    setStaffCreateStatus({ submitting: true, success: false, error: '' });
+    try {
+      const payload = {
+        name,
+        subject: (newStaffForm.subject || '').trim() || undefined,
+        description: (newStaffForm.description || '').trim() || undefined,
+        imageData: newStaffForm.imageData || undefined,
+      };
+      const res = await apiClient.post('/api/staff', payload);
+      const created = res?.data;
+      if (created?._id) {
+        setStaffMembers((prev) => [created, ...prev]);
+        setStaffCreateStatus({ submitting: false, success: true, error: '' });
+        resetNewStaffForm();
+        setShowNewStaffForm(false);
+      } else {
+        setStaffCreateStatus({ submitting: false, success: false, error: 'Staff was not created.' });
+      }
+    } catch (err) {
+      const errorMessage = err?.response?.data?.message || 'Failed to create staff member';
+      setStaffCreateStatus({ submitting: false, success: false, error: errorMessage });
+    }
+  };
+
+  // --- STAFF: EDIT/DELETE ---
+  const openEditStaff = (staff) => {
+    if (!staff?._id) return;
+    setEditingStaffId(staff._id);
+    setStaffForm({
+      name: staff.name || '',
+      subject: staff.subject || '',
+      description: staff.description || '',
+      imageUrl: staff.imageUrl || '',
+      imageData: '',
+      imagePreview: staff.imageUrl || '',
+    });
+  };
+
+  const closeEditStaff = () => {
+    setEditingStaffId(null);
+    setStaffForm({});
+  };
+
+  const handleStaffEditImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    const base64 = await fileToBase64(file);
+    setStaffForm((p) => ({ ...p, imageData: base64, imagePreview: base64 }));
+  };
+
+  const saveStaffEdits = async () => {
+    if (!editingStaffId) return;
+    const payload = {
+      name: (staffForm.name || '').trim(),
+      subject: (staffForm.subject || '').trim() || undefined,
+      description: (staffForm.description || '').trim() || undefined,
+      imageData: staffForm.imageData || undefined,
+      imageUrl: staffForm.imageUrl || undefined,
+    };
+    try {
+      const res = await apiClient.put(`/api/staff/${editingStaffId}`, payload);
+      const updated = res?.data;
+      if (updated?._id) {
+        setStaffMembers((prev) => prev.map((s) => (String(s._id) === String(updated._id) ? updated : s)));
+      }
+      closeEditStaff();
+    } catch (err) {
+      console.error('Failed to update staff', err);
+    }
+  };
+
+  const deleteStaffById = async (id) => {
+    if (!id) return;
+    if (!window.confirm('Delete this staff member?')) return;
+    try {
+      await apiClient.delete(`/api/staff/${id}`);
+      setStaffMembers((prev) => prev.filter((s) => String(s._id) !== String(id)));
+      if (String(editingStaffId) === String(id)) closeEditStaff();
+    } catch (err) {
+      console.error('Failed to delete staff', err);
+    }
+  };
+
+  // --- NOTICE CRUD ---
+  const resetNewNoticeForm = () => setNewNoticeForm({ title: '', description: '', imageData: '', imagePreview: '' });
+
+  const createNotice = async () => {
+    const title = (newNoticeForm.title || '').trim();
+    if (!title) {
+      setNoticeCreateStatus({ submitting: false, success: false, error: 'Title is required.' });
+      return;
+    }
+    setNoticeCreateStatus({ submitting: true, success: false, error: '' });
+    try {
+      const payload = {
+        title,
+        description: (newNoticeForm.description || '').trim() || undefined,
+        imageData: newNoticeForm.imageData || undefined,
+      };
+      const res = await apiClient.post('/api/notices', payload);
+      const created = res?.data;
+      if (created?._id) {
+        setNotices((prev) => [created, ...prev]);
+        setNoticeCreateStatus({ submitting: false, success: true, error: '' });
+        resetNewNoticeForm();
+        setShowNewNoticeForm(false);
+      } else {
+        setNoticeCreateStatus({ submitting: false, success: false, error: 'Notice was not created.' });
+      }
+    } catch (err) {
+      const errorMessage = err?.response?.data?.message || 'Failed to create notice';
+      setNoticeCreateStatus({ submitting: false, success: false, error: errorMessage });
+    }
+  };
+
+  const openEditNotice = (notice) => {
+    setEditingNoticeId(notice._id);
+    setNoticeForm({ title: notice.title || '', description: notice.description || '', imageUrl: notice.imageUrl || '', imageData: '', imagePreview: notice.imageUrl || '' });
+  };
+  const closeEditNotice = () => { setEditingNoticeId(null); setNoticeForm({}); };
+
+  const saveNoticeEdits = async () => {
+    if (!editingNoticeId) return;
+    try {
+      const payload = {
+        title: (noticeForm.title || '').trim(),
+        description: (noticeForm.description || '').trim(),
+        imageData: noticeForm.imageData || undefined,
+        imageUrl: (!noticeForm.imageData && noticeForm.imageUrl) ? noticeForm.imageUrl : undefined,
+      };
+      const res = await apiClient.put(`/api/notices/${editingNoticeId}`, payload);
+      const updated = res?.data;
+      if (updated?._id) {
+        setNotices((prev) => prev.map((n) => (String(n._id) === String(editingNoticeId) ? updated : n)));
+      }
+      closeEditNotice();
+    } catch (err) {
+      console.error('Failed to save notice edits', err);
+    }
+  };
+
+  const deleteNoticeById = async (id) => {
+    if (!id) return;
+    if (!window.confirm('Delete this notice?')) return;
+    try {
+      await apiClient.delete(`/api/notices/${id}`);
+      setNotices((prev) => prev.filter((n) => String(n._id) !== String(id)));
+      if (String(editingNoticeId) === String(id)) closeEditNotice();
+    } catch (err) {
+      console.error('Failed to delete notice', err);
+    }
+  };
+
+  const createEvent = async () => {
+    const title = (newEventForm.title || '').trim();
+    if (!title) {
+      setEventCreateStatus({ submitting: false, success: false, error: 'Title is required.' });
+      return;
+    }
+    setEventCreateStatus({ submitting: true, success: false, error: '' });
+    try {
+      const payload = {
+        title,
+        description: (newEventForm.description || '').trim() || undefined,
+        eventDate: newEventForm.eventDate || undefined,
+        imageData: newEventForm.imageData || undefined,
+      };
+      const res = await apiClient.post('/api/events', payload);
+      const created = res?.data;
+      if (created?._id) {
+        setEvents((prev) => [created, ...prev]);
+        setEventCreateStatus({ submitting: false, success: true, error: '' });
+        resetNewEventForm();
+        setShowNewEventForm(false);
+      } else {
+        setEventCreateStatus({ submitting: false, success: false, error: 'Event was not created.' });
+      }
+    } catch (err) {
+      const errorMessage = err?.response?.data?.message || 'Failed to create event';
+      setEventCreateStatus({ submitting: false, success: false, error: errorMessage });
     }
   };
 
@@ -603,6 +1077,208 @@ function Dashboard() {
         </span>
       </div>
 
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6">
+        <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Add New Course</p>
+            <p className="text-sm text-slate-500">Publish instantly to the Programs page once saved.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowNewCourseForm((prev) => !prev)}
+            className="px-4 py-2 rounded-xl font-bold text-sm border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+          >
+            {showNewCourseForm ? 'Hide form' : 'Add course'}
+          </button>
+        </div>
+
+        {showNewCourseForm && (
+          <div className="space-y-5">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
+                <input
+                  value={newCourseForm.title}
+                  onChange={(e) => updateNewCourseForm({ title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  placeholder="Diploma in Airline Ticketing"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Type</label>
+                <input
+                  value={newCourseForm.courseType}
+                  onChange={(e) => updateNewCourseForm({ courseType: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  placeholder="AIRLINE & AVIATION PROGRAMS"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
+                <input
+                  value={newCourseForm.duration}
+                  onChange={(e) => updateNewCourseForm({ duration: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  placeholder="06 to 08 Months (Part Time)"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Total Course Fee</label>
+                <input
+                  value={newCourseForm.totalCourseFee}
+                  onChange={(e) => updateNewCourseForm({ totalCourseFee: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  placeholder="LKR 100,000"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Cover Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleCourseImageUpload(e, setNewCourseForm)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {newCourseForm.imagePreview && (
+                  <img src={newCourseForm.imagePreview} alt="Preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-slate-100" />
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Short Description</label>
+              <textarea
+                value={newCourseForm.shortDescription}
+                onChange={(e) => updateNewCourseForm({ shortDescription: e.target.value })}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                placeholder="Brief summary shown on cards"
+              />
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+              <div className="text-sm font-bold text-slate-800 mb-3">Branch Prices (optional)</div>
+              <div className="grid md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">City Campus</label>
+                  <input
+                    value={newCourseForm.branchPrices?.iaacCity}
+                    onChange={(e) => updateNewBranchPrice('iaacCity', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:border-blue-500 outline-none text-sm"
+                    placeholder="LKR 80,000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Airport Academy</label>
+                  <input
+                    value={newCourseForm.branchPrices?.airportAcademy}
+                    onChange={(e) => updateNewBranchPrice('airportAcademy', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:border-blue-500 outline-none text-sm"
+                    placeholder="LKR 90,000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 uppercase mb-1">IAAC Center</label>
+                  <input
+                    value={newCourseForm.branchPrices?.iaacCenter}
+                    onChange={(e) => updateNewBranchPrice('iaacCenter', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white focus:border-blue-500 outline-none text-sm"
+                    placeholder="LKR 80,000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Minimum Entry Requirements</label>
+                <textarea
+                  value={newCourseForm.minimumEntryRequirements}
+                  onChange={(e) => updateNewCourseForm({ minimumEntryRequirements: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Evaluation Criteria</label>
+                <textarea
+                  value={newCourseForm.evaluationCriteria}
+                  onChange={(e) => updateNewCourseForm({ evaluationCriteria: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Examination Format</label>
+                <textarea
+                  value={newCourseForm.examinationFormat}
+                  onChange={(e) => updateNewCourseForm({ examinationFormat: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Additional Notes</label>
+                <textarea
+                  value={newCourseForm.additionalNotes}
+                  onChange={(e) => updateNewCourseForm({ additionalNotes: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session Details</label>
+                <textarea
+                  value={newCourseForm.sessionDetails}
+                  onChange={(e) => updateNewCourseForm({ sessionDetails: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                  placeholder="e.g. Weekend batches, simulator hours, on-site visits"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Gallery Images</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handleCourseGalleryUpload(e, setNewCourseForm)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {newCourseForm.galleryImages && newCourseForm.galleryImages.length > 0 && (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {newCourseForm.galleryImages.map((img, i) => (
+                      <div key={i} className="relative">
+                        <img src={img} alt={`Gallery ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+                        <button type="button" onClick={() => setNewCourseForm(p => ({ ...p, galleryImages: p.galleryImages.filter((_, idx) => idx !== i) }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="text-sm font-medium text-red-600">{courseCreateStatus.error}</div>
+              {courseCreateStatus.success && (
+                <div className="text-sm font-medium text-emerald-600">Course saved and visible on Programs.</div>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <button
+                  type="button"
+                  onClick={resetNewCourseForm}
+                  className="px-4 py-2 rounded-xl font-bold text-sm border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={createCourse}
+                  disabled={courseCreateStatus.submitting}
+                  className="px-4 py-2 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {courseCreateStatus.submitting ? 'Saving...' : 'Create Course'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {courses.length === 0 ? (
         <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
           No courses available.
@@ -669,6 +1345,82 @@ function Dashboard() {
           </span>
         </div>
 
+        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6">
+          <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+            <div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Add Practical Session</p>
+              <p className="text-sm text-slate-500">Create hands-on sessions with gallery and session notes.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowNewPracticalForm((prev) => !prev)}
+              className="px-4 py-2 rounded-xl font-bold text-sm border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+            >
+              {showNewPracticalForm ? 'Hide form' : 'Add practical'}
+            </button>
+          </div>
+
+          {showNewPracticalForm && (
+            <div className="space-y-5">
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session Images</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => handleCourseGalleryUpload(e, setNewPracticalForm)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {newPracticalForm.galleryImages && newPracticalForm.galleryImages.length > 0 && (
+                  <div className="flex gap-2 mt-3 flex-wrap">
+                    {newPracticalForm.galleryImages.map((img, i) => (
+                      <div key={i} className="relative">
+                        <img src={img} alt={`Session ${i+1}`} className="w-24 h-24 object-cover rounded-xl border border-slate-200" />
+                        <button type="button" onClick={() => setNewPracticalForm(p => ({ ...p, galleryImages: p.galleryImages.filter((_, idx) => idx !== i) }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+                <textarea
+                  value={newPracticalForm.shortDescription}
+                  onChange={(e) => setNewPracticalForm((p) => ({ ...p, shortDescription: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[120px]"
+                  placeholder="Describe this practical session..."
+                />
+              </div>
+
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="text-sm font-medium text-red-600">{practicalCreateStatus.error}</div>
+                {practicalCreateStatus.success && (
+                  <div className="text-sm font-medium text-emerald-600">Practical session saved!</div>
+                )}
+                <div className="flex gap-2 ml-auto">
+                  <button
+                    type="button"
+                    onClick={resetNewPracticalForm}
+                    className="px-4 py-2 rounded-xl font-bold text-sm border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={createPractical}
+                    disabled={practicalCreateStatus.submitting}
+                    className="px-4 py-2 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {practicalCreateStatus.submitting ? 'Saving...' : 'Add Session'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {trainings.length === 0 ? (
           <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
             No practical trainings available.
@@ -732,6 +1484,96 @@ function Dashboard() {
         </span>
       </div>
 
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6">
+        <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Add New Event</p>
+            <p className="text-sm text-slate-500">Create an event that appears on the Events page.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowNewEventForm((prev) => !prev)}
+            className="px-4 py-2 rounded-xl font-bold text-sm border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+          >
+            {showNewEventForm ? 'Hide form' : 'Add event'}
+          </button>
+        </div>
+
+        {showNewEventForm && (
+          <div className="space-y-5">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
+                <input
+                  value={newEventForm.title}
+                  onChange={(e) => setNewEventForm((p) => ({ ...p, title: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  placeholder="Graduation Ceremony 2026"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Date</label>
+                <input
+                  type="date"
+                  value={newEventForm.eventDate}
+                  onChange={(e) => setNewEventForm((p) => ({ ...p, eventDate: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEventImageUpload}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+            </div>
+
+            {newEventForm.imagePreview && (
+              <div className="rounded-2xl overflow-hidden border border-slate-200">
+                <img src={newEventForm.imagePreview} alt="Preview" className="w-full h-40 object-cover" />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+              <textarea
+                value={newEventForm.description}
+                onChange={(e) => setNewEventForm((p) => ({ ...p, description: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[120px]"
+                placeholder="Event details..."
+              />
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="text-sm font-medium text-red-600">{eventCreateStatus.error}</div>
+              {eventCreateStatus.success && (
+                <div className="text-sm font-medium text-emerald-600">Event created successfully.</div>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <button
+                  type="button"
+                  onClick={resetNewEventForm}
+                  className="px-4 py-2 rounded-xl font-bold text-sm border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={createEvent}
+                  disabled={eventCreateStatus.submitting}
+                  className="px-4 py-2 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {eventCreateStatus.submitting ? 'Saving...' : 'Create Event'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {events.length === 0 ? (
         <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
           No events available.
@@ -743,13 +1585,31 @@ function Dashboard() {
               {e.imageUrl && (
                 <img src={e.imageUrl} alt={e.title} className="w-full h-40 object-cover rounded-2xl mb-3 border border-slate-100" />
               )}
-              <div className="flex items-start justify-between mb-2">
-                <h4 className="font-bold text-lg text-slate-900 truncate">{e.title}</h4>
-                {e.eventDate && (
-                  <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-blue-100">
-                    {new Date(e.eventDate).toLocaleDateString()}
-                  </span>
-                )}
+              <div className="flex items-start justify-between mb-2 gap-2">
+                <h4 className="font-bold text-lg text-slate-900 truncate flex-1">{e.title}</h4>
+                <div className="flex items-center gap-1 shrink-0">
+                  {e.eventDate && (
+                    <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-blue-100">
+                      {new Date(e.eventDate).toLocaleDateString()}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => openEditEvent(e)}
+                    className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    title="Edit event"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteEventById(e._id)}
+                    className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    title="Delete event"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
               {e.description && <p className="text-sm text-slate-600 line-clamp-3">{e.description}</p>}
             </div>
@@ -769,6 +1629,103 @@ function Dashboard() {
         </span>
       </div>
 
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6">
+        <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Add Staff Member</p>
+            <p className="text-sm text-slate-500">Upload a photo and add lecturer details.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowNewStaffForm((prev) => !prev)}
+            className="px-4 py-2 rounded-xl font-bold text-sm border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+          >
+            {showNewStaffForm ? 'Hide form' : 'Add staff'}
+          </button>
+        </div>
+
+        {showNewStaffForm && (
+          <div className="space-y-5">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Lecturer Name</label>
+                <input
+                  value={newStaffForm.name}
+                  onChange={(e) => setNewStaffForm((p) => ({ ...p, name: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  placeholder="Mr. John Perera"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Subject / Role</label>
+                <input
+                  value={newStaffForm.subject}
+                  onChange={(e) => setNewStaffForm((p) => ({ ...p, subject: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  placeholder="Aviation Safety & Regulations"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Photo (upload from device)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleStaffImageUpload}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+              </div>
+            </div>
+
+            {newStaffForm.imagePreview && (
+              <div className="flex items-center gap-4">
+                <img src={newStaffForm.imagePreview} alt="Preview" className="w-20 h-20 object-cover rounded-xl border border-slate-200" />
+                <button
+                  type="button"
+                  onClick={() => setNewStaffForm((p) => ({ ...p, imageData: '', imagePreview: '' }))}
+                  className="text-xs text-red-600 font-bold hover:underline"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+              <textarea
+                value={newStaffForm.description}
+                onChange={(e) => setNewStaffForm((p) => ({ ...p, description: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[100px]"
+                placeholder="Brief bio or qualifications..."
+              />
+            </div>
+
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="text-sm font-medium text-red-600">{staffCreateStatus.error}</div>
+              {staffCreateStatus.success && (
+                <div className="text-sm font-medium text-emerald-600">Staff member added.</div>
+              )}
+              <div className="flex gap-2 ml-auto">
+                <button
+                  type="button"
+                  onClick={resetNewStaffForm}
+                  className="px-4 py-2 rounded-xl font-bold text-sm border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={createStaff}
+                  disabled={staffCreateStatus.submitting}
+                  className="px-4 py-2 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {staffCreateStatus.submitting ? 'Saving...' : 'Add Staff'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {staffMembers.length === 0 ? (
         <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
           No staff members available.
@@ -781,10 +1738,28 @@ function Dashboard() {
                 {s.imageUrl && (
                   <img src={s.imageUrl} alt={s.name} className="w-16 h-16 object-cover rounded-xl border border-slate-200" />
                 )}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h4 className="font-bold text-lg text-slate-900 truncate">{s.name}</h4>
+                  {s.subject && <div className="text-xs text-blue-600 font-bold mt-0.5">{s.subject}</div>}
                   <div className="text-xs text-slate-500">{s.role || s.category || 'Staff'}</div>
-                  {s.email && <div className="text-xs text-slate-600 mt-1">{s.email}</div>}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => openEditStaff(s)}
+                    className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                    title="Edit"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteStaffById(s._id)}
+                    className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
               {s.description && <p className="text-sm text-slate-600 mt-3 line-clamp-3">{s.description}</p>}
@@ -800,10 +1775,71 @@ function Dashboard() {
     <div className="space-y-6">
       <div className="flex justify-between items-center px-2">
         <h3 className="font-bold text-slate-800 text-2xl">Notices</h3>
-        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
-          {notices.length} Total
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
+            {notices.length} Total
+          </span>
+          <button
+            onClick={() => { setShowNewNoticeForm((p) => !p); setNoticeCreateStatus({ submitting: false, success: false, error: '' }); }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-600/20"
+          >
+            {showNewNoticeForm ? <X size={16} /> : <Plus size={16} />}
+            {showNewNoticeForm ? 'Cancel' : 'Add Notice'}
+          </button>
+        </div>
       </div>
+
+      {/* Add Notice Form */}
+      <AnimatePresence>
+        {showNewNoticeForm && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+            <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm space-y-4">
+              <h4 className="font-bold text-lg text-slate-800">New Notice</h4>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title *</label>
+                <input
+                  value={newNoticeForm.title}
+                  onChange={(e) => setNewNoticeForm((p) => ({ ...p, title: e.target.value }))}
+                  placeholder="Notice title"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleNoticeImageUpload}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                {newNoticeForm.imagePreview && (
+                  <img src={newNoticeForm.imagePreview} alt="Preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-slate-100" />
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+                <textarea
+                  value={newNoticeForm.description}
+                  onChange={(e) => setNewNoticeForm((p) => ({ ...p, description: e.target.value }))}
+                  placeholder="Notice description..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[100px]"
+                />
+              </div>
+              {noticeCreateStatus.error && <p className="text-red-500 text-sm font-medium">{noticeCreateStatus.error}</p>}
+              {noticeCreateStatus.success && <p className="text-green-500 text-sm font-medium">Notice created!</p>}
+              <div className="flex justify-end">
+                <button
+                  onClick={createNotice}
+                  disabled={noticeCreateStatus.submitting}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {noticeCreateStatus.submitting ? 'Saving...' : 'Create Notice'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {notices.length === 0 ? (
         <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
@@ -814,11 +1850,19 @@ function Dashboard() {
           {notices.map((n) => (
             <div key={n._id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm">
               <div className="flex items-start justify-between mb-2">
-                <h4 className="font-bold text-lg text-slate-900 truncate">{n.title}</h4>
-                <span className="text-[10px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-slate-200">
-                  {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '—'}
-                </span>
+                <h4 className="font-bold text-lg text-slate-900 truncate flex-1">{n.title}</h4>
+                <div className="flex items-center gap-1 ml-2">
+                  <button onClick={() => openEditNotice(n)} className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors" title="Edit">
+                    <Pencil size={14} />
+                  </button>
+                  <button onClick={() => deleteNoticeById(n._id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors" title="Delete">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
+              <span className="text-[10px] bg-slate-50 text-slate-700 px-2 py-0.5 rounded font-bold uppercase tracking-wide border border-slate-200 mb-2 inline-block">
+                {n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '—'}
+              </span>
               {n.imageUrl && (
                 <img src={n.imageUrl} alt={n.title} className="w-full h-32 object-cover rounded-2xl mb-3 border border-slate-100" />
               )}
@@ -1045,13 +2089,16 @@ function Dashboard() {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Image URL (optional)</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Cover Image</label>
                     <input
-                      value={courseForm.imageUrl || ''}
-                      onChange={(e) => updateCourseForm({ imageUrl: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                      placeholder="https://..."
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleCourseImageUpload(e, setCourseForm)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     />
+                    {courseForm.imagePreview && (
+                      <img src={courseForm.imagePreview} alt="Preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-slate-100" />
+                    )}
                   </div>
                 </div>
 
@@ -1131,6 +2178,34 @@ function Dashboard() {
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session Details</label>
+                    <textarea
+                      value={courseForm.sessionDetails || ''}
+                      onChange={(e) => updateCourseForm({ sessionDetails: e.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Gallery Images</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleCourseGalleryUpload(e, setCourseForm)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {courseForm.galleryImages && courseForm.galleryImages.length > 0 && (
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        {courseForm.galleryImages.map((img, i) => (
+                          <div key={i} className="relative">
+                            <img src={img} alt={`Gallery ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
+                            <button type="button" onClick={() => setCourseForm(p => ({ ...p, galleryImages: p.galleryImages.filter((_, idx) => idx !== i) }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1145,6 +2220,267 @@ function Dashboard() {
                 <button
                   type="button"
                   onClick={saveCourseEdits}
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- EVENT EDIT MODAL --- */}
+      <AnimatePresence>
+        {editingEventId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            onClick={closeEditEvent}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={(ev) => ev.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">Edit Event</h2>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">ID: {editingEventId}</p>
+                </div>
+                <button onClick={closeEditEvent} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                  <X size={24} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-5">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
+                    <input
+                      value={eventForm.title || ''}
+                      onChange={(ev) => updateEventForm({ title: ev.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                      placeholder="Event title"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Event Date</label>
+                    <input
+                      type="date"
+                      value={eventForm.eventDate || ''}
+                      onChange={(ev) => updateEventForm({ eventDate: ev.target.value })}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Image</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEventEditImageUpload}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                  </div>
+                </div>
+
+                {eventForm.imagePreview && (
+                  <div className="rounded-2xl overflow-hidden border border-slate-200">
+                    <img src={eventForm.imagePreview} alt="Preview" className="w-full h-40 object-cover" />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+                  <textarea
+                    value={eventForm.description || ''}
+                    onChange={(ev) => updateEventForm({ description: ev.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[120px]"
+                    placeholder="Event details"
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => deleteEventById(editingEventId)}
+                  className="px-5 py-2.5 bg-white border border-red-200 text-red-700 rounded-xl font-bold text-sm hover:bg-red-50 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={saveEventEdits}
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- STAFF EDIT MODAL --- */}
+      <AnimatePresence>
+        {editingStaffId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            onClick={closeEditStaff}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={(ev) => ev.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800">Edit Staff</h2>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">ID: {editingStaffId}</p>
+                </div>
+                <button onClick={closeEditStaff} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                  <X size={24} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-5">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Lecturer Name</label>
+                    <input
+                      value={staffForm.name || ''}
+                      onChange={(ev) => setStaffForm((p) => ({ ...p, name: ev.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Subject / Role</label>
+                    <input
+                      value={staffForm.subject || ''}
+                      onChange={(ev) => setStaffForm((p) => ({ ...p, subject: ev.target.value }))}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload New Photo</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleStaffEditImageUpload}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                  </div>
+                </div>
+
+                {staffForm.imagePreview && (
+                  <div className="flex items-center gap-4">
+                    <img src={staffForm.imagePreview} alt="Preview" className="w-20 h-20 object-cover rounded-xl border border-slate-200" />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+                  <textarea
+                    value={staffForm.description || ''}
+                    onChange={(ev) => setStaffForm((p) => ({ ...p, description: ev.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[100px]"
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => deleteStaffById(editingStaffId)}
+                  className="px-5 py-2.5 bg-white border border-red-200 text-red-700 rounded-xl font-bold text-sm hover:bg-red-50 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={saveStaffEdits}
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- NOTICE EDIT MODAL --- */}
+      <AnimatePresence>
+        {editingNoticeId && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            onClick={closeEditNotice}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="text-xl font-extrabold text-slate-900">Edit Notice</h3>
+                <button onClick={closeEditNotice} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                  <X size={24} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
+                  <input
+                    value={noticeForm.title || ''}
+                    onChange={(ev) => setNoticeForm((p) => ({ ...p, title: ev.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleNoticeEditImageUpload}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {noticeForm.imagePreview && (
+                    <img src={noticeForm.imagePreview} alt="Preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-slate-100" />
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+                  <textarea
+                    value={noticeForm.description || ''}
+                    onChange={(ev) => setNoticeForm((p) => ({ ...p, description: ev.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[100px]"
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => deleteNoticeById(editingNoticeId)}
+                  className="px-5 py-2.5 bg-white border border-red-200 text-red-700 rounded-xl font-bold text-sm hover:bg-red-50 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={saveNoticeEdits}
                   className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
                 >
                   Save Changes

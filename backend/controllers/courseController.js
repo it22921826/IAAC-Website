@@ -26,7 +26,9 @@ exports.create = async (req, res) => {
       evaluationCriteria, 
       examinationFormat, 
       additionalNotes,
+      sessionDetails,
       imageUrl,
+      imageData,
       imageUrls,
     } = req.body;
 
@@ -35,6 +37,9 @@ exports.create = async (req, res) => {
       branchPrices?.iaacCity ||
       branchPrices?.airportAcademy ||
       branchPrices?.iaacCenter;
+
+    // imageData is a base64 data-URI sent from the dashboard file picker
+    const finalImage = imageData || imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined);
 
     // Create the new course object
     const newCourse = new Course({
@@ -49,7 +54,8 @@ exports.create = async (req, res) => {
       evaluationCriteria,
       examinationFormat,
       additionalNotes,
-      imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
+      sessionDetails,
+      imageUrl: finalImage,
       imageUrls,
     });
 
@@ -77,7 +83,9 @@ exports.update = async (req, res) => {
       evaluationCriteria,
       examinationFormat,
       additionalNotes,
+      sessionDetails,
       imageUrl,
+      imageData,
       imageUrls,
     } = req.body || {};
 
@@ -86,6 +94,9 @@ exports.update = async (req, res) => {
       branchPrices?.iaacCity ||
       branchPrices?.airportAcademy ||
       branchPrices?.iaacCenter;
+
+    // imageData is a base64 data-URI sent from the dashboard file picker
+    const finalImage = imageData || imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined);
 
     const updatePayload = {
       title,
@@ -98,7 +109,8 @@ exports.update = async (req, res) => {
       evaluationCriteria,
       examinationFormat,
       additionalNotes,
-      imageUrl: imageUrl || (Array.isArray(imageUrls) && imageUrls.length > 0 ? imageUrls[0] : undefined),
+      sessionDetails,
+      imageUrl: finalImage,
       imageUrls,
     };
 

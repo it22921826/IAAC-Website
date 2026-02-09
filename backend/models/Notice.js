@@ -4,7 +4,7 @@ const noticeSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
-    imageUrl: { type: String, trim: true },
+    imageUrl: { type: String },
   },
   { timestamps: true }
 );

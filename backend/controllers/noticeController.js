@@ -12,12 +12,14 @@ exports.list = async (_req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { title, description, imageUrl } = req.body || {};
+    const { title, description, imageUrl, imageData } = req.body || {};
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
 
-    const notice = await Notice.create({ title, description, imageUrl });
+    // imageData is a base64 data-URI sent from the dashboard file picker
+    const finalImage = imageData || imageUrl || undefined;
+    const notice = await Notice.create({ title, description, imageUrl: finalImage });
     return res.status(201).json(notice);
   } catch (err) {
     console.error('Create notice error:', err);
@@ -28,11 +30,20 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, imageUrl } = req.body || {};
+    const { title, description, imageUrl, imageData } = req.body || {};
+
+    const updatePayload = {};
+    if (title !== undefined) updatePayload.title = title;
+    if (description !== undefined) updatePayload.description = description;
+    if (imageData) {
+      updatePayload.imageUrl = imageData;
+    } else if (imageUrl !== undefined) {
+      updatePayload.imageUrl = imageUrl;
+    }
 
     const updated = await Notice.findByIdAndUpdate(
       id,
-      { title, description, imageUrl },
+      updatePayload,
       { new: true }
     );
 

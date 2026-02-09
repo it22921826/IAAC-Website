@@ -90,7 +90,8 @@ function PracticalTrainings() {
                     title={c.title}
                     description={c.shortDescription || ''}
                     duration={c.duration || '—'}
-                    to={`/programs/course/${c._id}`}
+                    image={c.imageUrl || (c.imageUrls && c.imageUrls[0]) || ''}
+                    to={`/programs/session/${c._id}`}
                   />
                 ))}
               </motion.div>
@@ -102,10 +103,10 @@ function PracticalTrainings() {
   );
 }
 
-function CourseCard({ title, description, duration, to }) {
+function CourseCard({ title, description, duration, image, to }) {
   return (
     <motion.div
-      className="bg-white p-8 rounded-2xl border border-slate-100 group"
+      className="bg-white rounded-2xl border border-slate-100 group overflow-hidden"
       variants={{
         hidden: { opacity: 0, y: 40 },
         visible: {
@@ -117,22 +118,36 @@ function CourseCard({ title, description, duration, to }) {
       whileHover={{ y: -10, boxShadow: '0px 25px 50px -25px rgba(37, 99, 235, 0.25)' }}
       transition={{ type: 'spring', stiffness: 200, damping: 20 }}
     >
-      <div className="flex justify-between items-start mb-6">
-        <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-colors">
-          <Wrench size={32} strokeWidth={1.5} />
+      {/* Cover Image */}
+      {image ? (
+        <div className="w-full h-48 overflow-hidden">
+          <img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
         </div>
-        <span className="px-3 py-1 bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wide">
-          {duration}
-        </span>
+      ) : (
+        <div className="w-full h-48 bg-gradient-to-br from-blue-50 to-sky-100 flex items-center justify-center">
+          <Wrench size={48} className="text-blue-300" strokeWidth={1.5} />
+        </div>
+      )}
+
+      <div className="p-8">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-xl font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">{title}</h3>
+          <span className="px-3 py-1 bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wide whitespace-nowrap ml-3">
+            {duration}
+          </span>
+        </div>
+        <p className="text-slate-500 leading-relaxed text-sm mb-6 line-clamp-2">{description}</p>
+        <Link
+          to={to}
+          className="flex items-center gap-2 text-sm font-bold text-blue-600 transition-all duration-300 hover:gap-3 hover:brightness-110"
+        >
+          View Details <span aria-hidden="true">&rarr;</span>
+        </Link>
       </div>
-      <h3 className="text-xl font-bold text-slate-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">{title}</h3>
-      <p className="text-slate-500 leading-relaxed text-sm mb-6 line-clamp-2">{description}</p>
-      <Link
-        to={to}
-        className="flex items-center gap-2 text-sm font-bold text-blue-600 transition-all duration-300 hover:gap-3 hover:brightness-110"
-      >
-        View Curriculum <span aria-hidden="true">&rarr;</span>
-      </Link>
     </motion.div>
   );
 }

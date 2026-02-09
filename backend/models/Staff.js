@@ -3,8 +3,9 @@ const mongoose = require('mongoose');
 const staffSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    subject: { type: String, trim: true },
     description: { type: String, trim: true },
-    imageUrl: { type: String, trim: true },
+    imageUrl: { type: String },
     // legacy/optional fields so older content still loads
     role: { type: String, trim: true },
     qualifications: { type: String, trim: true },

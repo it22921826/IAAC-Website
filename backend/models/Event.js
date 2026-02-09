@@ -7,8 +7,8 @@ const eventSchema = new mongoose.Schema(
 
     // Fields used by the current admin dashboard
     eventDate: { type: Date },
-    imageUrl: { type: String, trim: true },
-    imageUrls: [{ type: String, trim: true }],
+    imageUrl: { type: String },
+    imageUrls: [{ type: String }],
 
     // legacy/optional fields so older content still loads
     date: { type: Date },

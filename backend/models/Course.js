@@ -18,6 +18,7 @@ const CourseSchema = new mongoose.Schema(
     evaluationCriteria: { type: String },
     examinationFormat: { type: String },
     additionalNotes: { type: String },
+    sessionDetails: { type: String },
   },
   { timestamps: true }
 );

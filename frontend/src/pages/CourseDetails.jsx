@@ -79,6 +79,17 @@ function CourseDetails() {
     ? (selectedBranchPrice || 'Contact for Pricing')
     : (normalizePrice(course.totalCourseFee) || anyBranchPrice || 'Contact for Pricing');
 
+  const sessionLines = (course.sessionDetails || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const gallery = Array.isArray(course.imageUrls) && course.imageUrls.length
+    ? course.imageUrls
+    : course.imageUrl
+      ? [course.imageUrl]
+      : [];
+
   return (
     <div className="bg-slate-50 min-h-screen">
       
@@ -169,7 +180,57 @@ function CourseDetails() {
         </div>
       </section>
 
-      {/* --- 3. SYLLABUS SECTION --- */}
+      {/* --- 3. SESSION DETAILS --- */}
+      {(sessionLines.length > 0 || gallery.length > 0) && (
+        <section className="bg-white py-16 px-6 border-t border-slate-200">
+          <div className="container mx-auto max-w-5xl space-y-12">
+            {sessionLines.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-amber-100 text-amber-700 rounded-xl">
+                    <Calendar size={24} />
+                  </div>
+                  <h2 className="text-3xl font-bold text-slate-900">Session Breakdown</h2>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8">
+                  <ul className="space-y-3">
+                    {sessionLines.map((line, idx) => (
+                      <li key={idx} className="flex items-start gap-3 text-slate-800">
+                        <CheckCircle className="text-blue-500 mt-1 shrink-0" size={18} />
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {gallery.length > 0 && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-blue-100 text-blue-700 rounded-xl">
+                    <FileText size={24} />
+                  </div>
+                  <h2 className="text-3xl font-bold text-slate-900">Session Gallery</h2>
+                </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {gallery.map((src, idx) => (
+                    <div key={idx} className="relative group overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+                      <img
+                        src={src}
+                        alt={`Gallery ${idx + 1}`}
+                        className="w-full h-52 object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* --- 4. SYLLABUS SECTION --- */}
       {course.additionalNotes && (
         <section className="bg-white py-20 px-6">
           <div className="container mx-auto max-w-5xl">
