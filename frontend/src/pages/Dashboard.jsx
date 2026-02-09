@@ -121,6 +121,14 @@ function Dashboard() {
     };
   }, []);
 
+  // --- UNIQUE COURSE TYPES (for dropdown) ---
+  const existingCourseTypes = useMemo(() => {
+    const types = [...new Set(courses.map((c) => c.courseType).filter(Boolean))];
+    const defaults = ['Airline & Aviation Programs', 'Pilot Training Programs'];
+    defaults.forEach((d) => { if (!types.includes(d)) types.push(d); });
+    return types.sort();
+  }, [courses]);
+
   // --- CALENDAR LOGIC ---
   const daysInMonth = getDaysInMonth(currentMonth);
   const firstDay = getFirstDayOfMonth(currentMonth);
@@ -1106,12 +1114,16 @@ function Dashboard() {
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Type</label>
-                <input
+                <select
                   value={newCourseForm.courseType}
                   onChange={(e) => updateNewCourseForm({ courseType: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                  placeholder="AIRLINE & AVIATION PROGRAMS"
-                />
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm bg-white"
+                >
+                  <option value="">Select Course Type</option>
+                  {existingCourseTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
@@ -1130,18 +1142,6 @@ function Dashboard() {
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
                   placeholder="LKR 100,000"
                 />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Cover Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleCourseImageUpload(e, setNewCourseForm)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-                {newCourseForm.imagePreview && (
-                  <img src={newCourseForm.imagePreview} alt="Preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-slate-100" />
-                )}
               </div>
             </div>
 
@@ -1229,26 +1229,6 @@ function Dashboard() {
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
                   placeholder="e.g. Weekend batches, simulator hours, on-site visits"
                 />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Gallery Images</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => handleCourseGalleryUpload(e, setNewCourseForm)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-                {newCourseForm.galleryImages && newCourseForm.galleryImages.length > 0 && (
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    {newCourseForm.galleryImages.map((img, i) => (
-                      <div key={i} className="relative">
-                        <img src={img} alt={`Gallery ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
-                        <button type="button" onClick={() => setNewCourseForm(p => ({ ...p, galleryImages: p.galleryImages.filter((_, idx) => idx !== i) }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             </div>
 
@@ -2063,12 +2043,16 @@ function Dashboard() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Course Type</label>
-                    <input
+                    <select
                       value={courseForm.courseType || ''}
                       onChange={(e) => updateCourseForm({ courseType: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
-                      placeholder="AIRLINE & AVIATION PROGRAMS"
-                    />
+                      className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm bg-white"
+                    >
+                      <option value="">Select Course Type</option>
+                      {existingCourseTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Duration</label>
@@ -2087,18 +2071,6 @@ function Dashboard() {
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
                       placeholder="LKR 100,000"
                     />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Cover Image</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleCourseImageUpload(e, setCourseForm)}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    {courseForm.imagePreview && (
-                      <img src={courseForm.imagePreview} alt="Preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-slate-100" />
-                    )}
                   </div>
                 </div>
 
@@ -2185,26 +2157,6 @@ function Dashboard() {
                       onChange={(e) => updateCourseForm({ sessionDetails: e.target.value })}
                       className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[90px]"
                     />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Gallery Images</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => handleCourseGalleryUpload(e, setCourseForm)}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    {courseForm.galleryImages && courseForm.galleryImages.length > 0 && (
-                      <div className="flex gap-2 mt-2 flex-wrap">
-                        {courseForm.galleryImages.map((img, i) => (
-                          <div key={i} className="relative">
-                            <img src={img} alt={`Gallery ${i+1}`} className="w-20 h-20 object-cover rounded-lg border border-slate-200" />
-                            <button type="button" onClick={() => setCourseForm(p => ({ ...p, galleryImages: p.galleryImages.filter((_, idx) => idx !== i) }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
