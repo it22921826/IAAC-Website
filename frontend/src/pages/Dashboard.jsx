@@ -70,7 +70,7 @@ function Dashboard() {
   const [showNewCourseForm, setShowNewCourseForm] = useState(false);
   const [showNewPracticalForm, setShowNewPracticalForm] = useState(false);
   const [showNewEventForm, setShowNewEventForm] = useState(false);
-  const [newEventForm, setNewEventForm] = useState({ title: '', description: '', eventDate: '', imageData: '', imagePreview: '' });
+  const [newEventForm, setNewEventForm] = useState({ title: '', description: '', eventDate: '', galleryImages: [] });
   const [showNewStaffForm, setShowNewStaffForm] = useState(false);
   const [newStaffForm, setNewStaffForm] = useState({ name: '', subject: '', description: '', imageData: '', imagePreview: '' });
   const [courseCreateStatus, setCourseCreateStatus] = useState({ submitting: false, success: false, error: '' });
@@ -294,7 +294,7 @@ function Dashboard() {
     setPracticalCreateStatus({ submitting: true, success: false, error: '' });
     try {
       const payload = {
-        title: 'Practical Session',
+        title: (newPracticalForm.title || '').trim() || 'Practical Session',
         duration: '-',
         courseType: 'Practical Training',
         shortDescription: description || undefined,
@@ -387,7 +387,7 @@ function Dashboard() {
 
   // --- EVENTS: CREATE ---
   const resetNewEventForm = () => {
-    setNewEventForm({ title: '', description: '', eventDate: '', imageData: '', imagePreview: '' });
+    setNewEventForm({ title: '', description: '', eventDate: '', galleryImages: [] });
     setEventCreateStatus({ submitting: false, success: false, error: '' });
   };
 
@@ -402,14 +402,18 @@ function Dashboard() {
 
   // --- IMAGE UPLOAD HANDLERS ---
   const handleEventImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setEventCreateStatus({ submitting: false, success: false, error: 'Image must be under 5 MB.' });
-      return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const validFiles = files.filter(f => f.size <= 5 * 1024 * 1024);
+    if (validFiles.length < files.length) {
+      setEventCreateStatus({ submitting: false, success: false, error: 'Some images were skipped (over 5 MB each).' });
     }
-    const base64 = await fileToBase64(file);
-    setNewEventForm((p) => ({ ...p, imageData: base64, imagePreview: base64 }));
+    const base64Arr = await Promise.all(validFiles.map(fileToBase64));
+    setNewEventForm((p) => {
+      const existing = p.galleryImages || [];
+      const combined = [...existing, ...base64Arr].slice(0, 15);
+      return { ...p, galleryImages: combined };
+    });
   };
 
   const handleEventEditImageUpload = async (e) => {
@@ -646,7 +650,8 @@ function Dashboard() {
         title,
         description: (newEventForm.description || '').trim() || undefined,
         eventDate: newEventForm.eventDate || undefined,
-        imageData: newEventForm.imageData || undefined,
+        imageData: (newEventForm.galleryImages && newEventForm.galleryImages.length > 0) ? newEventForm.galleryImages[0] : undefined,
+        imageUrls: (newEventForm.galleryImages && newEventForm.galleryImages.length > 0) ? newEventForm.galleryImages : undefined,
       };
       const res = await apiClient.post('/api/events', payload);
       const created = res?.data;
@@ -1344,6 +1349,17 @@ function Dashboard() {
             <div className="space-y-5">
 
               <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session Name</label>
+                <input
+                  type="text"
+                  value={newPracticalForm.title}
+                  onChange={(e) => setNewPracticalForm((p) => ({ ...p, title: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                  placeholder="e.g. Fire Safety Training"
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session Images</label>
                 <input
                   type="file"
@@ -1501,19 +1517,28 @@ function Dashboard() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Image</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Upload Images <span className="text-slate-400 normal-case font-normal">(up to 15)</span></label>
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleEventImageUpload}
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
               </div>
             </div>
 
-            {newEventForm.imagePreview && (
-              <div className="rounded-2xl overflow-hidden border border-slate-200">
-                <img src={newEventForm.imagePreview} alt="Preview" className="w-full h-40 object-cover" />
+            {newEventForm.galleryImages && newEventForm.galleryImages.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-slate-500 uppercase mb-2">{newEventForm.galleryImages.length} Image{newEventForm.galleryImages.length > 1 ? 's' : ''} selected</p>
+                <div className="flex gap-2 flex-wrap">
+                  {newEventForm.galleryImages.map((img, i) => (
+                    <div key={i} className="relative">
+                      <img src={img} alt={`Event ${i+1}`} className="w-24 h-24 object-cover rounded-xl border border-slate-200" />
+                      <button type="button" onClick={() => setNewEventForm(p => ({ ...p, galleryImages: p.galleryImages.filter((_, idx) => idx !== i) }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
