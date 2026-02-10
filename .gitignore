@@ -1,6 +1,7 @@
 # Node dependencies
 node_modules/
-
+/mongo-backup
+/mongo-backup.zip
 # Logs
 npm-debug.log*
 yarn-debug.log*
