@@ -30,9 +30,20 @@ app.use(
       if (!origin) return callback(null, true);
 
       const envOrigin = process.env.FRONTEND_URL;
+      // Automatically allow the www. variant of the configured origin
+      let wwwVariant;
+      if (envOrigin) {
+        const url = new URL(envOrigin);
+        if (url.hostname.startsWith('www.')) {
+          wwwVariant = envOrigin.replace('www.', '');
+        } else {
+          wwwVariant = envOrigin.replace('://', '://www.');
+        }
+      }
       const allowList = new Set(
         [
           envOrigin,
+          wwwVariant,
           'http://localhost:5173',
           'http://127.0.0.1:5173',
           'http://localhost:3000',
