@@ -6,9 +6,10 @@ import { useNavigate } from 'react-router-dom';
 /* ---------------- SLIDESHOW CONFIG ---------------- */
 const heroImages = [
   '/hero1.png',
+  '/hero5.jpg',
+  '/hero4.JPG',
   '/hero2.png',
-  '/hero4.png',
-  '/hero5.png',
+  '/hero6.JPG',
 ];
 
 const SLIDE_DURATION = 5000;
@@ -23,6 +24,14 @@ function HeroSection() {
       setIndex((prev) => (prev + 1) % heroImages.length);
     }, SLIDE_DURATION);
     return () => clearInterval(timer);
+  }, []);
+
+  /* Preload images */
+  useEffect(() => {
+    heroImages.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
   }, []);
 
   /* Branches */
@@ -60,51 +69,63 @@ function HeroSection() {
     <section className="relative w-full min-h-[100svh] overflow-hidden bg-slate-900 flex flex-col justify-center">
 
       {/* ---------- BACKGROUND SLIDESHOW ---------- */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, scale: 1.08 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.4, ease: 'easeInOut' }}
-          className="absolute inset-0 z-0"
-        >
-          <img
-            src={heroImages[index]}
-            alt="Aviation Academy"
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/40 to-slate-900/95" />
-        </motion.div>
-      </AnimatePresence>
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={index}
+            /* SMOOTH TRANSITION FIX:
+               1. Start new image slightly zoomed in and invisible.
+               2. Fade it in to 100% opacity.
+               3. IMPORTANT: 'exit' keeps opacity at 1. The old image stays solid 
+                  behind the new one until the new one is fully visible.
+            */
+            initial={{ opacity: 0, scale: 1.1, zIndex: 1 }}
+            animate={{ opacity: 1, scale: 1, zIndex: 2 }}
+            exit={{ opacity: 1, zIndex: 0 }} 
+            transition={{ 
+              duration: 2.0, // Increased duration for smoother blend
+              ease: [0.4, 0, 0.2, 1] // Custom ease curve
+            }}
+            className="absolute inset-0"
+          >
+            <img
+              src={heroImages[index]}
+              alt="Aviation Academy"
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Overlay built into the slide so it fades with the image */}
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/50 to-slate-900/90" />
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* ---------- HERO CONTENT ---------- */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 text-center pt-28 sm:pt-32 pb-16">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
           className="flex flex-col items-center"
         >
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md mb-6">
             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
             <span className="text-xs sm:text-sm font-medium text-blue-100 uppercase tracking-wider">
-              Admissions Open 2025
+              Admissions Open 2026
             </span>
           </div>
-
-          {/* Title */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-5">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-sky-200">
+{/* Title - UPDATED FOR BETTER HIGHLIGHT & MIX */}
+         {/* Title - UPDATED: Original Size + High Highlight Gradient */}
+          {/* Title - UPDATED: SYMMETRICAL GRADIENT (Blue -> Light -> Blue) */}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-tight mb-5 drop-shadow-2xl">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-cyan-200 to-blue-500">
               Best Airline Training College 
             </span>
             <br />
             in Asia 
           </h1>
-
           {/* Description */}
-          <p className="text-sm sm:text-base md:text-lg text-slate-200 max-w-xl sm:max-w-2xl leading-relaxed mb-10">
+          <p className="text-sm sm:text-base md:text-lg text-slate-200 max-w-xl sm:max-w-2xl leading-relaxed mb-10 drop-shadow-md">
             Join Asia's premier airline training college. We craft professionals
             for Cabin Crew, Cargo & Logistics, and Ground Operations with global standards.
           </p>
@@ -140,7 +161,7 @@ function HeroSection() {
                     <h3 className="font-poppins font-bold text-sm sm:text-base text-white tracking-wide">
                       {branch.name}
                     </h3>
-                    <p className="font-poppins text-[10px] sm:text-xs uppercase tracking-wider text-slate-300">
+                    <p className="font-poppins text-[10px] sm:text-xs uppercase tracking-wider text-slate-300 group-hover:text-white/90">
                       {branch.desc}
                     </p>
                   </div>

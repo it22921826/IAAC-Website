@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { 
   Users, FileText, Calendar, BookOpen, UploadCloud,
-  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil, Plus
+  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil, Plus, Menu
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,6 +37,7 @@ const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(
 
 function Dashboard() {
   const [activeTab, setActiveTab] = useState('application'); 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Data State
   const [courses, setCourses] = useState([]);
@@ -901,19 +902,19 @@ function Dashboard() {
   // --- VIEW: APPLICATIONS (CARD GRID) ---
   const renderApplications = () => (
     <div className="space-y-6">
-      <div className="flex justify-between items-center px-2">
-        <h3 className="font-bold text-slate-800 text-2xl">Student Applications</h3>
-        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
+      <div className="flex justify-between items-center px-1 sm:px-2 gap-3">
+        <h3 className="font-bold text-slate-800 text-lg sm:text-2xl">Student Applications</h3>
+        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200 shrink-0">
           {applications.filter((a) => !a.isDone).length} Pending
         </span>
       </div>
 
       {applications.length === 0 ? (
-        <div className="p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
+        <div className="p-8 sm:p-12 text-center text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200">
           No applications received yet.
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {applications.map((app) => (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
@@ -1008,15 +1009,15 @@ function Dashboard() {
   // --- VIEW: MESSAGES (CLEAN LIST) ---
   const renderMessages = () => (
     <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+      <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
         <h3 className="font-bold text-slate-800 text-lg">Inbox</h3>
         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">{messages.length} Messages</div>
       </div>
       <div className="divide-y divide-slate-100">
         {messages.length === 0 ? (
-          <div className="p-12 text-center text-slate-400">No new messages.</div>
+          <div className="p-8 sm:p-12 text-center text-slate-400">No new messages.</div>
         ) : messages.map((msg) => (
-          <div key={msg.id} className={`p-6 transition-all hover:bg-slate-50 ${msg.isDone ? 'opacity-50 grayscale' : ''}`}>
+          <div key={msg.id} className={`p-4 sm:p-6 transition-all hover:bg-slate-50 ${msg.isDone ? 'opacity-50 grayscale' : ''}`}>
             <div className="flex justify-between items-start gap-4">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -1083,8 +1084,8 @@ function Dashboard() {
   // --- VIEW: COURSES ---
   const renderCourses = () => (
     <div className="space-y-6">
-      <div className="flex justify-between items-center px-2">
-        <h3 className="font-bold text-slate-800 text-2xl">Courses</h3>
+      <div className="flex justify-between items-center px-1 sm:px-2 gap-3">
+        <h3 className="font-bold text-slate-800 text-lg sm:text-2xl">Courses</h3>
         <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
           {courses.length} Total
         </span>
@@ -1324,7 +1325,7 @@ function Dashboard() {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center px-2">
-          <h3 className="font-bold text-slate-800 text-2xl">Practical Trainings</h3>
+          <h3 className="font-bold text-slate-800 text-lg sm:text-2xl">Practical Trainings</h3>
           <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
             {trainings.length} Total
           </span>
@@ -1474,7 +1475,7 @@ function Dashboard() {
   const renderEvents = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center px-2">
-        <h3 className="font-bold text-slate-800 text-2xl">Events</h3>
+        <h3 className="font-bold text-slate-800 text-lg sm:text-2xl">Events</h3>
         <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
           {events.length} Total
         </span>
@@ -1628,7 +1629,7 @@ function Dashboard() {
   const renderStaff = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center px-2">
-        <h3 className="font-bold text-slate-800 text-2xl">Staff</h3>
+        <h3 className="font-bold text-slate-800 text-lg sm:text-2xl">Staff</h3>
         <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
           {staffMembers.length} Total
         </span>
@@ -1779,7 +1780,7 @@ function Dashboard() {
   const renderNotices = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center px-2">
-        <h3 className="font-bold text-slate-800 text-2xl">Notices</h3>
+        <h3 className="font-bold text-slate-800 text-lg sm:text-2xl">Notices</h3>
         <div className="flex items-center gap-3">
           <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200">
             {notices.length} Total
@@ -1881,15 +1882,28 @@ function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
-      
+
+      {/* --- MOBILE SIDEBAR OVERLAY --- */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* --- SIDEBAR --- */}
-      <aside className="sticky top-0 h-screen w-20 md:w-64 bg-white border-r border-slate-200 pt-24 pb-6 flex flex-col transition-all duration-300 z-30">
-        <nav className="flex-1 space-y-2 px-3">
+      <aside className={`fixed md:sticky top-0 h-screen w-64 bg-white border-r border-slate-200 pt-24 pb-6 flex flex-col transition-transform duration-300 z-50 md:z-30 md:translate-x-0 ${
+        sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+      }`}>
+        <nav className="flex-1 space-y-2 px-3 overflow-y-auto">
           <p className="px-3 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Menu</p>
           {navItems.map((item) => (
             <button
               key={item.value}
-              onClick={() => setActiveTab(item.value)}
+              onClick={() => { setActiveTab(item.value); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === item.value 
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
@@ -1897,9 +1911,9 @@ function Dashboard() {
               }`}
             >
               <item.icon size={20} />
-              <span className="hidden md:block">{item.label}</span>
+              <span>{item.label}</span>
               {item.value === 'application' && applications.length > 0 && (
-                <span className={`hidden md:flex ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${activeTab === 'application' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600'}`}>
+                <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${activeTab === 'application' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600'}`}>
                   {applications.filter(a => !a.isDone).length}
                 </span>
               )}
@@ -1909,15 +1923,25 @@ function Dashboard() {
       </aside>
 
       {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 pt-24 px-6 pb-12 overflow-x-hidden">
+      <main className="flex-1 pt-20 px-3 sm:px-6 pb-12 overflow-x-hidden min-w-0">
         <div className="max-w-7xl mx-auto">
           
-          <header className="mb-8">
-            <h1 className="text-3xl font-extrabold text-slate-900 capitalize flex items-center gap-3">
-              {navItems.find(n => n.value === activeTab)?.icon && React.createElement(navItems.find(n => n.value === activeTab).icon, { className: "text-blue-600" })}
-              {navItems.find(n => n.value === activeTab)?.label}
-            </h1>
-            <p className="text-slate-500 mt-1 ml-10">Manage your academy's {activeTab}s.</p>
+          <header className="mb-6 sm:mb-8 flex items-center gap-3">
+            {/* Mobile menu toggle */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 -ml-1 rounded-xl hover:bg-slate-100 text-slate-600 transition-colors shrink-0"
+              aria-label="Open menu"
+            >
+              <Menu size={24} />
+            </button>
+            <div>
+              <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 capitalize flex items-center gap-2 sm:gap-3">
+                {navItems.find(n => n.value === activeTab)?.icon && React.createElement(navItems.find(n => n.value === activeTab).icon, { size: 22, className: "text-blue-600 hidden sm:block" })}
+                {navItems.find(n => n.value === activeTab)?.label}
+              </h1>
+              <p className="text-slate-500 mt-0.5 text-sm sm:text-base">Manage your academy's {activeTab}s.</p>
+            </div>
           </header>
 
           {/* CONTENT SWITCHER */}
@@ -1943,27 +1967,27 @@ function Dashboard() {
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
-              className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col"
+              className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col"
               onClick={e => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-white px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Application Details</h2>
-                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">ID: {selectedApplication.id}</p>
+              <div className="sticky top-0 bg-white px-4 sm:px-8 py-4 sm:py-5 border-b border-slate-100 flex justify-between items-center z-10">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-bold text-slate-800 truncate">Application Details</h2>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1 truncate">ID: {selectedApplication.id}</p>
                 </div>
-                <button onClick={() => setSelectedApplicationId(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors"><X size={24} className="text-slate-400"/></button>
+                <button onClick={() => setSelectedApplicationId(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0"><X size={24} className="text-slate-400"/></button>
               </div>
               
-              <div className="p-8 space-y-8">
+              <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
                 {/* Header Info */}
-                <div className="flex items-center gap-5">
-                  <div className="w-20 h-20 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-3xl font-bold shadow-lg shadow-blue-200">
+                <div className="flex items-center gap-3 sm:gap-5">
+                  <div className="w-14 h-14 sm:w-20 sm:h-20 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg shadow-blue-200 shrink-0">
                     {(selectedApplication.fullName || selectedApplication.name || '?').charAt(0)}
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-slate-900">{getApplicationName(selectedApplication)}</h3>
-                    <p className="text-slate-500">{getApplicationEmail(selectedApplication)}</p>
-                    <div className="flex gap-2 mt-2">
+                  <div className="min-w-0">
+                    <h3 className="text-lg sm:text-2xl font-bold text-slate-900 truncate">{getApplicationName(selectedApplication)}</h3>
+                    <p className="text-slate-500 text-sm sm:text-base truncate">{getApplicationEmail(selectedApplication)}</p>
+                    <div className="flex flex-wrap gap-2 mt-2">
                       <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold border border-blue-100">{getApplicationCourse(selectedApplication)}</span>
                       {selectedApplication.isDone && <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200">Processed</span>}
                     </div>
@@ -1971,7 +1995,7 @@ function Dashboard() {
                 </div>
 
                 {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-y-6 gap-x-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 sm:gap-y-6 gap-x-4 sm:gap-x-8">
                   <div><label className="text-xs font-bold text-slate-400 uppercase">NIC / Passport</label><p className="font-medium text-slate-800">{selectedApplication.nic || '-'}</p></div>
                   <div><label className="text-xs font-bold text-slate-400 uppercase">Date of Birth</label><p className="font-medium text-slate-800">{selectedApplication.dob ? new Date(selectedApplication.dob).toLocaleDateString() : '-'}</p></div>
                   <div><label className="text-xs font-bold text-slate-400 uppercase">Phone</label><p className="font-medium text-slate-800">{getApplicationPhone(selectedApplication)}</p></div>
@@ -1986,7 +2010,7 @@ function Dashboard() {
                     <p className="text-sm mb-3"><span className="font-bold text-slate-600">School:</span> {selectedApplication.school || '-'}</p>
                     
                     {selectedApplication.olResults && (
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {Object.entries(selectedApplication.olResults).map(([subj, grade]) => (
                           <div key={subj} className="bg-white px-3 py-2 rounded-lg border border-slate-200 flex justify-between text-xs">
                             <span className="capitalize text-slate-500">{subj}</span>
@@ -2001,7 +2025,7 @@ function Dashboard() {
                 {/* Parent */}
                 <div className="border-t border-slate-100 pt-6">
                   <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Users size={18} className="text-blue-500"/> Guardian Info</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className="text-xs font-bold text-slate-400 uppercase">Name</label><p className="font-medium text-slate-800">{selectedApplication.parentName || '-'}</p></div>
                     <div><label className="text-xs font-bold text-slate-400 uppercase">Contact</label><p className="font-medium text-slate-800">{selectedApplication.parentPhone || '-'}</p></div>
                   </div>
@@ -2045,17 +2069,17 @@ function Dashboard() {
               className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="sticky top-0 bg-white px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Edit Course</h2>
-                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">ID: {editingCourseId}</p>
+              <div className="sticky top-0 bg-white px-4 sm:px-8 py-4 sm:py-5 border-b border-slate-100 flex justify-between items-center z-10">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-bold text-slate-800 truncate">Edit Course</h2>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1 truncate">ID: {editingCourseId}</p>
                 </div>
-                <button onClick={closeEditCourse} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <button onClick={closeEditCourse} className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0">
                   <X size={24} className="text-slate-400" />
                 </button>
               </div>
 
-              <div className="p-8 space-y-6">
+              <div className="p-4 sm:p-8 space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
@@ -2224,17 +2248,17 @@ function Dashboard() {
               className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
               onClick={(ev) => ev.stopPropagation()}
             >
-              <div className="sticky top-0 bg-white px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Edit Event</h2>
-                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">ID: {editingEventId}</p>
+              <div className="sticky top-0 bg-white px-4 sm:px-8 py-4 sm:py-5 border-b border-slate-100 flex justify-between items-center z-10">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-bold text-slate-800 truncate">Edit Event</h2>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1 truncate">ID: {editingEventId}</p>
                 </div>
-                <button onClick={closeEditEvent} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <button onClick={closeEditEvent} className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0">
                   <X size={24} className="text-slate-400" />
                 </button>
               </div>
 
-              <div className="p-8 space-y-5">
+              <div className="p-4 sm:p-8 space-y-5">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
@@ -2320,17 +2344,17 @@ function Dashboard() {
               className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
               onClick={(ev) => ev.stopPropagation()}
             >
-              <div className="sticky top-0 bg-white px-8 py-5 border-b border-slate-100 flex justify-between items-center z-10">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-800">Edit Staff</h2>
-                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1">ID: {editingStaffId}</p>
+              <div className="sticky top-0 bg-white px-4 sm:px-8 py-4 sm:py-5 border-b border-slate-100 flex justify-between items-center z-10">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-bold text-slate-800 truncate">Edit Staff</h2>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1 truncate">ID: {editingStaffId}</p>
                 </div>
-                <button onClick={closeEditStaff} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <button onClick={closeEditStaff} className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0">
                   <X size={24} className="text-slate-400" />
                 </button>
               </div>
 
-              <div className="p-8 space-y-5">
+              <div className="p-4 sm:p-8 space-y-5">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Lecturer Name</label>
@@ -2416,7 +2440,7 @@ function Dashboard() {
                 </button>
               </div>
 
-              <div className="p-8 space-y-5">
+              <div className="p-4 sm:p-8 space-y-5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Title</label>
                   <input

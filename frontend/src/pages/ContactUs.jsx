@@ -1,7 +1,35 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, Mail, Clock, Send, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Send, Facebook, Instagram, Linkedin, Youtube, Building2, Plane } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
+
+// --- BRANCH DATA CONFIGURATION ---
+const BRANCHES = [
+  {
+    id: 'city',
+    name: 'IAAC City Campus (Head Office)',
+    icon: <Building2 size={20} />,
+    address: '49A Siri Dhamma Mawatha, Colombo 01000',
+    hotline: '076 676 3777',
+    mapLink: 'https://maps.google.com/?q=IAAC+City+Campus+Colombo'
+  },
+  {
+    id: 'airport',
+    name: 'Airport Academy',
+    icon: <Plane size={20} />,
+    address: 'Ratmalana International Airport, Colombo',
+    hotline: '076 678 2781', // Update if specific number exists
+    mapLink: 'https://maps.google.com/?q=Ratmalana+Airport'
+  },
+  {
+    id: 'kurunegala',
+    name: 'Kurunegala Center',
+    icon: <MapPin size={20} />,
+    address: 'No. 27, Mihindu Mawatha, Kurunegala',
+    hotline: '077 558 7888', // Update if specific number exists
+    mapLink: 'https://maps.app.goo.gl/TS9KEPvNWdwwBxzW7'
+  }
+];
 
 function ContactUs() {
   const [form, setForm] = useState({
@@ -52,9 +80,8 @@ function ContactUs() {
 
   return (
     <>
-      {/* --- HERO SECTION (Updated to Dark Navy Brand Style) --- */}
+      {/* --- HERO SECTION --- */}
       <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden text-center px-6">
-        
         {/* Background Glow Effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl opacity-50"></div>
@@ -86,7 +113,7 @@ function ContactUs() {
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-12 gap-12 lg:gap-20">
 
-            {/* --- LEFT COLUMN: INFO & HOURS (Span 5) --- */}
+            {/* --- LEFT COLUMN: CAMPUS INFO & HOURS (Span 5) --- */}
             <motion.div 
               className="lg:col-span-5 space-y-10"
               initial={{ opacity: 0, x: -30 }}
@@ -94,17 +121,48 @@ function ContactUs() {
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
             >
-              {/* Info Card */}
+              
+              {/* 1. Branch/Campus Cards (NEW SEPARATE SECTIONS) */}
               <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">Contact Information</h3>
-                <ul className="space-y-6">
-                  <ContactItem icon={<MapPin size={20} />} title="Visit Us" content={<>49A Siri Dhamma Mawatha,<br/>Colombo 01000, Sri Lanka</>} />
-                  <ContactItem icon={<Phone size={20} />} title="Call Us" content={<a href="tel:0766763777" className="hover:text-blue-600">076 676 3777</a>} />
-                  <ContactItem icon={<Mail size={20} />} title="Email Us" content={<a href="mailto:info@iaac.lk" className="hover:text-blue-600">info@iaac.lk</a>} />
-                </ul>
+                <h3 className="text-2xl font-bold text-slate-900 mb-6">Our Campuses</h3>
+                <div className="space-y-4">
+                  {BRANCHES.map((branch) => (
+                    <div key={branch.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                          {branch.icon}
+                        </div>
+                        <h4 className="font-bold text-slate-800">{branch.name}</h4>
+                      </div>
+                      
+                      <div className="space-y-2 pl-2 border-l-2 border-slate-100 ml-4">
+                        <div className="flex items-start gap-3">
+                          <MapPin size={16} className="text-slate-400 mt-1 shrink-0" />
+                          <p className="text-sm text-slate-600 leading-snug">{branch.address}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Phone size={16} className="text-slate-400 shrink-0" />
+                          <a href={`tel:${branch.hotline}`} className="text-sm font-semibold text-blue-600 hover:underline">
+                            {branch.hotline}
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {/* Opening Hours */}
+              {/* 2. General Email */}
+              <div className="bg-blue-600 text-white p-6 rounded-2xl shadow-lg shadow-blue-600/20">
+                 <div className="flex items-center gap-3 mb-2">
+                    <Mail size={24} className="text-blue-200" />
+                    <h4 className="font-bold text-lg">General Inquiries</h4>
+                 </div>
+                 <p className="text-blue-100 text-sm mb-3">For all general questions and email correspondence.</p>
+                 <a href="mailto:info@iaac.lk" className="text-xl font-bold hover:text-white hover:underline">info@iaac.lk</a>
+              </div>
+
+              {/* 3. Opening Hours */}
               <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                 <div className="flex items-center gap-2 mb-4 text-slate-900">
                   <Clock size={20} className="text-blue-600" />
@@ -117,32 +175,17 @@ function ContactUs() {
                 </ul>
               </div>
 
-              {/* Social Links */}
+              {/* 4. Social Links */}
               <div>
                 <h4 className="font-bold text-slate-900 mb-4">Follow Us</h4>
                 <div className="flex gap-4">
-                  <SocialBtn
-                    icon={<Facebook size={20} />}
-                    href="https://www.facebook.com/iaacsl"
-                    label="IAAC on Facebook"
-                  />
-                  <SocialBtn
-                    icon={<Youtube size={20} />}
-                    href="https://www.youtube.com/@internationalairlineaviati4986"
-                    label="IAAC on YouTube"
-                  />
-                  <SocialBtn
-                    icon={<Linkedin size={20} />}
-                    href="https://www.linkedin.com/company/international-airline-aviation-college/posts/?feedView=all"
-                    label="IAAC on LinkedIn"
-                  />
-                  <SocialBtn
-                    icon={<Instagram size={20} />}
-                    href="https://www.instagram.com/iaac_aviation/"
-                    label="IAAC on Instagram"
-                  />
+                  <SocialBtn icon={<Facebook size={20} />} href="https://www.facebook.com/iaacsl" label="Facebook" />
+                  <SocialBtn icon={<Youtube size={20} />} href="https://www.youtube.com/@internationalairlineaviati4986" label="YouTube" />
+                  <SocialBtn icon={<Linkedin size={20} />} href="https://www.linkedin.com/company/international-airline-aviation-college/posts/?feedView=all" label="LinkedIn" />
+                  <SocialBtn icon={<Instagram size={20} />} href="https://www.instagram.com/iaac_aviation/" label="Instagram" />
                 </div>
               </div>
+
             </motion.div>
 
             {/* --- RIGHT COLUMN: FORM (Span 7) --- */}
@@ -153,7 +196,7 @@ function ContactUs() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-slate-200/60 border border-slate-100">
+              <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-xl shadow-slate-200/60 border border-slate-100 sticky top-24">
                 <h2 className="text-3xl font-bold text-slate-900 mb-2">Send a Message</h2>
                 <p className="text-slate-500 mb-8">Fill out the form below and our team will get back to you within 24 hours.</p>
                 
@@ -236,10 +279,10 @@ function ContactUs() {
         </div>
       </section>
 
-      {/* --- MAP SECTION (Full Width) --- */}
+      {/* --- MAP SECTION (Main City Campus) --- */}
       <section className="h-[400px] w-full bg-slate-200 relative grayscale hover:grayscale-0 transition-all duration-700">
         <iframe 
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.9866635904835!2d79.87037777478297!3d6.892196693106935!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3ae25a3262372579%3A0x7e584033f2427b0f!2sInternational%20Airline%20%26%20Aviation%20College!5e0!3m2!1sen!2slk!4v1709620000000!5m2!1sen!2slk" 
+          src="https://www.google.com/maps?q=International+Airline+%26+Aviation+College+-+IAAC+Sri+Lanka&z=17&output=embed" 
           width="100%" 
           height="100%" 
           style={{ border: 0 }} 
@@ -250,10 +293,10 @@ function ContactUs() {
          ></iframe>
          
          <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12 bg-white p-4 rounded-xl shadow-xl max-w-xs hidden md:block">
-           <p className="font-bold text-slate-900 text-sm">Find us easily</p>
-           <p className="text-xs text-slate-500 mt-1">View our exact location on Google Maps.</p>
+           <p className="font-bold text-slate-900 text-sm">Main Campus (City)</p>
+           <p className="text-xs text-slate-500 mt-1">49A Siri Dhamma Mawatha, Colombo 10</p>
            <a
-             href="https://maps.app.goo.gl/YourMapLinkHere"
+             href="https://www.google.com/maps?q=International+Airline+%26+Aviation+College+-+IAAC+Sri+Lanka&z=17&output=embed"
              target="_blank"
              rel="noreferrer"
              className="mt-2 inline-block text-xs font-semibold text-blue-600 hover:underline"
@@ -267,20 +310,6 @@ function ContactUs() {
 }
 
 // --- SUBCOMPONENTS ---
-
-function ContactItem({ icon, title, content }) {
-  return (
-    <li className="flex items-start gap-4">
-      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl shrink-0">
-        {icon}
-      </div>
-      <div>
-        <h4 className="font-bold text-slate-900 text-sm mb-1">{title}</h4>
-        <div className="text-slate-600 text-base leading-relaxed">{content}</div>
-      </div>
-    </li>
-  );
-}
 
 function HourItem({ day, hours }) {
   return (
