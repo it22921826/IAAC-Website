@@ -8,6 +8,7 @@ const heroImages = [
   '/hero1.png',
   '/hero2.png',
   '/hero4.png',
+  '/hero5.png',
 ];
 
 const SLIDE_DURATION = 5000;
