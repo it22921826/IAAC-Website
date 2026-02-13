@@ -41,6 +41,7 @@ function Dashboard() {
   
   // Data State
   const [courses, setCourses] = useState([]);
+  const [trainingPrograms, setTrainingPrograms] = useState([]);
   const [events, setEvents] = useState([]);
   const [applications, setApplications] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -112,6 +113,7 @@ function Dashboard() {
 
     // Secondary: content lists (do not block rendering)
     get('/api/courses', (items) => setCourses(items));
+    get('/api/training-programs', (items) => setTrainingPrograms(items));
     get('/api/events', (items) => setEvents(items));
     get('/api/staff', (items) => setStaffMembers(items));
     get('/api/notices', (items) => setNotices(items));
@@ -302,10 +304,10 @@ function Dashboard() {
         imageData: newPracticalForm.imageData || undefined,
         imageUrls: (newPracticalForm.galleryImages && newPracticalForm.galleryImages.length > 0) ? newPracticalForm.galleryImages : undefined,
       };
-      const res = await apiClient.post('/api/courses', payload);
+      const res = await apiClient.post('/api/training-programs', payload);
       const created = res?.data;
       if (created?._id) {
-        setCourses((prev) => [created, ...prev]);
+        setTrainingPrograms((prev) => [created, ...prev]);
         setPracticalCreateStatus({ submitting: false, success: true, error: '' });
         resetNewPracticalForm();
         setShowNewPracticalForm(false);
@@ -325,6 +327,59 @@ function Dashboard() {
     setCourses((prev) => prev.filter((c) => String(c._id) !== String(id)));
     if (String(editingCourseId) === String(id)) {
       closeEditCourse();
+    }
+  };
+
+  // --- TRAINING PROGRAMS: EDIT/DELETE ---
+  const [editingTrainingId, setEditingTrainingId] = useState(null);
+
+  const openEditTraining = (training) => {
+    if (!training?._id) return;
+    setEditingTrainingId(training._id);
+    setPracticalForm({
+      title: training.title || '',
+      duration: training.duration || '-',
+      courseType: 'Practical Training',
+      shortDescription: training.shortDescription || '',
+      sessionDetails: training.sessionDetails || '',
+      imageUrl: training.imageUrl || '',
+      imageData: '',
+      imagePreview: training.imageUrl || '',
+      galleryImages: Array.isArray(training.imageUrls) ? training.imageUrls : [],
+    });
+  };
+
+  const closeEditTraining = () => {
+    setEditingTrainingId(null);
+    setPracticalForm(createEmptyCourseForm({ courseType: 'Practical Training' }));
+  };
+
+  const saveTrainingEdits = async () => {
+    if (!editingTrainingId) return;
+    const payload = {
+      title: (practicalForm.title || '').trim() || 'Practical Session',
+      duration: (practicalForm.duration || '').trim() || '-',
+      shortDescription: (practicalForm.shortDescription || '').trim() || undefined,
+      sessionDetails: (practicalForm.sessionDetails || '').trim() || undefined,
+      imageData: practicalForm.imageData || undefined,
+      imageUrl: (!practicalForm.imageData && practicalForm.imageUrl) ? practicalForm.imageUrl : undefined,
+      imageUrls: (practicalForm.galleryImages && practicalForm.galleryImages.length > 0) ? practicalForm.galleryImages : undefined,
+    };
+    const res = await apiClient.put(`/api/training-programs/${editingTrainingId}`, payload);
+    const updated = res?.data;
+    if (updated?._id) {
+      setTrainingPrograms((prev) => prev.map((t) => (String(t._id) === String(updated._id) ? updated : t)));
+    }
+    closeEditTraining();
+  };
+
+  const deleteTrainingById = async (id) => {
+    if (!id) return;
+    if (!window.confirm('Delete this training program?')) return;
+    await apiClient.delete(`/api/training-programs/${id}`);
+    setTrainingPrograms((prev) => prev.filter((t) => String(t._id) !== String(id)));
+    if (String(editingTrainingId) === String(id)) {
+      closeEditTraining();
     }
   };
 
@@ -1321,7 +1376,7 @@ function Dashboard() {
 
   // --- VIEW: PRACTICAL TRAININGS ---
   const renderPractical = () => {
-    const trainings = courses.filter((c) => c.courseType === 'Practical Training');
+    const trainings = trainingPrograms;
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center px-2">
@@ -1441,17 +1496,17 @@ function Dashboard() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       type="button"
-                      onClick={() => openEditCourse(t)}
+                      onClick={() => openEditTraining(t)}
                       className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                      title="Edit course"
+                      title="Edit training"
                     >
                       <Pencil size={16} />
                     </button>
                     <button
                       type="button"
-                      onClick={() => deleteCourseById(t._id)}
+                      onClick={() => deleteTrainingById(t._id)}
                       className="p-2 rounded-full bg-slate-50 text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                      title="Delete course"
+                      title="Delete training"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -2221,6 +2276,97 @@ function Dashboard() {
                 <button
                   type="button"
                   onClick={saveCourseEdits}
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* --- TRAINING PROGRAM EDIT MODAL --- */}
+      <AnimatePresence>
+        {editingTrainingId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+            onClick={closeEditTraining}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white px-4 sm:px-8 py-4 sm:py-5 border-b border-slate-100 flex justify-between items-center z-10">
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-bold text-slate-800 truncate">Edit Training Program</h2>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-1 truncate">ID: {editingTrainingId}</p>
+                </div>
+                <button onClick={closeEditTraining} className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0">
+                  <X size={24} className="text-slate-400" />
+                </button>
+              </div>
+
+              <div className="p-4 sm:p-8 space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session Name</label>
+                  <input
+                    value={practicalForm.title || ''}
+                    onChange={(e) => setPracticalForm((p) => ({ ...p, title: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm"
+                    placeholder="e.g. Fire Safety Training"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Session Images</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleCourseGalleryUpload(e, setPracticalForm)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {practicalForm.galleryImages && practicalForm.galleryImages.length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {practicalForm.galleryImages.map((img, i) => (
+                        <div key={i} className="relative">
+                          <img src={img} alt={`Session ${i+1}`} className="w-24 h-24 object-cover rounded-xl border border-slate-200" />
+                          <button type="button" onClick={() => setPracticalForm(p => ({ ...p, galleryImages: p.galleryImages.filter((_, idx) => idx !== i) }))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">&times;</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+                  <textarea
+                    value={practicalForm.shortDescription || ''}
+                    onChange={(e) => setPracticalForm((p) => ({ ...p, shortDescription: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none text-sm min-h-[120px]"
+                    placeholder="Describe this practical session..."
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => deleteTrainingById(editingTrainingId)}
+                  className="px-5 py-2.5 bg-white border border-red-200 text-red-700 rounded-xl font-bold text-sm hover:bg-red-50 transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={saveTrainingEdits}
                   className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
                 >
                   Save Changes

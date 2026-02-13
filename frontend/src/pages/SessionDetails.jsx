@@ -15,7 +15,7 @@ function SessionDetails() {
     let mounted = true;
     async function fetchSession() {
       try {
-        const res = await apiClient.get('/api/courses');
+        const res = await apiClient.get('/api/training-programs');
         const items = res.data.items || [];
         const found = items.find((c) => c._id === sessionId);
         if (mounted) setSession(found);

@@ -92,6 +92,9 @@ app.use('/api/messages', messageRoutes);
 const chatRoutes = require('./routes/chat');
 app.use('/api/chat', chatRoutes);
 
+const trainingProgramRoutes = require('./routes/trainingPrograms');
+app.use('/api/training-programs', trainingProgramRoutes);
+
 app.get('/api/health', (req, res) => {
   const dbState = mongoose.connection.readyState;
 
@@ -132,12 +135,19 @@ app.get('/api/sitemap.xml', async (req, res) => {
     const Course = require('./models/Course');
     const courses = await Course.find({}, '_id courseType').lean();
     dynamicPages = courses.map((c) => ({
-      loc: c.courseType === 'Practical Training'
-        ? `/programs/session/${c._id}`
-        : `/programs/course/${c._id}`,
+      loc: `/programs/course/${c._id}`,
       changefreq: 'weekly',
       priority: '0.6',
     }));
+
+    const TrainingProgram = require('./models/TrainingProgram');
+    const trainings = await TrainingProgram.find({}, '_id').lean();
+    const trainingPages = trainings.map((t) => ({
+      loc: `/programs/session/${t._id}`,
+      changefreq: 'weekly',
+      priority: '0.6',
+    }));
+    dynamicPages = [...dynamicPages, ...trainingPages];
   } catch (_) {
     // DB may not be connected; serve static pages only
   }

@@ -12,10 +12,9 @@ function PracticalTrainings() {
     let mounted = true;
     async function load() {
       try {
-        const res = await apiClient.get('/api/courses');
+        const res = await apiClient.get('/api/training-programs');
         const items = res.data.items || [];
-        const practicalOnly = items.filter((c) => c.courseType === 'Practical Training');
-        if (mounted) setTrainings(practicalOnly);
+        if (mounted) setTrainings(items);
       } catch (_) {
         if (mounted) setTrainings([]);
       }
