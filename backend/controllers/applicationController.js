@@ -20,6 +20,8 @@ function resolveReferralName(codeOrEmpty) {
 exports.create = async (req, res) => {
   try {
     const {
+      title,
+      fullName,
       firstName,
       lastName,
       dob,
@@ -47,6 +49,8 @@ exports.create = async (req, res) => {
     }
 
     const app = await Application.create({
+      title,
+      fullName,
       firstName,
       lastName,
       dob: dob ? new Date(dob) : undefined,

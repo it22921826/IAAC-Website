@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { 
-  Users, FileText, Calendar, BookOpen, UploadCloud,
+  Users, User, FileText, Calendar, BookOpen, UploadCloud,
   ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil, Plus, Menu
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
@@ -800,8 +800,8 @@ function Dashboard() {
 
     // 1. Personal Info
     drawSection('Personal Information', [
+      ['Title', app.title],
       ['Full Name', getApplicationName(app)],
-      ['Name with Initials', app.nameWithInitials],
       ['Date of Birth', app.dob ? new Date(app.dob).toLocaleDateString() : '-'],
       ['Gender', app.gender],
       ['NIC / Passport', app.nic],
@@ -818,7 +818,7 @@ function Dashboard() {
     // 3. Academic & Parent
     drawSection('Education & Guardian', [
       ['School Attended', app.school],
-      ['Course Applied', getApplicationCourse(app)],
+      ['O/L Year', app.olYear],
       ['Guardian Name', app.parentName],
       ['Guardian Contact', app.parentPhone || app.parentMobile],
     ]);
@@ -839,7 +839,17 @@ function Dashboard() {
                 y += 15;
             }
         });
+        y += 20;
     }
+
+    // 4. Program Details
+    drawSection('Program Details', [
+      ['Course Applied', getApplicationCourse(app)],
+      ['Academy / Campus', app.academy],
+      ['Referred By', app.referral || 'General Office'],
+      ['Application Date', app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '-'],
+      ['Status', app.isDone ? 'Processed' : 'Pending'],
+    ]);
 
     // Footer
     doc.setDrawColor(200, 200, 200);
@@ -893,17 +903,20 @@ function Dashboard() {
 
           <div class="section">
             <div class="section-title">Program Details</div>
-            <div class="field">
-              <span class="label">Course Applied For</span>
-              <div class="value">${getApplicationCourse(app)}</div>
+            <div class="grid">
+              <div class="field"><span class="label">Course Applied For</span><div class="value">${getApplicationCourse(app)}</div></div>
+              <div class="field"><span class="label">Academy / Campus</span><div class="value">${safeText(app.academy)}</div></div>
+              <div class="field"><span class="label">Referred By</span><div class="value">${safeText(app.referral || 'General Office')}</div></div>
+              <div class="field"><span class="label">Application Date</span><div class="value">${app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '-'}</div></div>
+              <div class="field"><span class="label">Status</span><div class="value">${app.isDone ? 'Processed' : 'Pending'}</div></div>
             </div>
           </div>
 
           <div class="section">
             <div class="section-title">Personal Information</div>
             <div class="grid">
+              <div class="field"><span class="label">Title</span><div class="value">${safeText(app.title)}</div></div>
               <div class="field"><span class="label">Full Name</span><div class="value">${getApplicationName(app)}</div></div>
-              <div class="field"><span class="label">Name with Initials</span><div class="value">${safeText(app.nameWithInitials)}</div></div>
               <div class="field"><span class="label">NIC / Passport</span><div class="value">${safeText(app.nic)}</div></div>
               <div class="field"><span class="label">Date of Birth</span><div class="value">${app.dob ? new Date(app.dob).toLocaleDateString() : '-'}</div></div>
               <div class="field"><span class="label">Gender</span><div class="value">${safeText(app.gender)}</div></div>
@@ -921,6 +934,7 @@ function Dashboard() {
             <div class="section-title">Education & Guardian</div>
             <div class="grid">
               <div class="field"><span class="label">School Attended</span><div class="value">${safeText(app.school)}</div></div>
+              <div class="field"><span class="label">O/L Year</span><div class="value">${safeText(app.olYear)}</div></div>
               <div class="field"><span class="label">Guardian Name</span><div class="value">${safeText(app.parentName)}</div></div>
               <div class="field"><span class="label">Guardian Contact</span><div class="value">${safeText(app.parentPhone || app.parentMobile)}</div></div>
             </div>
@@ -2049,20 +2063,38 @@ function Dashboard() {
                   </div>
                 </div>
 
-                {/* Info Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 sm:gap-y-6 gap-x-4 sm:gap-x-8">
-                  <div><label className="text-xs font-bold text-slate-400 uppercase">NIC / Passport</label><p className="font-medium text-slate-800">{selectedApplication.nic || '-'}</p></div>
-                  <div><label className="text-xs font-bold text-slate-400 uppercase">Date of Birth</label><p className="font-medium text-slate-800">{selectedApplication.dob ? new Date(selectedApplication.dob).toLocaleDateString() : '-'}</p></div>
-                  <div><label className="text-xs font-bold text-slate-400 uppercase">Phone</label><p className="font-medium text-slate-800">{getApplicationPhone(selectedApplication)}</p></div>
-                  <div><label className="text-xs font-bold text-slate-400 uppercase">WhatsApp</label><p className="font-medium text-slate-800">{getApplicationWhatsapp(selectedApplication)}</p></div>
-                  <div className="col-span-2"><label className="text-xs font-bold text-slate-400 uppercase">Address</label><p className="font-medium text-slate-800">{getApplicationAddress(selectedApplication)}</p></div>
+                {/* Personal Info Grid */}
+                <div className="border-t border-slate-100 pt-6">
+                  <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><User size={18} className="text-blue-500"/> Personal Information</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 sm:gap-y-6 gap-x-4 sm:gap-x-8">
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Title</label><p className="font-medium text-slate-800">{selectedApplication.title || '-'}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Full Name</label><p className="font-medium text-slate-800">{getApplicationName(selectedApplication)}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">NIC / Passport</label><p className="font-medium text-slate-800">{selectedApplication.nic || '-'}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Date of Birth</label><p className="font-medium text-slate-800">{selectedApplication.dob ? new Date(selectedApplication.dob).toLocaleDateString() : '-'}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Gender</label><p className="font-medium text-slate-800">{selectedApplication.gender || '-'}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Applied On</label><p className="font-medium text-slate-800">{selectedApplication.createdAt ? new Date(selectedApplication.createdAt).toLocaleDateString() : '-'}</p></div>
+                  </div>
+                </div>
+
+                {/* Contact Details */}
+                <div className="border-t border-slate-100 pt-6">
+                  <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Phone size={18} className="text-blue-500"/> Contact Details</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 sm:gap-y-6 gap-x-4 sm:gap-x-8">
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Mobile</label><p className="font-medium text-slate-800">{getApplicationPhone(selectedApplication)}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">WhatsApp</label><p className="font-medium text-slate-800">{getApplicationWhatsapp(selectedApplication)}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Email</label><p className="font-medium text-slate-800">{getApplicationEmail(selectedApplication)}</p></div>
+                    <div className="sm:col-span-2"><label className="text-xs font-bold text-slate-400 uppercase">Home Address</label><p className="font-medium text-slate-800">{getApplicationAddress(selectedApplication)}</p></div>
+                  </div>
                 </div>
 
                 {/* Education */}
                 <div className="border-t border-slate-100 pt-6">
                   <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><BookOpen size={18} className="text-blue-500"/> Education History</h4>
                   <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                    <p className="text-sm mb-3"><span className="font-bold text-slate-600">School:</span> {selectedApplication.school || '-'}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                      <p className="text-sm"><span className="font-bold text-slate-600">School:</span> {selectedApplication.school || '-'}</p>
+                      <p className="text-sm"><span className="font-bold text-slate-600">O/L Year:</span> {selectedApplication.olYear || '-'}</p>
+                    </div>
                     
                     {selectedApplication.olResults && (
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -2077,12 +2109,22 @@ function Dashboard() {
                   </div>
                 </div>
 
-                {/* Parent */}
+                {/* Parent / Guardian */}
                 <div className="border-t border-slate-100 pt-6">
                   <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Users size={18} className="text-blue-500"/> Guardian Info</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><label className="text-xs font-bold text-slate-400 uppercase">Name</label><p className="font-medium text-slate-800">{selectedApplication.parentName || '-'}</p></div>
-                    <div><label className="text-xs font-bold text-slate-400 uppercase">Contact</label><p className="font-medium text-slate-800">{selectedApplication.parentPhone || '-'}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Guardian Name</label><p className="font-medium text-slate-800">{selectedApplication.parentName || '-'}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Guardian Contact</label><p className="font-medium text-slate-800">{selectedApplication.parentPhone || '-'}</p></div>
+                  </div>
+                </div>
+
+                {/* Program Details */}
+                <div className="border-t border-slate-100 pt-6">
+                  <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Briefcase size={18} className="text-blue-500"/> Program Details</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Course Applied</label><p className="font-medium text-slate-800">{getApplicationCourse(selectedApplication)}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Academy / Campus</label><p className="font-medium text-slate-800">{selectedApplication.academy || '-'}</p></div>
+                    <div><label className="text-xs font-bold text-slate-400 uppercase">Referred By</label><p className="font-medium text-slate-800">{selectedApplication.referral || 'General Office'}</p></div>
                   </div>
                 </div>
               </div>

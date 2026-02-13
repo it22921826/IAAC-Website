@@ -38,7 +38,7 @@ function HeroSection() {
   const branches = [
     {
       id: 1,
-      name: 'IAAC CITY',
+      name: 'IAAC CITY ACADEMY',
       branchKey: 'iaacCity',
       icon: Building2,
       desc: 'Colombo 10',
@@ -47,7 +47,7 @@ function HeroSection() {
     },
     {
       id: 2,
-      name: 'AIRPORT ACADEMY',
+      name: 'IAAC AIRPORT ACADEMY',
       branchKey: 'airportAcademy',
       icon: Plane,
       desc: 'Rathmalana Airport',
@@ -56,7 +56,7 @@ function HeroSection() {
     },
     {
       id: 3,
-      name: 'IAAC CENTRAL',
+      name: 'IAAC CENTRAL ACADEMY',
       branchKey: 'iaacCenter',
       icon: MapPin,
       desc: 'Kurunagala ',

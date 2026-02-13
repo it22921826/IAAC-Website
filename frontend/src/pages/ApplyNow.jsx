@@ -48,24 +48,70 @@ function ApplyNow() {
     agreed: false
   });
 
-  const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
-  const updateNested = (category, field) => (e) => setForm({ 
-    ...form, 
-    [category]: { ...form[category], [field]: e.target.value } 
-  });
+  const [errors, setErrors] = useState({});
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 3));
-  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
+  const update = (field) => (e) => {
+    setForm({ ...form, [field]: e.target.value });
+    if (errors[field]) setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
+  };
+  const updateNested = (category, field) => (e) => {
+    setForm({ ...form, [category]: { ...form[category], [field]: e.target.value } });
+    const key = `${category}.${field}`;
+    if (errors[key]) setErrors((prev) => { const next = { ...prev }; delete next[key]; return next; });
+  };
+
+  // --- VALIDATION ---
+  const validateStep1 = () => {
+    const e = {};
+    if (!form.fullName.trim()) e.fullName = 'Full name is required';
+    if (!form.nic.trim()) e.nic = 'NIC / Passport is required';
+    if (!form.dob) e.dob = 'Date of birth is required';
+    if (!form.mobile.trim()) e.mobile = 'Mobile number is required';
+    else if (!/^[0-9+\-\s]{7,15}$/.test(form.mobile.trim())) e.mobile = 'Enter a valid mobile number';
+    if (!form.email.trim()) e.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = 'Enter a valid email address';
+    if (!form.address.trim()) e.address = 'Home address is required';
+    return e;
+  };
+
+  const validateStep2 = () => {
+    const e = {};
+    if (!form.school.trim()) e.school = 'School name is required';
+    if (!form.olYear.trim()) e.olYear = 'O/L year is required';
+    else if (!/^\d{4}$/.test(form.olYear.trim())) e.olYear = 'Enter a valid year (e.g. 2023)';
+    if (!form.parentName.trim()) e.parentName = 'Guardian name is required';
+    if (!form.parentPhone.trim()) e.parentPhone = 'Guardian contact is required';
+    else if (!/^[0-9+\-\s]{7,15}$/.test(form.parentPhone.trim())) e.parentPhone = 'Enter a valid phone number';
+    return e;
+  };
+
+  const validateStep3 = () => {
+    const e = {};
+    if (!form.academy) e.academy = 'Please select an academy / campus';
+    if (!form.course) e.course = 'Please select a course';
+    if (!form.agreed) e.agreed = 'You must agree to the declaration';
+    return e;
+  };
+
+  const nextStep = () => {
+    const stepErrors = currentStep === 1 ? validateStep1() : currentStep === 2 ? validateStep2() : {};
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors);
+      return;
+    }
+    setErrors({});
+    setCurrentStep((prev) => Math.min(prev + 1, 3));
+  };
+  const prevStep = () => { setErrors({}); setCurrentStep((prev) => Math.max(prev - 1, 1)); };
 
   const submit = async () => {
-    if (!form.agreed) {
-      setStatus({ submitting: false, success: false, error: 'Please agree to the terms.' });
+    const stepErrors = validateStep3();
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors);
+      setStatus({ submitting: false, success: false, error: 'Please fix the highlighted errors.' });
       return;
     }
-    if (!form.academy) {
-      setStatus({ submitting: false, success: false, error: 'Please select the academy/campus.' });
-      return;
-    }
+    setErrors({});
     setStatus({ submitting: true, success: false, error: '' });
     try {
       const fullName = (form.fullName || '').trim();
@@ -178,30 +224,35 @@ function ApplyNow() {
                       </select>
                     </div>
                     <div className="md:col-span-3">
-                      <Label text="Full Name" />
-                      <input type="text" placeholder="Your Full Name" value={form.fullName} onChange={update('fullName')} className="input-field" />
+                      <Label text="Full Name" required />
+                      <input type="text" placeholder="Your Full Name" value={form.fullName} onChange={update('fullName')} className={`input-field ${errors.fullName ? 'input-error' : ''}`} />
+                      {errors.fullName && <FieldError msg={errors.fullName} />}
                     </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-5">
                     <div>
-                      <Label text="NIC / Passport" />
-                      <input type="text" placeholder="Identity Number" value={form.nic} onChange={update('nic')} className="input-field" />
+                      <Label text="NIC / Passport" required />
+                      <input type="text" placeholder="Identity Number" value={form.nic} onChange={update('nic')} className={`input-field ${errors.nic ? 'input-error' : ''}`} />
+                      {errors.nic && <FieldError msg={errors.nic} />}
                     </div>
                     <div>
-                      <Label text="Date of Birth" />
-                      <input type="date" value={form.dob} onChange={update('dob')} className="input-field" />
+                      <Label text="Date of Birth" required />
+                      <input type="date" value={form.dob} onChange={update('dob')} className={`input-field ${errors.dob ? 'input-error' : ''}`} />
+                      {errors.dob && <FieldError msg={errors.dob} />}
                     </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-5">
                     <div>
-                      <Label text="Mobile Number" />
-                      <input type="tel" placeholder="077 123 4567" value={form.mobile} onChange={update('mobile')} className="input-field" />
+                      <Label text="Mobile Number" required />
+                      <input type="tel" placeholder="077 123 4567" value={form.mobile} onChange={update('mobile')} className={`input-field ${errors.mobile ? 'input-error' : ''}`} />
+                      {errors.mobile && <FieldError msg={errors.mobile} />}
                     </div>
                     <div>
-                      <Label text="Email Address" />
-                      <input type="email" placeholder="you@example.com" value={form.email} onChange={update('email')} className="input-field" />
+                      <Label text="Email Address" required />
+                      <input type="email" placeholder="you@example.com" value={form.email} onChange={update('email')} className={`input-field ${errors.email ? 'input-error' : ''}`} />
+                      {errors.email && <FieldError msg={errors.email} />}
                     </div>
                   </div>
 
@@ -214,8 +265,9 @@ function ApplyNow() {
                   </div>
 
                   <div>
-                    <Label text="Home Address" />
-                    <textarea rows="2" placeholder="Your permanent address" value={form.address} onChange={update('address')} className="input-field"></textarea>
+                    <Label text="Home Address" required />
+                    <textarea rows="2" placeholder="Your permanent address" value={form.address} onChange={update('address')} className={`input-field ${errors.address ? 'input-error' : ''}`}></textarea>
+                    {errors.address && <FieldError msg={errors.address} />}
                   </div>
                 </motion.div>
               )}
@@ -234,12 +286,14 @@ function ApplyNow() {
                     </h3>
                     <div className="grid md:grid-cols-3 gap-5 mb-5">
                       <div className="md:col-span-2">
-                        <Label text="School Attended" />
-                        <input type="text" placeholder="School Name" value={form.school} onChange={update('school')} className="input-field" />
+                        <Label text="School Attended" required />
+                        <input type="text" placeholder="School Name" value={form.school} onChange={update('school')} className={`input-field ${errors.school ? 'input-error' : ''}`} />
+                        {errors.school && <FieldError msg={errors.school} />}
                       </div>
                       <div>
-                        <Label text="O/L Year" />
-                        <input type="text" placeholder="2023" value={form.olYear} onChange={update('olYear')} className="input-field" />
+                        <Label text="O/L Year" required />
+                        <input type="text" placeholder="2023" value={form.olYear} onChange={update('olYear')} className={`input-field ${errors.olYear ? 'input-error' : ''}`} />
+                        {errors.olYear && <FieldError msg={errors.olYear} />}
                       </div>
                     </div>
 
@@ -264,12 +318,14 @@ function ApplyNow() {
                     </h3>
                     <div className="grid md:grid-cols-2 gap-5">
                       <div>
-                        <Label text="Guardian Name" />
-                        <input type="text" placeholder="Parent's Name" value={form.parentName} onChange={update('parentName')} className="input-field" />
+                        <Label text="Guardian Name" required />
+                        <input type="text" placeholder="Parent's Name" value={form.parentName} onChange={update('parentName')} className={`input-field ${errors.parentName ? 'input-error' : ''}`} />
+                        {errors.parentName && <FieldError msg={errors.parentName} />}
                       </div>
                       <div>
-                        <Label text="Contact Number" />
-                        <input type="tel" placeholder="Parent's Mobile" value={form.parentPhone} onChange={update('parentPhone')} className="input-field" />
+                        <Label text="Contact Number" required />
+                        <input type="tel" placeholder="Parent's Mobile" value={form.parentPhone} onChange={update('parentPhone')} className={`input-field ${errors.parentPhone ? 'input-error' : ''}`} />
+                        {errors.parentPhone && <FieldError msg={errors.parentPhone} />}
                       </div>
                     </div>
                   </div>
@@ -287,15 +343,17 @@ function ApplyNow() {
                     <h3 className="text-xl font-bold text-slate-800 mb-6">Select Your Course</h3>
 
                     <div className="mb-6">
-                      <Label text="Select Academy / Campus" />
-                      <select value={form.academy} onChange={update('academy')} className="input-field">
+                      <Label text="Select Academy / Campus" required />
+                      <select value={form.academy} onChange={update('academy')} className={`input-field ${errors.academy ? 'input-error' : ''}`}>
                         <option value="">Select</option>
-                        <option value="IAAC City Campus">IAAC City Campus</option>
-                        <option value="Airport Academy">Airport Academy</option>
-                        <option value="Kurunegala Center">Kurunegala Center</option>
+                        <option value="IAAC City Academy">IAAC City Academy</option>
+                        <option value="IAAC Airport Academy">IAAC Airport Academy</option>
+                        <option value="IAAC Central Academy">IAAC Central Academy</option>
                       </select>
+                      {errors.academy && <FieldError msg={errors.academy} />}
                     </div>
 
+                    {errors.course && <div className="mb-2"><FieldError msg={errors.course} /></div>}
                     <div className="grid md:grid-cols-2 gap-4">
                       {[
                         'Diploma in Airline Cabin Crew',
@@ -331,7 +389,7 @@ function ApplyNow() {
                   <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
                     <label className="flex items-start gap-4 cursor-pointer group">
                       <div className="relative flex items-center">
-                        <input type="checkbox" checked={form.agreed} onChange={(e) => setForm({...form, agreed: e.target.checked})} className="peer sr-only" />
+                        <input type="checkbox" checked={form.agreed} onChange={(e) => { setForm({...form, agreed: e.target.checked}); if (errors.agreed) setErrors((prev) => { const next = { ...prev }; delete next.agreed; return next; }); }} className="peer sr-only" />
                         <div className="w-6 h-6 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all"></div>
                         <CheckCircle2 size={16} className="absolute text-white opacity-0 peer-checked:opacity-100 left-1 top-1 transition-all" />
                       </div>
@@ -340,6 +398,7 @@ function ApplyNow() {
                         I certify that the information provided is true and correct.
                       </div>
                     </label>
+                    {errors.agreed && <FieldError msg={errors.agreed} />}
                   </div>
 
                   {status.success && (
@@ -395,8 +454,16 @@ function ApplyNow() {
 
 // --- HELPER COMPONENTS ---
 
-function Label({ text }) {
-  return <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 ml-1">{text}</label>;
+function Label({ text, required }) {
+  return (
+    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2 ml-1">
+      {text}{required && <span className="text-red-500 ml-0.5">*</span>}
+    </label>
+  );
+}
+
+function FieldError({ msg }) {
+  return <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{msg}</p>;
 }
 
 function StepBubble({ step, current, label, icon: Icon }) {
@@ -467,6 +534,14 @@ const styles = `
     border-color: #3b82f6; /* blue-500 */
     background-color: #ffffff;
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  }
+  .input-field.input-error {
+    border-color: #ef4444; /* red-500 */
+    background-color: #fef2f2;
+  }
+  .input-field.input-error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
   }
 `;
 

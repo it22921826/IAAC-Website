@@ -215,12 +215,12 @@ function ContactUs() {
                 
                 <form className="space-y-6" onSubmit={submit}>
                   <div className="grid md:grid-cols-2 gap-6">
-                    <InputGroup label="First Name" type="text" placeholder="John" value={form.firstName} onChange={update('firstName')} />
-                    <InputGroup label="Last Name" type="text" placeholder="Doe" value={form.lastName} onChange={update('lastName')} />
+                    <InputGroup label="First Name" type="text" placeholder="Ashini" value={form.firstName} onChange={update('firstName')} />
+                    <InputGroup label="Last Name" type="text" placeholder="Perera" value={form.lastName} onChange={update('lastName')} />
                   </div>
                   
                   <div className="grid md:grid-cols-2 gap-6">
-                    <InputGroup label="Email Address" type="email" placeholder="john@example.com" value={form.email} onChange={update('email')} />
+                    <InputGroup label="Email Address" type="email" placeholder="ashini@example.com" value={form.email} onChange={update('email')} />
                     <InputGroup label="Phone Number" type="tel" placeholder="+94 7X XXX XXXX" value={form.phone} onChange={update('phone')} />
                   </div>
 
