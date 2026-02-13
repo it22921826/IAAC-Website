@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, X, ChevronRight, Camera } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
 function SessionDetails() {
@@ -67,6 +68,12 @@ function SessionDetails() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
+      <SEO
+        title={session.title || session.name || 'Training Session'}
+        description={session.description ? session.description.substring(0, 160) : `View details of ${session.title || 'this practical training session'} at IAAC - International Airline and Aviation College.`}
+        path={`/programs/session/${sessionId}`}
+        keywords={`${session.title || ''}, practical training, aviation session, IAAC training`}
+      />
 
       {/* --- HERO --- */}
       <section className="relative bg-slate-900 pt-40 pb-24 px-6 overflow-hidden">

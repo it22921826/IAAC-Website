@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, X, ArrowRight, CalendarDays } from 'lucide-react';
 
 // --- IMPORT YOUR COMPONENTS ---
+import SEO from '../components/SEO.jsx';
 import HeroSection from '../components/HeroSection';
 import WelcomeToIAAC from '../components/WelcomeToIAAC.jsx';
 import apiClient from '../services/apiClient.js';
@@ -55,6 +56,12 @@ function Home() {
 
   return (
     <>
+      <SEO
+        title={null}
+        description="International Airline and Aviation College (IAAC) - Sri Lanka's leading aviation training institute. Professional airline & aviation courses, practical training, and career support across Colombo, Ratmalana & Kurunegala."
+        path="/"
+        keywords="aviation college Sri Lanka, airline training, IATA courses, cabin crew training, airport management"
+      />
       {/* 1. HERO SECTION */}
       <HeroSection />
 

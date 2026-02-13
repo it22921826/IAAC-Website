@@ -3,12 +3,19 @@ import { motion } from 'framer-motion';
 import { 
   CheckCircle2, Target, Compass, Award, BookOpen, UserCheck, ShieldCheck 
 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 
 function About() {
   const fastTransition = { duration: 0.5, ease: 'easeOut' };
 
   return (
     <>
+      <SEO
+        title="About Us"
+        description="Learn about IAAC - International Airline and Aviation College. Since 2015, we've been Sri Lanka's premier aviation training institute, building careers in airline and aviation industries."
+        path="/about"
+        keywords="about IAAC, aviation college history, aviation education Sri Lanka, airline academy"
+      />
       {/* --- SECTION 1: HERO - LIFE AT IAAC (New Addition) --- */}
       <section className="relative pt-40 pb-16 bg-[#0f172a] overflow-hidden">
         {/* Background Gradient Effect */}

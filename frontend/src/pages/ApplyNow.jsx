@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO.jsx';
 
 function ApplyNow() {
   const navigate = useNavigate();
@@ -110,6 +111,12 @@ function ApplyNow() {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-20">
+      <SEO
+        title="Apply Now"
+        description="Apply to IAAC - International Airline and Aviation College. Start your aviation career today. Submit your application for airline and aviation training programs."
+        path="/apply-now"
+        keywords="apply aviation college, aviation course application, enroll airline training, IAAC admission"
+      />
       
       {/* --- HERO HEADER --- */}
       <section className="bg-[#0f172a] pt-32 pb-24 px-6 text-center relative overflow-hidden">

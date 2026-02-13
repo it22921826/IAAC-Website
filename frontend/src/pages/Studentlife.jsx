@@ -1,10 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Shirt, Users, Presentation, CheckCircle2 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 
 function StudentLife() {
   return (
     <div className="bg-slate-50 min-h-screen">
+      <SEO
+        title="Student Life"
+        description="Experience campus life at IAAC. Discover student activities, clubs, uniforms, presentations, and the vibrant community at International Airline and Aviation College."
+        path="/student-life"
+        keywords="IAAC student life, aviation college campus, student activities, aviation community Sri Lanka"
+      />
       
       {/* --- HERO SECTION --- */}
       <section className="relative bg-slate-900 pt-32 sm:pt-[180px] pb-24 px-6 overflow-hidden">

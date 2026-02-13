@@ -10,6 +10,7 @@ import {
   GraduationCap,
   HelpCircle
 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
 function CareerSupport() {
@@ -47,6 +48,12 @@ function CareerSupport() {
 
   return (
     <>
+      <SEO
+        title="Career Support"
+        description="Get career guidance and support from IAAC. We help aviation graduates find employment opportunities in airlines and the aviation industry in Sri Lanka and abroad."
+        path="/career-support"
+        keywords="aviation career support, airline job placement, aviation employment, career guidance Sri Lanka"
+      />
       {/* --- HERO SECTION --- */}
       <motion.section
         className="bg-slate-900 pt-32 md:pt-[160px] pb-16 px-6"

@@ -1,0 +1,22 @@
+{
+  "name": "International Airline and Aviation College",
+  "short_name": "IAAC",
+  "description": "Sri Lanka's leading aviation training institute offering professional airline and aviation courses, practical training, and career support.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/weblogo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/weblogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calendar as CalendarIcon, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
 const Events = () => {
@@ -84,6 +85,12 @@ const Events = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
+      <SEO
+        title="Upcoming Events"
+        description="Stay updated with IAAC events, workshops, and seminars. Discover upcoming aviation industry events at International Airline and Aviation College."
+        path="/events/upcoming"
+        keywords="IAAC events, aviation workshops, airline seminars, aviation college events Sri Lanka"
+      />
 
       <AnimatePresence>
         {previewImages.length ? (

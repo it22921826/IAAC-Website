@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { BookOpen, Plane, Wrench, Building2, MapPin } from 'lucide-react'; // Added icons
+import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
 // Updated BRANCHES with icons
@@ -82,6 +83,12 @@ function Programs() {
 
   return (
     <>
+      <SEO
+        title="Programs & Courses"
+        description="Explore aviation courses and practical training programs at IAAC. Professional airline training, cabin crew courses, airport management, and more across Colombo, Ratmalana & Kurunegala."
+        path="/programs"
+        keywords="aviation courses, airline training programs, cabin crew course, airport management, pilot training, IATA courses Sri Lanka"
+      />
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden">
         {/* Background Glow Effects */}

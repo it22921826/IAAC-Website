@@ -4,6 +4,7 @@ import {
   Clock, CreditCard, BookOpen, Calendar, 
   CheckCircle, FileText, ChevronLeft 
 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
 const BRANCHES = [
@@ -92,6 +93,23 @@ function CourseDetails() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
+      <SEO
+        title={course.title || course.name || 'Course Details'}
+        description={course.description ? course.description.substring(0, 160) : `Learn about ${course.title || 'this course'} at IAAC - International Airline and Aviation College. Professional aviation training in Sri Lanka.`}
+        path={`/programs/course/${courseId}`}
+        keywords={`${course.title || ''}, aviation course, airline training, IAAC course`}
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "Course",
+          "name": course.title || course.name,
+          "description": course.description || '',
+          "provider": {
+            "@type": "EducationalOrganization",
+            "name": "International Airline and Aviation College",
+            "url": "https://iaacasia.com"
+          }
+        }}
+      />
       
       {/* --- 1. HERO SECTION --- */}
       <section className="bg-slate-900 pt-40 pb-20 px-6">

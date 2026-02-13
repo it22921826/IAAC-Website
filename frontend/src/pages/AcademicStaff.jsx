@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Award, Loader2 } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
 const AcademicStaff = () => {
@@ -50,6 +51,12 @@ const AcademicStaff = () => {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-20">
+      <SEO
+        title="Academic Staff"
+        description="Meet IAAC's experienced academic staff. Our qualified instructors bring industry expertise to aviation and airline training programs in Sri Lanka."
+        path="/academic-staff"
+        keywords="aviation instructors, airline training faculty, IAAC lecturers, aviation educators Sri Lanka"
+      />
       
       {/* --- HEADER SECTION (Updated Color) --- */}
       <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden text-center px-6">

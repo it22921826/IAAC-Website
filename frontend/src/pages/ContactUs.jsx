@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, Clock, Send, Facebook, Instagram, Linkedin, Youtube, Building2, Plane } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
 // --- BRANCH DATA CONFIGURATION ---
@@ -80,6 +81,18 @@ function ContactUs() {
 
   return (
     <>
+      <SEO
+        title="Contact Us"
+        description="Contact IAAC - International Airline and Aviation College. Reach our City Campus (Colombo), Airport Academy (Ratmalana), or Kurunegala Center. Call 076 676 3777."
+        path="/contact-us"
+        keywords="contact IAAC, aviation college contact, Colombo aviation academy, Ratmalana airport academy, Kurunegala aviation center"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "ContactPage",
+          "name": "Contact IAAC",
+          "url": "https://iaacasia.com/contact-us"
+        }}
+      />
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden text-center px-6">
         {/* Background Glow Effects */}

@@ -1,0 +1,26 @@
+# robots.txt for iaacasia.com
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /admin/login
+Disallow: /admin/dashboard
+Disallow: /student-login
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://iaacasia.com/sitemap.xml
+
+# Crawl-delay (optional, respected by some bots)
+Crawl-delay: 1
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Bing specific
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/

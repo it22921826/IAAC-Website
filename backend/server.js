@@ -107,6 +107,54 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// SEO: Dynamic sitemap that includes database-driven course/session URLs
+app.get('/api/sitemap.xml', async (req, res) => {
+  const SITE_URL = process.env.FRONTEND_URL || 'https://iaacasia.com';
+
+  // Static pages
+  const staticPages = [
+    { loc: '/', changefreq: 'weekly', priority: '1.0' },
+    { loc: '/about', changefreq: 'monthly', priority: '0.9' },
+    { loc: '/programs', changefreq: 'weekly', priority: '0.9' },
+    { loc: '/programs/courses', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/programs/practical-trainings', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/academic-staff', changefreq: 'monthly', priority: '0.7' },
+    { loc: '/student-life', changefreq: 'monthly', priority: '0.7' },
+    { loc: '/career-support', changefreq: 'monthly', priority: '0.8' },
+    { loc: '/contact-us', changefreq: 'monthly', priority: '0.8' },
+    { loc: '/apply-now', changefreq: 'monthly', priority: '0.9' },
+    { loc: '/events/upcoming', changefreq: 'weekly', priority: '0.7' },
+  ];
+
+  // Dynamic course pages from database
+  let dynamicPages = [];
+  try {
+    const Course = require('./models/Course');
+    const courses = await Course.find({}, '_id courseType').lean();
+    dynamicPages = courses.map((c) => ({
+      loc: c.courseType === 'Practical Training'
+        ? `/programs/session/${c._id}`
+        : `/programs/course/${c._id}`,
+      changefreq: 'weekly',
+      priority: '0.6',
+    }));
+  } catch (_) {
+    // DB may not be connected; serve static pages only
+  }
+
+  const allPages = [...staticPages, ...dynamicPages];
+  const urls = allPages
+    .map(
+      (p) =>
+        `  <url>\n    <loc>${SITE_URL}${p.loc}</loc>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority}</priority>\n  </url>`
+    )
+    .join('\n');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>`;
+  res.header('Content-Type', 'application/xml');
+  res.send(xml);
+});
+
 const port = process.env.PORT || 5000;
 
 const startServer = async () => {

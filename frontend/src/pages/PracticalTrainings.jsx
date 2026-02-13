@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Wrench } from 'lucide-react';
+import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
 function PracticalTrainings() {
@@ -27,6 +28,12 @@ function PracticalTrainings() {
 
   return (
     <>
+      <SEO
+        title="Practical Training Programs"
+        description="Hands-on practical aviation training at IAAC. Gain real-world experience with industry-standard equipment and expert instructors in Sri Lanka."
+        path="/programs/practical-trainings"
+        keywords="practical aviation training, hands-on airline training, aviation workshop, flight training Sri Lanka"
+      />
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
