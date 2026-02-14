@@ -7,31 +7,38 @@ import SEO from '../components/SEO.jsx';
 const MAIN_EVENTS = [
   {
     id: 1,
-    title: "Annual Aviation Symposium",
-    desc: "A premier gathering where students connect with industry leaders, alumni, and experts to discuss the future of global aviation.",
-    image: "/event1.jpg", // Replace with your actual image path
+    title: "State-of-the-Art Facilities",
+    desc: "Step into environments designed to mirror the real aviation world. From our dedicated mock cabins for in-flight service practice to our fully equipped computer labs for GDS and ticketing training, IAAC ensures your learning goes far beyond textbook theory. Our modern classrooms and student lounges provide the perfect space to focus, collaborate, and relax",
+    image: "/slife1.jpeg", // Replace with your actual image path
     tag: "Academic"
   },
   {
     id: 2,
-    title: "Annual Sports Meet",
-    desc: "Fostering teamwork and physical fitness. Our sports meet brings out the competitive spirit and camaraderie among all batches.",
-    image: "/event2.jpg", // Replace with your actual image path
+    title: "Industry Exposure",
+    desc: "Aviation cannot be learned solely inside four walls. At IAAC, we take the classroom to the tarmac. Through exclusive field trips to international airports, cargo terminals, and airline hangars, our students get firsthand experience of ground operations, aviation security, and real-time flight management. See the industry in action before you even graduate",
+    image: "/slife2.jpg", // Replace with your actual image path
     tag: "Extracurricular"
   },
   {
     id: 3,
-    title: "Cultural Day & Talent Show",
-    desc: "A vibrant celebration of diversity. Students showcase their artistic talents, cultural heritage, and creativity on the big stage.",
-    image: "/event3.jpg", // Replace with your actual image path
-    tag: "Community"
+    title: "Avurudu Festival",
+    desc: "Celebrate our rich cultural heritage at the annual IAAC Avurudu Festival. It’s a time when our campus comes alive with traditional games, authentic sweetmeats, and vibrant cultural attire. This festive gathering fosters unity, joy, and a deep sense of belonging among our diverse student community.",
+    image: "/slife3.jpeg", // Replace with your actual image path
+    tag: "Cultural"
   },
   {
     id: 4,
     title: "Graduation Ceremony",
-    desc: "The pinnacle of the IAAC journey. A grand event celebrating the hard work, dedication, and success of our graduating professionals.",
-    image: "/event4.jpg", // Replace with your actual image path
+    desc: "The pinnacle of your IAAC journey. Our Graduation Ceremony is a grand celebration of your hard work, dedication, and transformation into an aviation professional. Share this proud, unforgettable milestone with family, friends, and faculty as you prepare to take flight into your new career.",
+    image: "/slife5.jpg", // Replace with your actual image path
     tag: "Ceremony"
+  },
+  {
+    id: 5,
+    title: "Day in the Life of IAAC",
+    desc: "Experience the energy, the pride, and the friendships that define the IAAC journey. Browse through our gallery to see our students in their element—from proudly wearing their uniforms on day one, to late-night study sessions, practical drills, and celebrating their final graduation moments",
+    image: "/slife4.jpg", // Replace with your actual image path
+    tag: "Student Life"
   }
 ];
 
