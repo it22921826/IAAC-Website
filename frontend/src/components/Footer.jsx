@@ -94,7 +94,7 @@ function Footer() {
       <div className="border-t border-slate-900 bg-slate-950">
         <div className="container mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
           <p>© {new Date().getFullYear()} International Airline & Aviation College. All rights reserved.</p>
-          <p className="text-slate-600">Designed & Developed by IAAC IT Team.</p>
+          <p className="text-slate-600">Designed & Developed by Sanuthi Ranaweera.</p>
         </div>
       </div>
     </footer>

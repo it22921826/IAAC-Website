@@ -7,9 +7,9 @@ import apiClient from '../services/apiClient.js';
 
 // Updated BRANCHES with icons
 const BRANCHES = [
-  { key: 'iaacCity', label: 'IAAC City Campus', icon: <Building2 size={18} /> },
-  { key: 'airportAcademy', label: 'Airport Academy', icon: <Plane size={18} /> },
-  { key: 'iaacCenter', label: 'Kurunegala Center', icon: <MapPin size={18} /> },
+  { key: 'iaacCity', label: 'IAAC City Academy', icon: <Building2 size={18} /> },
+  { key: 'airportAcademy', label: 'IAAC Airport Academy', icon: <Plane size={18} /> },
+  { key: 'iaacCenter', label: 'IAAC Central Academy', icon: <MapPin size={18} /> },
 ];
 
 const normalizeValue = (value) => {

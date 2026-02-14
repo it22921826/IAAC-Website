@@ -1,7 +1,39 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shirt, Users, Presentation, CheckCircle2 } from 'lucide-react';
+import { Shirt, Users, Presentation, CheckCircle2, Calendar } from 'lucide-react';
 import SEO from '../components/SEO.jsx';
+
+// --- EVENT DATA ---
+const MAIN_EVENTS = [
+  {
+    id: 1,
+    title: "Annual Aviation Symposium",
+    desc: "A premier gathering where students connect with industry leaders, alumni, and experts to discuss the future of global aviation.",
+    image: "/event1.jpg", // Replace with your actual image path
+    tag: "Academic"
+  },
+  {
+    id: 2,
+    title: "Annual Sports Meet",
+    desc: "Fostering teamwork and physical fitness. Our sports meet brings out the competitive spirit and camaraderie among all batches.",
+    image: "/event2.jpg", // Replace with your actual image path
+    tag: "Extracurricular"
+  },
+  {
+    id: 3,
+    title: "Cultural Day & Talent Show",
+    desc: "A vibrant celebration of diversity. Students showcase their artistic talents, cultural heritage, and creativity on the big stage.",
+    image: "/event3.jpg", // Replace with your actual image path
+    tag: "Community"
+  },
+  {
+    id: 4,
+    title: "Graduation Ceremony",
+    desc: "The pinnacle of the IAAC journey. A grand event celebrating the hard work, dedication, and success of our graduating professionals.",
+    image: "/event4.jpg", // Replace with your actual image path
+    tag: "Ceremony"
+  }
+];
 
 function StudentLife() {
   return (
@@ -36,7 +68,6 @@ function StudentLife() {
       </section>
 
       {/* --- SECTION 1: DRESS CODE (Split Layout) --- */}
-      {/* This layout solves the image size issue by giving the image its own full column */}
       <section className="py-24 px-6">
         <div className="container mx-auto">
           <div className="bg-white rounded-[2.5rem] p-4 md:p-6 shadow-xl shadow-slate-200/50 overflow-hidden">
@@ -75,7 +106,6 @@ function StudentLife() {
               </motion.div>
 
               {/* Right Column: Image */}
-              {/* Now the image can be as tall as it needs to be! */}
               <motion.div 
                 className="relative h-[400px] lg:h-[600px] w-full rounded-[2rem] overflow-hidden order-1 lg:order-2 group"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -96,6 +126,24 @@ function StudentLife() {
               </motion.div>
 
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- SECTION 2: MAIN EVENTS (Grid Layout) --- */}
+      <section className="px-6 pb-24">
+        <div className="container mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Campus Highlights</h2>
+            <p className="text-slate-500 text-lg">
+              Throughout the year, IAAC hosts a variety of events designed to build character, celebrate culture, and create unforgettable memories.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-10">
+            {MAIN_EVENTS.map((event, index) => (
+              <EventCard key={event.id} event={event} index={index} />
+            ))}
           </div>
         </div>
       </section>
@@ -133,7 +181,7 @@ function StudentLife() {
 
             {/* Card 3 */}
             <ActivityCard 
-              icon={<div className="font-bold text-2xl">L</div>} // Custom icon or use another lucide one
+              icon={<div className="font-bold text-2xl">L</div>} 
               title="Leadership"
               desc="Step up and take charge. Our programs are designed to identify and nurture future industry leaders."
               color="text-blue-600"
@@ -174,6 +222,49 @@ function ActivityCard({ icon, title, desc, color, bg }) {
       <p className="text-slate-500 leading-relaxed">
         {desc}
       </p>
+    </motion.div>
+  );
+}
+
+function EventCard({ event, index }) {
+  return (
+    <motion.div
+      className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col"
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, delay: index * 0.1 }}
+    >
+      {/* Event Image Box */}
+      <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-200">
+        <img 
+          src={event.image} 
+          alt={event.title} 
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          onError={(e) => {
+            // Fallback if image not found
+            e.target.src = "https://via.placeholder.com/800x600?text=Event+Image";
+          }}
+        />
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        
+        {/* Tag Pill */}
+        <div className="absolute top-6 left-6 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full flex items-center gap-2 shadow-sm">
+          <Calendar size={14} className="text-blue-600" />
+          <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">{event.tag}</span>
+        </div>
+      </div>
+
+      {/* Event Content Box */}
+      <div className="p-8 flex-grow flex flex-col">
+        <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
+          {event.title}
+        </h3>
+        <p className="text-slate-600 leading-relaxed text-base flex-grow">
+          {event.desc}
+        </p>
+      </div>
     </motion.div>
   );
 }

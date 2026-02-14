@@ -233,9 +233,9 @@ function ContactUs() {
                       required
                     >
                       <option value="">Select</option>
-                      <option value="IAAC City Campus">IAAC City Campus</option>
-                      <option value="Airport Academy">Airport Academy</option>
-                      <option value="Kurunegala Center">Kurunegala Center</option>
+                      <option value="IAAC City Academy">IAAC City Academy</option>
+                      <option value="IAAC Airport Academy">IAAC Airport Academy</option>
+                      <option value="IAAC Center Academy">IAAC Center Academy</option>
                     </select>
                   </div>
 
