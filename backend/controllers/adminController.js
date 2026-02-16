@@ -37,7 +37,6 @@ exports.applications = async (req, res) => {
     const Application = require('../models/Application');
     const items = await Application.find({})
       .sort({ createdAt: -1 })
-      .limit(20)
       .lean();
       
     const mapped = items.map((a) => ({

@@ -152,6 +152,7 @@ function WelcomeToIAAC() {
                 <CourseCard
                 title="Airline Cabin Crew"
                 Icon={Users}
+                image="/h1.png"
                 description="Comprehensive training for aspiring flight attendants focusing on safety, grooming, and in-flight service."
                 />
             </div>
@@ -161,6 +162,7 @@ function WelcomeToIAAC() {
                 <CourseCard
                 title="Airport Ground Ops"
                 Icon={Building2}
+                image="/h4.png"
                 description="Mastering passenger handling, check-in procedures, terminal operations, and ramp safety."
                 />
             </div>
@@ -170,6 +172,7 @@ function WelcomeToIAAC() {
                 <CourseCard
                 title="Ticketing & Reservations"
                 Icon={Ticket}
+                image="/h2.png"
                 description="Expert training in global airline ticketing systems (GDS), reservations, and travel management."
                 />
             </div>
@@ -179,6 +182,7 @@ function WelcomeToIAAC() {
                 <CourseCard
                 title="Cargo & Logistics"
                 Icon={Package}
+                image="/h3.png"
                 description="Specialized courses in air cargo operations, supply chain management, and global logistics."
                 />
             </div>
@@ -191,10 +195,12 @@ function WelcomeToIAAC() {
 
 // --- HELPER COMPONENTS ---
 
-function CourseCard({ title, Icon, description }) {
+function CourseCard({ title, Icon, description, image }) {
+  const [imgError, setImgError] = React.useState(false);
+
   return (
     <motion.div
-      className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm group h-full flex flex-col"
+      className="bg-white rounded-2xl border border-slate-100 shadow-sm group h-full flex flex-col overflow-hidden"
       variants={{
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
@@ -202,11 +208,29 @@ function CourseCard({ title, Icon, description }) {
       whileHover={{ y: -8, boxShadow: '0px 25px 50px -28px rgba(15, 23, 42, 0.35)' }}
       transition={{ type: 'spring', stiffness: 400, damping: 25 }}
     >
-      <div className="mb-6 inline-flex items-center justify-center p-4 rounded-2xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors w-fit">
-        <Icon strokeWidth={1.5} className="w-8 h-8" />
+      {/* Card Image */}
+      <div className="relative w-full h-64 sm:h-72 overflow-hidden bg-slate-200 shrink-0">
+        {image && !imgError ? (
+          <img
+            src={image}
+            alt={title}
+            loading="eager"
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300">
+            <Icon strokeWidth={1.5} className="w-16 h-16" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       </div>
-      <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">{title}</h3>
-      <p className="text-slate-500 leading-relaxed text-sm flex-grow">{description}</p>
+
+      {/* Card Content */}
+      <div className="p-8 flex flex-col flex-grow">
+        <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">{title}</h3>
+        <p className="text-slate-500 leading-relaxed text-sm flex-grow">{description}</p>
+      </div>
     </motion.div>
   );
 }
