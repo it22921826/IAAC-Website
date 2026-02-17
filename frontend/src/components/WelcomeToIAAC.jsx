@@ -152,7 +152,7 @@ function WelcomeToIAAC() {
                 <CourseCard
                 title="Airline Cabin Crew"
                 Icon={Users}
-                image="/h1.png"
+                image="/h1.jpeg"
                 description="Comprehensive training for aspiring flight attendants focusing on safety, grooming, and in-flight service."
                 />
             </div>
@@ -160,9 +160,9 @@ function WelcomeToIAAC() {
             {/* Card 2 */}
             <div className="w-full md:w-[calc(50%-1rem)] lg:w-[calc(50%-1.5rem)] min-w-[300px] flex-grow-0">
                 <CourseCard
-                title="Airport Ground Ops"
+                title="Airport Ground Operations"
                 Icon={Building2}
-                image="/h4.png"
+                image="/h2.jpeg"
                 description="Mastering passenger handling, check-in procedures, terminal operations, and ramp safety."
                 />
             </div>
@@ -172,7 +172,7 @@ function WelcomeToIAAC() {
                 <CourseCard
                 title="Ticketing & Reservations"
                 Icon={Ticket}
-                image="/h2.png"
+                image="/h3.jpeg"
                 description="Expert training in global airline ticketing systems (GDS), reservations, and travel management."
                 />
             </div>
@@ -182,7 +182,7 @@ function WelcomeToIAAC() {
                 <CourseCard
                 title="Cargo & Logistics"
                 Icon={Package}
-                image="/h3.png"
+                image="/h4.png"
                 description="Specialized courses in air cargo operations, supply chain management, and global logistics."
                 />
             </div>
