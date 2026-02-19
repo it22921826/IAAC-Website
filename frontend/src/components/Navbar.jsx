@@ -60,7 +60,7 @@ function Navbar() {
               href="https://portal.iaacasialms.com/index"
               className="px-4 py-2 border border-blue-600 text-blue-600 text-sm font-bold rounded-full hover:bg-blue-50 transition"
             >
-              Student Login
+              LMS Login
             </a>
             <Link
               to="/apply-now"
@@ -136,7 +136,7 @@ function Navbar() {
                 }}
                 className="block text-center py-3 border border-blue-600 text-blue-600 font-bold rounded-lg"
               >
-                Student Login
+                LMS Login
               </a>
               <Link
                 to="/apply-now"

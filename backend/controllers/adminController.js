@@ -107,6 +107,66 @@ exports.markApplicationDone = async (req, res) => {
   }
 };
 
+// --- PASSING GRADES for Math & English check ---
+const PASSING_GRADES = ['A', 'B', 'C', 'S'];
+
+function hasMinimumGrades(olResults) {
+  if (!olResults || typeof olResults !== 'object') {
+    return { eligible: false, mathPass: false, englishPass: false, mathGrade: '', englishGrade: '' };
+  }
+  const mathGrade = (olResults.math || '').toUpperCase().trim();
+  const englishGrade = (olResults.english || '').toUpperCase().trim();
+  const mathPass = PASSING_GRADES.includes(mathGrade);
+  const englishPass = PASSING_GRADES.includes(englishGrade);
+  return { eligible: mathPass && englishPass, mathPass, englishPass, mathGrade, englishGrade };
+}
+
+exports.approveApplication = async (req, res) => {
+  try {
+    const Application = require('../models/Application');
+    const { sendApprovalEmail } = require('../config/email');
+
+    const app = await Application.findById(req.params.id);
+    if (!app) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Check O/L grades eligibility
+    const gradeCheck = hasMinimumGrades(app.olResults);
+    if (!gradeCheck.eligible) {
+      const reasons = [];
+      if (!gradeCheck.mathPass) reasons.push(`Mathematics: ${gradeCheck.mathGrade || 'Not provided'}`);
+      if (!gradeCheck.englishPass) reasons.push(`English: ${gradeCheck.englishGrade || 'Not provided'}`);
+      return res.status(400).json({
+        message: 'Student does not meet minimum entry requirements',
+        details: `Requires at least S pass in Mathematics and English. Failed: ${reasons.join(', ')}`,
+        gradeCheck,
+      });
+    }
+
+    // Mark as done/approved
+    app.isDone = true;
+    await app.save();
+
+    // Send approval email to student
+    const emailResult = await sendApprovalEmail(app);
+
+    return res.status(200).json({
+      id: app._id,
+      isDone: true,
+      approved: true,
+      emailSent: emailResult.sent,
+      preview: emailResult.preview || null,
+      message: emailResult.sent
+        ? `Application approved. Congratulations email sent to ${app.email}`
+        : `Application approved but email failed: ${emailResult.error || 'Unknown error'}`,
+    });
+  } catch (err) {
+    console.error('Approve error:', err);
+    return res.status(500).json({ message: 'Failed to approve application' });
+  }
+};
+
 exports.deleteApplication = async (req, res) => {
   try {
     const Application = require('../models/Application');

@@ -1,5 +1,5 @@
 const express = require('express');
-const { login, me, applications, markApplicationDone, stats, config, createCourse, createEvent, deleteCourse, deleteEvent, deleteApplication, messages, markMessageDone, deleteMessage } = require('../controllers/adminController');
+const { login, me, applications, markApplicationDone, approveApplication, stats, config, createCourse, createEvent, deleteCourse, deleteEvent, deleteApplication, messages, markMessageDone, deleteMessage } = require('../controllers/adminController');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -16,6 +16,7 @@ router.get('/me', auth, me);
 // Protected: example dashboard data
 router.get('/applications', auth, applications);
 router.patch('/applications/:id/done', auth, markApplicationDone);
+router.post('/applications/:id/approve', auth, approveApplication);
 router.get('/stats', auth, stats);
 router.get('/messages', auth, messages);
 router.patch('/messages/:id/done', auth, markMessageDone);

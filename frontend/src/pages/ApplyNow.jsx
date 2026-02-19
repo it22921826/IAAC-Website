@@ -28,7 +28,7 @@ function ApplyNow() {
     fullName: '',
     nic: '',
     dob: '',
-    gender: 'Male',
+    gender: '',
     address: '',
     mobile: '',
     whatsapp: '',
@@ -71,6 +71,7 @@ function ApplyNow() {
     if (!form.email.trim()) e.email = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = 'Enter a valid email address';
     if (!form.address.trim()) e.address = 'Home address is required';
+    if (!form.gender) e.gender = 'Please select your gender';
     return e;
   };
 
@@ -230,7 +231,7 @@ function ApplyNow() {
                     </div>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-5">
+                  <div className="grid md:grid-cols-3 gap-5">
                     <div>
                       <Label text="NIC / Passport" required />
                       <input type="text" placeholder="Identity Number" value={form.nic} onChange={update('nic')} className={`input-field ${errors.nic ? 'input-error' : ''}`} />
@@ -240,6 +241,16 @@ function ApplyNow() {
                       <Label text="Date of Birth" required />
                       <input type="date" value={form.dob} onChange={update('dob')} className={`input-field ${errors.dob ? 'input-error' : ''}`} />
                       {errors.dob && <FieldError msg={errors.dob} />}
+                    </div>
+                    <div>
+                      <Label text="Gender" required />
+                      <select value={form.gender} onChange={update('gender')} className={`input-field ${errors.gender ? 'input-error' : ''}`}>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      {errors.gender && <FieldError msg={errors.gender} />}
                     </div>
                   </div>
 

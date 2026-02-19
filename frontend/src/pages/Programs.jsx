@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookOpen, Plane, Wrench, Building2, MapPin } from 'lucide-react'; // Added icons
+import { BookOpen, Plane, Wrench, Building2, MapPin, Loader2 } from 'lucide-react'; // Added Loader2
 import SEO from '../components/SEO.jsx';
 import apiClient from '../services/apiClient.js';
 
@@ -25,7 +25,6 @@ const isCourseAvailableAtBranch = (course, branchKey) => {
   const keys = BRANCHES.map((b) => b.key);
   const anyBranchHasValue = keys.some((k) => normalizeValue(branchPrices?.[k]));
 
-  // If branchPrices exists but is effectively empty, treat as available.
   if (!anyBranchHasValue) return true;
 
   return !!normalizeValue(branchPrices?.[branchKey]);
@@ -35,15 +34,19 @@ function Programs() {
   const [extraCourses, setExtraCourses] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState('iaacCity');
   const [searchParams] = useSearchParams();
+  const [isLoading, setIsLoading] = useState(true); // --- 1. ADDED LOADING STATE ---
 
   useEffect(() => {
     let mounted = true;
     async function load() {
+      setIsLoading(true); // Start loading
       try {
         const res = await apiClient.get('/api/courses');
         if (mounted) setExtraCourses(res.data.items || []);
       } catch (_) {
         if (mounted) setExtraCourses([]);
+      } finally {
+        if (mounted) setIsLoading(false); // Stop loading regardless of success/fail
       }
     }
     load();
@@ -58,8 +61,6 @@ function Programs() {
     if (BRANCHES.some((b) => b.key === requested) && requested !== selectedBranch) {
       setSelectedBranch(requested);
     }
-    // Only react to URL changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   // --- GROUPING LOGIC ---
@@ -89,9 +90,9 @@ function Programs() {
         path="/programs"
         keywords="aviation courses, airline training programs, cabin crew course, airport management, pilot training, IATA courses Sri Lanka"
       />
+      
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 md:pt-[160px] pb-24 bg-[#0f172a] overflow-hidden">
-        {/* Background Glow Effects */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl opacity-50"></div>
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl opacity-30"></div>
@@ -124,9 +125,13 @@ function Programs() {
                 <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Select Your Campus</h2>
               </div>
               
-              <div className="inline-flex p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-x-auto max-w-full">
+              {/* --- 2. HIDDEN SCROLLBAR FOR MOBILE ([&::-webkit-scrollbar]:hidden) --- */}
+              <div className="inline-flex p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-x-auto max-w-full [&::-webkit-scrollbar]:hidden">
                 {BRANCHES.map((b) => {
                   const active = b.key === selectedBranch;
+                  const activeColor = b.key === 'airportAcademy'
+                    ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20 scale-100'
+                    : 'bg-blue-600 text-white shadow-md shadow-blue-600/20 scale-100';
                   return (
                     <button
                       key={b.key}
@@ -134,7 +139,7 @@ function Programs() {
                       className={`
                         relative flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap
                         ${active 
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20 scale-100' 
+                          ? activeColor 
                           : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                         }
                       `}
@@ -149,8 +154,14 @@ function Programs() {
           </div>
         </div>
 
-        {/* Course lists */}
-        {Object.keys(coursesByType).length > 0 ? (
+        {/* --- 3. LOADING STATE OR COURSE LISTS --- */}
+        {isLoading ? (
+          <div className="container mx-auto px-6 py-32 flex flex-col items-center justify-center">
+            <Loader2 size={48} className="text-blue-500 animate-spin mb-4" />
+            <h3 className="text-xl font-bold text-slate-900">Loading Programs...</h3>
+            <p className="text-slate-500 mt-2">Fetching the latest courses for {BRANCHES.find(b => b.key === selectedBranch)?.label}</p>
+          </div>
+        ) : Object.keys(coursesByType).length > 0 ? (
           Object.entries(coursesByType).map(([categoryName, courses]) => (
             <section key={categoryName} className="py-16 border-b border-slate-200 last:border-0 bg-white first:pt-10">
               <div className="container mx-auto px-6">
@@ -161,12 +172,12 @@ function Programs() {
                   transition={{ duration: 0.5 }}
                   viewport={{ once: true }}
                 >
-                  <div className="p-3.5 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100 shadow-sm">
+                  <div className={`p-3.5 rounded-2xl border shadow-sm ${selectedBranch === 'airportAcademy' ? 'bg-purple-50 text-purple-600 border-purple-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
                     {getCategoryIcon(categoryName)}
                   </div>
                   <div>
                     <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{categoryName}</h2>
-                    <p className="text-slate-500 mt-1">Available programs at <span className="font-semibold text-blue-600">{BRANCHES.find(b => b.key === selectedBranch)?.label}</span></p>
+                    <p className="text-slate-500 mt-1">Available programs at <span className={`font-semibold ${selectedBranch === 'airportAcademy' ? 'text-purple-600' : 'text-blue-600'}`}>{BRANCHES.find(b => b.key === selectedBranch)?.label}</span></p>
                   </div>
                 </motion.div>
 
@@ -186,6 +197,7 @@ function Programs() {
                       to={`/programs/course/${c._id}`}
                       branchKey={selectedBranch}
                       description={c.shortDescription || ''}
+                      isPurple={selectedBranch === 'airportAcademy'}
                     />
                   ))}
                 </motion.div>
@@ -208,16 +220,16 @@ function Programs() {
   );
 }
 
-function CourseCard({ title, Icon, description, duration, to, branchKey }) {
+function CourseCard({ title, Icon, description, duration, to, branchKey, isPurple }) {
   const href = branchKey ? `${to}?branch=${encodeURIComponent(branchKey)}` : to;
   return (
     <Link
       to={href}
-      className="block h-full focus:outline-none focus:ring-4 focus:ring-blue-200 rounded-2xl"
+      className={`block h-full focus:outline-none focus:ring-4 rounded-2xl ${isPurple ? 'focus:ring-purple-200' : 'focus:ring-blue-200'}`}
       aria-label={`View details for ${title}`}
     >
       <motion.div
-        className="group bg-white rounded-2xl border border-slate-100 p-6 h-full flex flex-col hover:border-blue-200 transition-all duration-300 cursor-pointer"
+        className={`group bg-white rounded-2xl border border-slate-100 p-6 h-full flex flex-col transition-all duration-300 cursor-pointer ${isPurple ? 'hover:border-purple-200' : 'hover:border-blue-200'}`}
         variants={{
           hidden: { opacity: 0, y: 20 },
           visible: {
@@ -229,7 +241,7 @@ function CourseCard({ title, Icon, description, duration, to, branchKey }) {
         whileHover={{ y: -5, boxShadow: '0 20px 40px -15px rgba(15, 23, 42, 0.08)' }}
       >
         <div className="flex justify-between items-start mb-5">
-          <div className="p-3 bg-slate-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+          <div className={`p-3 bg-slate-50 rounded-xl group-hover:text-white transition-colors duration-300 ${isPurple ? 'text-purple-600 group-hover:bg-purple-600' : 'text-blue-600 group-hover:bg-blue-600'}`}>
             <Icon size={28} strokeWidth={1.5} />
           </div>
           <span className="px-3 py-1 bg-slate-50 border border-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wide">
@@ -237,7 +249,7 @@ function CourseCard({ title, Icon, description, duration, to, branchKey }) {
           </span>
         </div>
 
-        <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-blue-600 transition-colors">
+        <h3 className={`text-xl font-bold text-slate-900 mb-3 leading-snug transition-colors ${isPurple ? 'group-hover:text-purple-600' : 'group-hover:text-blue-600'}`}>
           {title}
         </h3>
 

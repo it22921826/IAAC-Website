@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { 
   Users, User, FileText, Calendar, BookOpen, UploadCloud,
-  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil, Plus, Menu
+  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil, Plus, Menu, Award
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1070,6 +1070,28 @@ function Dashboard() {
                 </button>
 
                 <div className="flex gap-2">
+                  <button 
+                    onClick={async () => {
+                      if (!window.confirm('Approve this application and send acceptance email to the student?')) return;
+                      try {
+                        const res = await apiClient.post(`/api/admin/applications/${app.id}/approve`);
+                        if (res?.data?.approved) {
+                          setApplications((prev) => prev.map((x) => (x.id === app.id ? { ...x, isDone: true } : x)));
+                          alert(res.data.message || 'Application approved!');
+                        }
+                      } catch (e) {
+                        const msg = e?.response?.data?.details || e?.response?.data?.message || 'Failed to approve';
+                        alert(msg);
+                      }
+                    }}
+                    disabled={app.isDone}
+                    className={`p-2 rounded-full transition-colors ${
+                      app.isDone ? 'bg-slate-50 text-slate-300 cursor-not-allowed' : 'bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600'
+                    }`}
+                    title="Approve & Send Email"
+                  >
+                    <Award size={16} />
+                  </button>
                   <button 
                     onClick={async () => {
                       try {
@@ -2164,7 +2186,27 @@ function Dashboard() {
               </div>
               
               {/* Footer Actions */}
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 mt-auto">
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 mt-auto flex-wrap">
+                {!selectedApplication.isDone && (
+                  <button 
+                    onClick={async () => {
+                      if (!window.confirm('Approve this application and send acceptance email?')) return;
+                      try {
+                        const res = await apiClient.post(`/api/admin/applications/${selectedApplication.id}/approve`);
+                        if (res?.data?.approved) {
+                          setApplications((prev) => prev.map((x) => (x.id === selectedApplication.id ? { ...x, isDone: true } : x)));
+                          alert(res.data.message || 'Application approved!');
+                        }
+                      } catch (e) {
+                        const msg = e?.response?.data?.details || e?.response?.data?.message || 'Failed to approve';
+                        alert(msg);
+                      }
+                    }}
+                    className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors flex items-center gap-2"
+                  >
+                    <Award size={16}/> Approve & Send Email
+                  </button>
+                )}
                 <button 
                   onClick={() => downloadApplicationPdf(selectedApplication)}
                   className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold text-sm hover:bg-slate-100 transition-colors flex items-center gap-2"
