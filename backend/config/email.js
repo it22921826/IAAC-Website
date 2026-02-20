@@ -1,4 +1,22 @@
 const nodemailer = require('nodemailer');
+const path = require('path');
+const fs = require('fs');
+
+// FIND LOCAL LOGO PATH FOR CID EMBEDDING
+let validLogoPath = null;
+try {
+  const logoPaths = [
+    path.join(__dirname, '..', 'assets', 'logo3.png'),
+    path.join(__dirname, '..', '..', 'frontend', 'public', 'logo3.png'),
+    path.join(__dirname, '..', 'public', 'logo3.png'),
+  ];
+  for (const p of logoPaths) {
+    if (fs.existsSync(p)) {
+      validLogoPath = p;
+      break;
+    }
+  }
+} catch (_) { /* logo embedding is optional */ }
 
 function readSmtpEnv() {
   return {
@@ -68,7 +86,6 @@ async function sendApplicationNotifications(app) {
   const testMode = (process.env.EMAIL_TEST_MODE || 'false').toLowerCase() === 'true';
 
   if (recipients.length === 0) {
-    // No recipients configured; nothing to send
     return { sent: 0, failed: 0 };
   }
 
@@ -93,7 +110,6 @@ async function sendApplicationNotifications(app) {
   let sent = 0;
   let failed = 0;
 
-  // Optional: verify SMTP connection to surface issues proactively
   if (debug) {
     try {
       await transporter.verify();
@@ -101,32 +117,23 @@ async function sendApplicationNotifications(app) {
     } catch (verifyErr) {
       const msg = verifyErr && verifyErr.message ? verifyErr.message : String(verifyErr);
       console.error('[email] SMTP verify failed:', msg);
-      // Fallback between STARTTLS (587,false) and SMTPS (465,true)
       if (/wrong version number|EPROTO|handshake/i.test(msg)) {
         const envCfg = readSmtpEnv();
         const fallback = envCfg.secure || envCfg.port === 465
           ? { host: envCfg.host, port: 587, secure: false, user: envCfg.user, pass: envCfg.pass }
           : { host: envCfg.host, port: 465, secure: true, user: envCfg.user, pass: envCfg.pass };
-        if (debug) {
-          console.log(`[email] Retrying with fallback SMTP ${fallback.host}:${fallback.port} secure=${fallback.secure}`);
-        }
         try {
           transporter = createTransportFromConfig(fallback);
           await transporter.verify();
           console.log('[email] Fallback SMTP connection verified');
         } catch (fallbackErr) {
-          console.error('[email] Fallback SMTP verify failed:', fallbackErr && fallbackErr.message ? fallbackErr.message : fallbackErr);
+          console.error('[email] Fallback SMTP verify failed:', fallbackErr);
         }
       }
     }
   }
 
   const previews = [];
-  if (debug) {
-    console.log('[email] Recipients:', recipients.join(', '));
-    console.log('[email] From:', fromAddress());
-    console.log('[email] Subject:', subject);
-  }
   for (const to of recipients) {
     try {
       const info = await transporter.sendMail({
@@ -135,26 +142,18 @@ async function sendApplicationNotifications(app) {
         subject,
         text,
       });
-      if (debug) {
-        console.log(`[email] Sent to ${to}: messageId=${info && info.messageId}`);
-      }
       if (testMode) {
         const url = nodemailer.getTestMessageUrl(info);
         if (url) previews.push(url);
       }
       sent += 1;
     } catch (err) {
-      if (debug) {
-        console.error(`[email] Failed to send to ${to}:`, err && err.message ? err.message : err);
-      }
       failed += 1;
     }
   }
 
   return { sent, failed, previews };
 }
-
-module.exports = { sendApplicationNotifications, sendApprovalEmail };
 
 /**
  * Send approval/acceptance email to the student.
@@ -173,90 +172,100 @@ async function sendApprovalEmail(app) {
   const academyName = app.academy || 'IAAC';
 
   const siteUrl = process.env.FRONTEND_URL || 'https://iaacasia.com';
-  const logoUrl = `${siteUrl}/logo3.png`;
+
+  // FIX: If we found a local file, we will attach it with CID "iaaclogo". 
+  // Otherwise, fallback to the public web URL.
+  const logoSrc = validLogoPath ? 'cid:iaaclogo' : `${siteUrl}/logo3.png`;
 
   const subject = `Congratulations! You Have Been Selected - ${academyName}`;
 
+  // Added missing HTML standard tags (!DOCTYPE, html, body) for email client compatibility
   const html = `
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-      <!-- Header with Logo -->
-      <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 32px 30px; text-align: center;">
-        <img src="${logoUrl}" alt="IAAC Logo" style="width: 80px; height: auto; margin-bottom: 16px;" />
-        <h1 style="color: #ffffff; font-size: 26px; margin: 0 0 6px 0; letter-spacing: 0.5px;">Congratulations from IAAC !</h1>
-        <p style="color: #bfdbfe; font-size: 13px; margin: 0;">International Airline and Aviation College</p>
-      </div>
-      
-      <div style="padding: 40px 30px;">
-        <p style="font-size: 16px; color: #1e293b; margin-bottom: 20px;">Dear <strong>${studentName}</strong>,</p>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 20px; background-color: #f8fafc;">
+      <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 32px 30px; text-align: center;">
+          <img src="${logoSrc}" alt="IAAC Logo" style="width: 80px; height: auto; margin-bottom: 16px;" />
+          <h1 style="color: #ffffff; font-size: 26px; margin: 0 0 6px 0; letter-spacing: 0.5px;">Congratulations from IAAC !</h1>
+          <p style="color: #bfdbfe; font-size: 13px; margin: 0;">International Airline and Aviation College</p>
+        </div>
         
-        <p style="font-size: 15px; color: #334155; line-height: 1.7; margin-bottom: 20px;">
-          We are delighted to inform you that your application for 
-          <strong style="color: #1e3a8a;">${programName}</strong> 
-          at <strong>${academyName}</strong> has been reviewed and 
-          <span style="color: #059669; font-weight: bold;">approved</span>.
-        </p>
+        <div style="padding: 40px 30px;">
+          <p style="font-size: 16px; color: #1e293b; margin-bottom: 20px;">Dear <strong>${studentName}</strong>,</p>
+          
+          <p style="font-size: 15px; color: #334155; line-height: 1.7; margin-bottom: 20px;">
+            We are delighted to inform you that your application for 
+            <strong style="color: #1e3a8a;">${programName}</strong> 
+            at <strong>${academyName}</strong> has been reviewed and 
+            <span style="color: #059669; font-weight: bold;">approved</span>.
+          </p>
 
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin: 24px 0;">
-          <h3 style="color: #166534; margin: 0 0 12px 0; font-size: 15px;">Next Steps to Complete Your Enrollment:</h3>
-          <ol style="color: #334155; font-size: 14px; line-height: 2; padding-left: 20px; margin: 0;">
-            <li>Visit the <strong>${academyName}</strong> campus with your original documents</li>
-            <li>Bring your NIC/Passport, O/L results sheet, and 2 passport-size photos</li>
-            <li>Complete the registration form and pay the initial enrollment fee</li>
-            <li>Collect your student ID and class schedule</li>
-          </ol>
-        </div>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; margin: 24px 0;">
+            <h3 style="color: #166534; margin: 0 0 12px 0; font-size: 15px;">Next Steps to Complete Your Enrollment:</h3>
+            <ol style="color: #334155; font-size: 14px; line-height: 2; padding-left: 20px; margin: 0;">
+              <li>Visit the <strong>${academyName}</strong> campus with your original documents</li>
+              <li>Bring your NIC/Passport, O/L results sheet, and 2 passport-size photos</li>
+              <li>Complete the registration form and pay the initial enrollment fee</li>
+              <li>Collect your student ID and class schedule</li>
+            </ol>
+          </div>
 
-        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 20px; margin: 24px 0;">
-          <p style="color: #1e40af; font-size: 13px; margin: 0;">
-            <strong>Important:</strong> Please complete your enrollment within <strong>14 days</strong> of receiving this email to secure your seat.
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px 20px; margin: 24px 0;">
+            <p style="color: #1e40af; font-size: 13px; margin: 0;">
+              <strong>Important:</strong> Please complete your enrollment within <strong>14 days</strong> of receiving this email to secure your seat.
+            </p>
+          </div>
+
+          <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-top: 24px;">
+            If you have any questions, feel free to contact us or visit the campus during working hours.
+          </p>
+
+          <p style="font-size: 14px; color: #334155; margin-top: 30px;">
+            Best regards,<br/>
+            <strong>Admissions Office</strong><br/>
+            International Airline and Aviation College (IAAC)
           </p>
         </div>
-
-        <p style="font-size: 14px; color: #64748b; line-height: 1.6; margin-top: 24px;">
-          If you have any questions, feel free to contact us or visit the campus during working hours.
-        </p>
-
-        <p style="font-size: 14px; color: #334155; margin-top: 30px;">
-          Best regards,<br/>
-          <strong>Admissions Office</strong><br/>
-          International Airline and Aviation College (IAAC)
-        </p>
-      </div>
-      
-      <!-- Footer with Contact Info -->
-      <div style="background: #0f172a; padding: 28px 30px; text-align: center;">
-        <img src="${logoUrl}" alt="IAAC" style="width: 50px; height: auto; margin-bottom: 14px; opacity: 0.9;" />
         
-        <!-- IAAC City -->
-        <div style="margin-bottom: 14px;">
-          <p style="color: #60a5fa; font-size: 12px; font-weight: bold; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">IAAC City Academy</p>
-          <p style="color: #94a3b8; font-size: 12px; margin: 0 0 3px 0;">49A Siri Dhamma Mawatha, Colombo 01000, Sri Lanka</p>
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-            Phone: <a href="tel:+94766763777" style="color: #60a5fa; text-decoration: none;">+94 76 676 3777</a>
-          </p>
-        </div>
+        <div style="background: #0f172a; padding: 28px 30px; text-align: center;">
+          <img src="${logoSrc}" alt="IAAC" style="width: 50px; height: auto; margin-bottom: 14px; opacity: 0.9;" />
+          
+          <div style="margin-bottom: 14px;">
+            <p style="color: #60a5fa; font-size: 12px; font-weight: bold; margin: 0 0 4px 0; text-transform: uppercase;">IAAC City Academy</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 3px 0;">49A Siri Dhamma Mawatha, Colombo 10</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0;">Phone: <a href="tel:+94766763777" style="color: #60a5fa; text-decoration: none;">+94 76 676 3777</a></p>
+          </div>
 
-        <!-- IAAC Airport -->
-        <div style="margin-bottom: 16px; padding-top: 12px; border-top: 1px solid #1e293b;">
-          <p style="color: #60a5fa; font-size: 12px; font-weight: bold; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 1px;">IAAC Airport Academy</p>
-          <p style="color: #94a3b8; font-size: 12px; margin: 0 0 3px 0;">261 Ven Baddegama Wimalawansa Mawatha, Deans Road, Colombo 01000, Sri Lanka</p>
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-            Phone: <a href="tel:+94762782781" style="color: #60a5fa; text-decoration: none;">+94 76 278 2781</a>
-          </p>
-        </div>
+          <div style="margin-bottom: 16px; padding-top: 12px; border-top: 1px solid #1e293b;">
+            <p style="color: #60a5fa; font-size: 12px; font-weight: bold; margin: 0 0 4px 0; text-transform: uppercase;">IAAC Airport Academy</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 3px 0;">261 Ven Baddegama Wimalawansa Mawatha, Colombo 10</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0;">Phone: <a href="tel:+94762782781" style="color: #60a5fa; text-decoration: none;">+94 76 278 2781</a></p>
+          </div>
 
-        <div style="margin-bottom: 10px;">
-          <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-            Email: <a href="mailto:info@iaac.lk" style="color: #60a5fa; text-decoration: none;">info@iaac.lk</a>
-          </p>
-        </div>
+          <div style="margin-bottom: 16px; padding-top: 12px; border-top: 1px solid #1e293b;">
+            <p style="color: #60a5fa; font-size: 12px; font-weight: bold; margin: 0 0 4px 0; text-transform: uppercase;">IAAC Kurunegala Center</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 3px 0;">No. 27, Mihindu Mawatha, Kurunegala</p>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0;">Phone: <a href="tel:+94766763777" style="color: #60a5fa; text-decoration: none;">+94 76 676 3777</a></p>
+          </div>
 
-        <div style="border-top: 1px solid #1e293b; padding-top: 14px;">
-          <a href="${siteUrl}" style="color: #60a5fa; font-size: 12px; text-decoration: none; font-weight: bold;">www.iaacasia.com</a>
-          <p style="color: #64748b; font-size: 11px; margin: 8px 0 0 0;">This is an automated message from IAAC Admissions Portal.</p>
+          <div style="margin-bottom: 10px;">
+            <p style="color: #94a3b8; font-size: 12px; margin: 0;">
+              Email: <a href="mailto:info@iaac.lk" style="color: #60a5fa; text-decoration: none;">info@iaac.lk</a>
+            </p>
+          </div>
+
+          <div style="border-top: 1px solid #1e293b; padding-top: 14px;">
+            <a href="${siteUrl}" style="color: #60a5fa; font-size: 12px; text-decoration: none; font-weight: bold;">www.iaacasia.com</a>
+          </div>
         </div>
       </div>
-    </div>
+    </body>
+    </html>
   `;
 
   const text = [
@@ -272,32 +281,31 @@ async function sendApprovalEmail(app) {
     '',
     'Please complete your enrollment within 14 days of receiving this email to secure your seat.',
     '',
-    '---',
-    'IAAC - International Airline and Aviation College',
-    '',
-    'IAAC City Academy',
-    '49A Siri Dhamma Mawatha, Colombo 01000, Sri Lanka',
-    'Phone: +94 76 676 3777',
-    '',
-    'IAAC Airport Academy',
-    '261 Ven Baddegama Wimalawansa Mawatha, Deans Road, Colombo 01000, Sri Lanka',
-    'Phone: +94 76 278 2781',
-    '',
-    'Email: info@iaac.lk',
-    'Web: https://iaacasia.com',
-    '',
     'Best regards,',
     'Admissions Office',
   ].join('\n');
 
-  try {
-    const info = await transporter.sendMail({
-      from: fromAddress(),
-      to: app.email,
-      subject,
-      text,
-      html,
+  // SETUP MAIL OPTIONS (WITH ATTACHMENTS FOR CID)
+  const mailOptions = {
+    from: fromAddress(),
+    to: app.email,
+    subject,
+    text,
+    html,
+    attachments: [] // Initialize empty
+  };
+
+  // If local logo is found, attach it for CID embedding
+  if (validLogoPath) {
+    mailOptions.attachments.push({
+      filename: 'logo3.png',
+      path: validLogoPath,
+      cid: 'iaaclogo' // Matches the "cid:iaaclogo" in the HTML string
     });
+  }
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
 
     if (debug) {
       console.log(`[email] Approval email sent to ${app.email}: messageId=${info && info.messageId}`);
@@ -316,3 +324,9 @@ async function sendApprovalEmail(app) {
     return { sent: false, error: err && err.message ? err.message : 'Email sending failed' };
   }
 }
+
+// Module exports always belong at the bottom of the file
+module.exports = { 
+  sendApplicationNotifications, 
+  sendApprovalEmail 
+};
