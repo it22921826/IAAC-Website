@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import apiClient from '../services/apiClient.js';
 import { 
   User, MapPin, Phone, Mail, BookOpen, CheckCircle2, 
@@ -12,6 +12,7 @@ function ApplyNow() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [status, setStatus] = useState({ submitting: false, success: false, error: '' });
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!status.success) return;
@@ -50,47 +51,179 @@ function ApplyNow() {
 
   const [errors, setErrors] = useState({});
 
+  // Track which fields the user has interacted with (for real-time validation on blur)
+  const [touched, setTouched] = useState({});
+
   const update = (field) => (e) => {
-    setForm({ ...form, [field]: e.target.value });
+    const val = e.target.value;
+    setForm((prev) => ({ ...prev, [field]: val }));
     if (errors[field]) setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
   };
   const updateNested = (category, field) => (e) => {
-    setForm({ ...form, [category]: { ...form[category], [field]: e.target.value } });
+    setForm((prev) => ({ ...prev, [category]: { ...prev[category], [field]: e.target.value } }));
     const key = `${category}.${field}`;
     if (errors[key]) setErrors((prev) => { const next = { ...prev }; delete next[key]; return next; });
   };
 
-  // --- VALIDATION ---
+  // Mark a field as touched on blur and run single-field validation
+  const handleBlur = (field) => () => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const err = validateField(field, form);
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (err) next[field] = err; else delete next[field];
+      return next;
+    });
+  };
+
+  // --- HELPER VALIDATORS ---
+  const isValidSriLankanNIC = (val) => {
+    const v = val.trim();
+    // Old NIC: 9 digits + V/X (case-insensitive)
+    if (/^\d{9}[vVxX]$/.test(v)) return true;
+    // New NIC: exactly 12 digits
+    if (/^\d{12}$/.test(v)) return true;
+    // Passport format: 1-2 letters followed by 5-9 digits
+    if (/^[A-Za-z]{1,2}\d{5,9}$/.test(v)) return true;
+    return false;
+  };
+
+  const isValidPhoneNumber = (val) => {
+    const v = val.trim().replace(/[\s\-]/g, '');
+    // Sri Lankan mobile: 07X followed by 7 digits (total 10)
+    if (/^07\d{8}$/.test(v)) return true;
+    // With country code: +947X... or 00947X...
+    if (/^(\+94|0094)7\d{8}$/.test(v)) return true;
+    // Landline: 0X1... (area code)
+    if (/^0\d{9}$/.test(v)) return true;
+    // International with +
+    if (/^\+\d{7,15}$/.test(v)) return true;
+    return false;
+  };
+
+  const isValidEmail = (val) => {
+    return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(val.trim());
+  };
+
+  const getAge = (dobStr) => {
+    const dob = new Date(dobStr);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    return age;
+  };
+
+  const hasOnlyLettersAndSpaces = (val) => /^[A-Za-z\s.'-]+$/.test(val.trim());
+
+  // --- SINGLE-FIELD VALIDATION ---
+  const validateField = (field, f) => {
+    switch (field) {
+      case 'fullName':
+        if (!f.fullName.trim()) return 'Full name is required';
+        if (f.fullName.trim().length < 3) return 'Name must be at least 3 characters';
+        if (!hasOnlyLettersAndSpaces(f.fullName)) return 'Name should contain only letters and spaces';
+        if (f.fullName.trim().split(/\s+/).length < 2) return 'Please enter your first and last name';
+        return null;
+      case 'nic':
+        if (!f.nic.trim()) return 'NIC / Passport number is required';
+        if (!isValidSriLankanNIC(f.nic)) return 'Enter a valid NIC (e.g. 200012345678 or 912345678V) or passport number';
+        return null;
+      case 'dob':
+        if (!f.dob) return 'Date of birth is required';
+        { const age = getAge(f.dob);
+          if (age < 15) return 'You must be at least 15 years old to apply';
+          if (age > 60) return 'Please check your date of birth';
+          if (new Date(f.dob) > new Date()) return 'Date of birth cannot be in the future';
+        }
+        return null;
+      case 'gender':
+        if (!f.gender) return 'Please select your gender';
+        return null;
+      case 'mobile':
+        if (!f.mobile.trim()) return 'Mobile number is required';
+        if (!isValidPhoneNumber(f.mobile)) return 'Enter a valid mobile number (e.g. 077 123 4567)';
+        return null;
+      case 'whatsapp':
+        if (f.whatsapp.trim() && !isValidPhoneNumber(f.whatsapp)) return 'Enter a valid WhatsApp number (e.g. 077 123 4567)';
+        return null;
+      case 'email':
+        if (!f.email.trim()) return 'Email address is required';
+        if (!isValidEmail(f.email)) return 'Enter a valid email address (e.g. name@example.com)';
+        return null;
+      case 'address':
+        if (!f.address.trim()) return 'Home address is required';
+        if (f.address.trim().length < 10) return 'Please enter a complete address (at least 10 characters)';
+        return null;
+      case 'school':
+        if (!f.school.trim()) return 'School name is required';
+        if (f.school.trim().length < 3) return 'School name must be at least 3 characters';
+        return null;
+      case 'olYear': {
+        if (!f.olYear.trim()) return 'O/L year is required';
+        if (!/^\d{4}$/.test(f.olYear.trim())) return 'Enter a valid 4-digit year (e.g. 2023)';
+        const year = parseInt(f.olYear.trim(), 10);
+        const currentYear = new Date().getFullYear();
+        if (year > currentYear) return 'O/L year cannot be in the future';
+        if (year < 1970) return 'Please enter a valid O/L year';
+        return null;
+      }
+      case 'parentName':
+        if (!f.parentName.trim()) return 'Guardian name is required';
+        if (f.parentName.trim().length < 3) return 'Guardian name must be at least 3 characters';
+        if (!hasOnlyLettersAndSpaces(f.parentName)) return 'Guardian name should contain only letters and spaces';
+        return null;
+      case 'parentPhone':
+        if (!f.parentPhone.trim()) return 'Guardian contact number is required';
+        if (!isValidPhoneNumber(f.parentPhone)) return 'Enter a valid phone number (e.g. 077 123 4567)';
+        return null;
+      case 'academy':
+        if (!f.academy) return 'Please select an academy / campus';
+        return null;
+      case 'course':
+        if (!f.course) return 'Please select a course';
+        return null;
+      case 'agreed':
+        if (!f.agreed) return 'You must agree to the declaration';
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  // --- STEP-LEVEL VALIDATION ---
   const validateStep1 = () => {
+    const fields = ['fullName', 'nic', 'dob', 'gender', 'mobile', 'whatsapp', 'email', 'address'];
     const e = {};
-    if (!form.fullName.trim()) e.fullName = 'Full name is required';
-    if (!form.nic.trim()) e.nic = 'NIC / Passport is required';
-    if (!form.dob) e.dob = 'Date of birth is required';
-    if (!form.mobile.trim()) e.mobile = 'Mobile number is required';
-    else if (!/^[0-9+\-\s]{7,15}$/.test(form.mobile.trim())) e.mobile = 'Enter a valid mobile number';
-    if (!form.email.trim()) e.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = 'Enter a valid email address';
-    if (!form.address.trim()) e.address = 'Home address is required';
-    if (!form.gender) e.gender = 'Please select your gender';
+    fields.forEach((f) => {
+      const err = validateField(f, form);
+      if (err) e[f] = err;
+    });
     return e;
   };
 
   const validateStep2 = () => {
+    const fields = ['school', 'olYear', 'parentName', 'parentPhone'];
     const e = {};
-    if (!form.school.trim()) e.school = 'School name is required';
-    if (!form.olYear.trim()) e.olYear = 'O/L year is required';
-    else if (!/^\d{4}$/.test(form.olYear.trim())) e.olYear = 'Enter a valid year (e.g. 2023)';
-    if (!form.parentName.trim()) e.parentName = 'Guardian name is required';
-    if (!form.parentPhone.trim()) e.parentPhone = 'Guardian contact is required';
-    else if (!/^[0-9+\-\s]{7,15}$/.test(form.parentPhone.trim())) e.parentPhone = 'Enter a valid phone number';
+    fields.forEach((f) => {
+      const err = validateField(f, form);
+      if (err) e[f] = err;
+    });
+    // Check that at least 3 O/L results are filled
+    const filledSubjects = Object.values(form.olResults).filter((v) => v && v.trim() !== '').length;
+    if (filledSubjects < 3) {
+      e.olResults = 'Please fill at least 3 O/L subject results';
+    }
     return e;
   };
 
   const validateStep3 = () => {
+    const fields = ['academy', 'course', 'agreed'];
     const e = {};
-    if (!form.academy) e.academy = 'Please select an academy / campus';
-    if (!form.course) e.course = 'Please select a course';
-    if (!form.agreed) e.agreed = 'You must agree to the declaration';
+    fields.forEach((f) => {
+      const err = validateField(f, form);
+      if (err) e[f] = err;
+    });
     return e;
   };
 
@@ -106,6 +239,9 @@ function ApplyNow() {
   const prevStep = () => { setErrors({}); setCurrentStep((prev) => Math.max(prev - 1, 1)); };
 
   const submit = async () => {
+    // Prevent duplicate submissions from rapid clicks
+    if (submittingRef.current) return;
+
     const stepErrors = validateStep3();
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors);
@@ -113,6 +249,7 @@ function ApplyNow() {
       return;
     }
     setErrors({});
+    submittingRef.current = true;
     setStatus({ submitting: true, success: false, error: '' });
     try {
       const fullName = (form.fullName || '').trim();
@@ -150,6 +287,7 @@ function ApplyNow() {
       await apiClient.post('/api/applications', payload);
       setStatus({ submitting: false, success: true, error: '' });
     } catch (err) {
+      submittingRef.current = false;
       const serverMessage = err?.response?.data?.message;
       const networkMessage = err?.message;
       setStatus({ submitting: false, success: false, error: serverMessage || networkMessage || 'Failed to submit application' });
@@ -226,7 +364,7 @@ function ApplyNow() {
                     </div>
                     <div className="md:col-span-3">
                       <Label text="Full Name" required />
-                      <input type="text" placeholder="Your Full Name" value={form.fullName} onChange={update('fullName')} className={`input-field ${errors.fullName ? 'input-error' : ''}`} />
+                      <input type="text" placeholder="Your Full Name" value={form.fullName} onChange={update('fullName')} onBlur={handleBlur('fullName')} className={`input-field ${errors.fullName ? 'input-error' : ''}`} />
                       {errors.fullName && <FieldError msg={errors.fullName} />}
                     </div>
                   </div>
@@ -234,17 +372,17 @@ function ApplyNow() {
                   <div className="grid md:grid-cols-3 gap-5">
                     <div>
                       <Label text="NIC / Passport" required />
-                      <input type="text" placeholder="Identity Number" value={form.nic} onChange={update('nic')} className={`input-field ${errors.nic ? 'input-error' : ''}`} />
+                      <input type="text" placeholder="e.g. 200012345678 or 912345678V" value={form.nic} onChange={update('nic')} onBlur={handleBlur('nic')} className={`input-field ${errors.nic ? 'input-error' : ''}`} />
                       {errors.nic && <FieldError msg={errors.nic} />}
                     </div>
                     <div>
                       <Label text="Date of Birth" required />
-                      <input type="date" value={form.dob} onChange={update('dob')} className={`input-field ${errors.dob ? 'input-error' : ''}`} />
+                      <input type="date" value={form.dob} onChange={update('dob')} onBlur={handleBlur('dob')} className={`input-field ${errors.dob ? 'input-error' : ''}`} />
                       {errors.dob && <FieldError msg={errors.dob} />}
                     </div>
                     <div>
                       <Label text="Gender" required />
-                      <select value={form.gender} onChange={update('gender')} className={`input-field ${errors.gender ? 'input-error' : ''}`}>
+                      <select value={form.gender} onChange={update('gender')} onBlur={handleBlur('gender')} className={`input-field ${errors.gender ? 'input-error' : ''}`}>
                         <option value="">Select Gender</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -257,12 +395,12 @@ function ApplyNow() {
                   <div className="grid md:grid-cols-2 gap-5">
                     <div>
                       <Label text="Mobile Number" required />
-                      <input type="tel" placeholder="077 123 4567" value={form.mobile} onChange={update('mobile')} className={`input-field ${errors.mobile ? 'input-error' : ''}`} />
+                      <input type="tel" placeholder="077 123 4567" value={form.mobile} onChange={update('mobile')} onBlur={handleBlur('mobile')} className={`input-field ${errors.mobile ? 'input-error' : ''}`} />
                       {errors.mobile && <FieldError msg={errors.mobile} />}
                     </div>
                     <div>
                       <Label text="Email Address" required />
-                      <input type="email" placeholder="you@example.com" value={form.email} onChange={update('email')} className={`input-field ${errors.email ? 'input-error' : ''}`} />
+                      <input type="email" placeholder="you@example.com" value={form.email} onChange={update('email')} onBlur={handleBlur('email')} className={`input-field ${errors.email ? 'input-error' : ''}`} />
                       {errors.email && <FieldError msg={errors.email} />}
                     </div>
                   </div>
@@ -270,14 +408,15 @@ function ApplyNow() {
                   <div className="grid md:grid-cols-2 gap-5">
                     <div>
                       <Label text="WhatsApp Number" />
-                      <input type="tel" placeholder="077 123 4567" value={form.whatsapp} onChange={update('whatsapp')} className="input-field" />
+                      <input type="tel" placeholder="077 123 4567" value={form.whatsapp} onChange={update('whatsapp')} onBlur={handleBlur('whatsapp')} className={`input-field ${errors.whatsapp ? 'input-error' : ''}`} />
+                      {errors.whatsapp && <FieldError msg={errors.whatsapp} />}
                     </div>
                     <div />
                   </div>
 
                   <div>
                     <Label text="Home Address" required />
-                    <textarea rows="2" placeholder="Your permanent address" value={form.address} onChange={update('address')} className={`input-field ${errors.address ? 'input-error' : ''}`}></textarea>
+                    <textarea rows="2" placeholder="Your permanent address" value={form.address} onChange={update('address')} onBlur={handleBlur('address')} className={`input-field ${errors.address ? 'input-error' : ''}`}></textarea>
                     {errors.address && <FieldError msg={errors.address} />}
                   </div>
                 </motion.div>
@@ -298,20 +437,22 @@ function ApplyNow() {
                     <div className="grid md:grid-cols-3 gap-5 mb-5">
                       <div className="md:col-span-2">
                         <Label text="School Attended" required />
-                        <input type="text" placeholder="School Name" value={form.school} onChange={update('school')} className={`input-field ${errors.school ? 'input-error' : ''}`} />
+                        <input type="text" placeholder="School Name" value={form.school} onChange={update('school')} onBlur={handleBlur('school')} className={`input-field ${errors.school ? 'input-error' : ''}`} />
                         {errors.school && <FieldError msg={errors.school} />}
                       </div>
                       <div>
                         <Label text="O/L Year" required />
-                        <input type="text" placeholder="2023" value={form.olYear} onChange={update('olYear')} className={`input-field ${errors.olYear ? 'input-error' : ''}`} />
+                        <input type="text" placeholder="2023" value={form.olYear} onChange={update('olYear')} onBlur={handleBlur('olYear')} className={`input-field ${errors.olYear ? 'input-error' : ''}`} />
                         {errors.olYear && <FieldError msg={errors.olYear} />}
                       </div>
                     </div>
 
                     {/* O/L Grid */}
-                    <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200">
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-4">G.C.E O/L Results</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className={`bg-slate-50 p-5 rounded-2xl border ${errors.olResults ? 'border-red-300 bg-red-50/30' : 'border-slate-200'}`}>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">G.C.E O/L Results</p>
+                      <p className="text-[11px] text-slate-400 mb-4">Please fill at least 3 subjects</p>
+                      {errors.olResults && <FieldError msg={errors.olResults} />}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-2">
                         <ResultSelect subject="Mathematics" value={form.olResults.math} onChange={updateNested('olResults', 'math')} />
                         <ResultSelect subject="English" value={form.olResults.english} onChange={updateNested('olResults', 'english')} />
                         <ResultSelect subject="Science" value={form.olResults.science} onChange={updateNested('olResults', 'science')} />
@@ -330,12 +471,12 @@ function ApplyNow() {
                     <div className="grid md:grid-cols-2 gap-5">
                       <div>
                         <Label text="Guardian Name" required />
-                        <input type="text" placeholder="Parent's Name" value={form.parentName} onChange={update('parentName')} className={`input-field ${errors.parentName ? 'input-error' : ''}`} />
+                        <input type="text" placeholder="Parent's Name" value={form.parentName} onChange={update('parentName')} onBlur={handleBlur('parentName')} className={`input-field ${errors.parentName ? 'input-error' : ''}`} />
                         {errors.parentName && <FieldError msg={errors.parentName} />}
                       </div>
                       <div>
                         <Label text="Contact Number" required />
-                        <input type="tel" placeholder="Parent's Mobile" value={form.parentPhone} onChange={update('parentPhone')} className={`input-field ${errors.parentPhone ? 'input-error' : ''}`} />
+                        <input type="tel" placeholder="Parent's Mobile" value={form.parentPhone} onChange={update('parentPhone')} onBlur={handleBlur('parentPhone')} className={`input-field ${errors.parentPhone ? 'input-error' : ''}`} />
                         {errors.parentPhone && <FieldError msg={errors.parentPhone} />}
                       </div>
                     </div>
@@ -387,7 +528,7 @@ function ApplyNow() {
                     <select value={form.referral} onChange={update('referral')} className="input-field">
                       <option value="">General Office (No counselor)</option>
                       <option value="C001">Rochini</option>
-                      <option value="C002">Dulani</option>
+                      <option value="C002">Dimath</option>
                       <option value="C003">Abhishek</option>
                       <option value="C004">Vishwani</option>
                       <option value="C005">Michelle</option>

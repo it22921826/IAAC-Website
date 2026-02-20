@@ -4,20 +4,11 @@ import {
   Users,
   Building2,
   Ticket,
-  Package,
-  Trophy,
-  Award
+  Package
 } from 'lucide-react';
 
 function WelcomeToIAAC() {
   const fastTransition = { duration: 0.5, ease: 'easeOut' };
-
-  // Data for the 3 awards
-  const awards = [
-    { year: '2020 - 2021', title: 'Best Airline Training College' },
-    { year: '2021 - 2022', title: 'Best Airline Training College' },
-    { year: '2022 - 2023', title: 'Best Airline Training College' },
-  ];
 
   return (
     <>
@@ -27,7 +18,7 @@ function WelcomeToIAAC() {
         className="py-16 bg-white scroll-mt-[140px]"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: true, amount: 0.1 }}
         variants={{
           hidden: { opacity: 0, y: 28 },
           visible: {
@@ -45,8 +36,7 @@ function WelcomeToIAAC() {
         <div className="container mx-auto px-6">
           
           {/* Top Grid: Text & Video */}
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-            
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
               className="space-y-6"
               variants={{
@@ -96,84 +86,6 @@ function WelcomeToIAAC() {
               ></iframe>
             </motion.div>
           </div>
-
-          {/* --- 3-PART AWARD SECTION --- */}
-          <div className="mb-16">
-            <motion.div 
-              className="text-center mb-10"
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-              }}
-            >
-              <h3 className="text-3xl font-bold text-slate-900">Recognized for Excellence</h3>
-              <p className="text-slate-500 mt-3 max-w-2xl mx-auto">
-                Consistently awarded by the industry for delivering the highest standards in aviation training and student success in Sri Lanka.
-              </p>
-            </motion.div>
-
-            <motion.div 
-              className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto"
-              variants={{
-                visible: { transition: { staggerChildren: 0.15 } }
-              }}
-            >
-              {awards.map((award, index) => (
-                <motion.div
-                  key={index}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
-                  }}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                  className="bg-white rounded-3xl border border-slate-100 p-8 shadow-lg shadow-slate-200/40 flex flex-col items-center text-center relative overflow-hidden group"
-                >
-                  {/* Subtle hover background glow */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-amber-50/0 to-amber-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                  
-                  {/* Trophy Icon */}
-                  <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-amber-500 group-hover:text-white transition-colors duration-300 shadow-sm">
-                    <Trophy size={32} strokeWidth={1.5} />
-                  </div>
-                  
-                  {/* Year Tag */}
-                  <div className="px-4 py-1.5 bg-slate-50 border border-slate-100 rounded-full text-xs font-bold text-slate-600 tracking-widest mb-4">
-                    {award.year}
-                  </div>
-                  auto object-contain
-                  {/* Title */}
-                  <h4 className="text-xl font-bold text-slate-900 leading-snug">
-                    {award.title}
-                  </h4>
-                  
-                  {/* Small decorative star */}
-                  <div className="mt-6 text-amber-300 group-hover:text-amber-400 transition-colors">
-                    <Award size={20} />
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* --- WIDE BANNER IMAGE --- */}
-          <motion.div
-            className="w-full rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50"
-            variants={{
-              hidden: { opacity: 0, scale: 0.98 },
-              visible: { 
-                opacity: 1, 
-                scale: 1,
-                transition: { duration: 0.7, ease: 'easeOut' }
-              }
-            }}
-          >
-            <img 
-              src="/w1.jpeg"
-              alt="IAAC Awards and Recognition" 
-              className="w-full h-auto rounded-3xl"
-            />
-          </motion.div>
-
         </div>
       </motion.section>
 
@@ -242,6 +154,55 @@ function WelcomeToIAAC() {
                 />
             </div>
           </motion.div>
+        </div>
+      </motion.section>
+
+      {/* --- SECTION 3: AWARDS GRID & BANNER IMAGE --- */}
+      <motion.section
+        className="py-20 bg-white border-t border-slate-100"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
+        variants={{
+          hidden: { opacity: 0, y: 30 },
+          visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut', staggerChildren: 0.2 } },
+        }}
+      >
+        <div className="container mx-auto px-6">
+
+          {/* AWARDS HEADING */}
+          <motion.div 
+            className="text-center mb-12"
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+            }}
+          >
+            <h2 className="text-3xl font-bold text-slate-900">Recognized for Excellence</h2>
+            <p className="text-slate-500 mt-4 text-lg max-w-2xl mx-auto">
+              Consistently awarded by the industry for delivering the highest standards in aviation training and student success in Sri Lanka.
+            </p>
+          </motion.div>
+
+          {/* WIDE BANNER IMAGE */}
+          <motion.div
+            className="w-full mt-20 rounded-3xl overflow-hidden shadow-xl shadow-slate-200/50 border border-slate-100"
+            variants={{
+              hidden: { opacity: 0, scale: 0.98 },
+              visible: { 
+                opacity: 1, 
+                scale: 1,
+                transition: { duration: 0.7, ease: 'easeOut' }
+              }
+            }}
+          >
+            <img 
+              src="/w1.jpeg"
+              alt="IAAC Awards and Recognition" 
+              className="w-full h-auto object-contain hover:scale-105 transition-transform duration-1000"
+            />
+          </motion.div>
+
         </div>
       </motion.section>
     </>

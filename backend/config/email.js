@@ -173,7 +173,7 @@ async function sendApprovalEmail(app) {
   const academyName = app.academy || 'IAAC';
 
   const siteUrl = process.env.FRONTEND_URL || 'https://iaacasia.com';
-  const logoUrl = `${siteUrl}/logo.png`;
+  const logoUrl = `${siteUrl}/logo3.png`;
 
   const subject = `Congratulations! You Have Been Selected - ${academyName}`;
 

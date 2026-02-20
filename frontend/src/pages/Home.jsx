@@ -140,13 +140,13 @@ function Home() {
                     onClick={() => setSelectedNotice(notice)}
                     className="min-w-[300px] max-w-[300px] md:min-w-[340px] md:max-w-[340px] snap-center bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer border border-slate-100 group flex flex-col h-full"
                   >
-                    {/* Image */}
-                    <div className="relative h-48 overflow-hidden bg-slate-200">
+                    {/* Image (1:1 square) */}
+                    <div className="relative w-full aspect-square overflow-hidden bg-white">
                       {notice.imageUrl ? (
                         <img
                           src={notice.imageUrl}
                           alt={notice.title}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300">
@@ -206,13 +206,13 @@ function Home() {
                 <X size={20} />
               </button>
 
-              {/* Modal Image */}
+              {/* Modal Image (1:1 square) */}
               {selectedNotice.imageUrl && (
-                <div className="w-full md:w-2/5 h-64 md:h-auto relative shrink-0">
+                <div className="w-full md:w-2/5 aspect-square relative shrink-0 bg-white">
                   <img
                     src={selectedNotice.imageUrl}
                     alt={selectedNotice.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
               )}

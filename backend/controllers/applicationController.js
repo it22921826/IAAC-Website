@@ -48,6 +48,19 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // Prevent duplicate submissions: reject if identical application exists within last 2 minutes
+    const duplicateCutoff = new Date(Date.now() - 2 * 60 * 1000);
+    const existing = await Application.findOne({
+      email,
+      phone,
+      program,
+      academy,
+      createdAt: { $gte: duplicateCutoff },
+    });
+    if (existing) {
+      return res.status(409).json({ message: 'This application was already submitted. Please wait before trying again.' });
+    }
+
     const app = await Application.create({
       title,
       fullName,
