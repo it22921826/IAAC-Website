@@ -1074,13 +1074,13 @@ function Dashboard() {
                     onClick={async () => {
                       if (!window.confirm('Approve this application and send acceptance email to the student?')) return;
                       try {
-                        const res = await apiClient.post(`/api/admin/applications/${app.id}/approve`);
+                        const res = await apiClient.post(`/api/admin/applications/${app.id}/approve`, {}, { timeout: 30000 });
                         if (res?.data?.approved) {
                           setApplications((prev) => prev.map((x) => (x.id === app.id ? { ...x, isDone: true } : x)));
                           alert(res.data.message || 'Application approved!');
                         }
                       } catch (e) {
-                        const msg = e?.response?.data?.details || e?.response?.data?.message || 'Failed to approve';
+                        const msg = e?.response?.data?.details || e?.response?.data?.message || 'Failed to approve. Please check your connection and try again.';
                         alert(msg);
                       }
                     }}
@@ -2192,13 +2192,13 @@ function Dashboard() {
                     onClick={async () => {
                       if (!window.confirm('Approve this application and send acceptance email?')) return;
                       try {
-                        const res = await apiClient.post(`/api/admin/applications/${selectedApplication.id}/approve`);
+                        const res = await apiClient.post(`/api/admin/applications/${selectedApplication.id}/approve`, {}, { timeout: 30000 });
                         if (res?.data?.approved) {
                           setApplications((prev) => prev.map((x) => (x.id === selectedApplication.id ? { ...x, isDone: true } : x)));
                           alert(res.data.message || 'Application approved!');
                         }
                       } catch (e) {
-                        const msg = e?.response?.data?.details || e?.response?.data?.message || 'Failed to approve';
+                        const msg = e?.response?.data?.details || e?.response?.data?.message || 'Failed to approve. Please check your connection and try again.';
                         alert(msg);
                       }
                     }}

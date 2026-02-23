@@ -131,35 +131,43 @@ exports.approveApplication = async (req, res) => {
       return res.status(404).json({ message: 'Application not found' });
     }
 
-    // Check O/L grades eligibility
+    // Check O/L grades eligibility (warning only — does not block approval)
     const gradeCheck = hasMinimumGrades(app.olResults);
+    let gradeWarning = null;
     if (!gradeCheck.eligible) {
       const reasons = [];
       if (!gradeCheck.mathPass) reasons.push(`Mathematics: ${gradeCheck.mathGrade || 'Not provided'}`);
       if (!gradeCheck.englishPass) reasons.push(`English: ${gradeCheck.englishGrade || 'Not provided'}`);
-      return res.status(400).json({
-        message: 'Student does not meet minimum entry requirements',
-        details: `Requires at least S pass in Mathematics and English. Failed: ${reasons.join(', ')}`,
-        gradeCheck,
-      });
+      gradeWarning = `Note: ${reasons.join(', ')} — does not meet minimum S-pass requirement`;
     }
 
     // Mark as done/approved
     app.isDone = true;
     await app.save();
 
-    // Send approval email to student
-    const emailResult = await sendApprovalEmail(app);
+    // Fire-and-forget: send approval email in the background (don't block HTTP response)
+    sendApprovalEmail(app)
+      .then((result) => {
+        if (result.sent) {
+          console.log(`[approve] Congratulations email sent to ${app.email}`);
+        } else {
+          console.error(`[approve] Email to ${app.email} failed: ${result.error || 'Unknown'}`);
+        }
+      })
+      .catch((err) => {
+        console.error(`[approve] Email to ${app.email} error:`, err && err.message ? err.message : err);
+      });
 
+    // Respond immediately without waiting for the email
     return res.status(200).json({
       id: app._id,
       isDone: true,
       approved: true,
-      emailSent: emailResult.sent,
-      preview: emailResult.preview || null,
-      message: emailResult.sent
-        ? `Application approved. Congratulations email sent to ${app.email}`
-        : `Application approved but email failed: ${emailResult.error || 'Unknown error'}`,
+      emailSent: 'pending',
+      gradeWarning,
+      message: gradeWarning
+        ? `Application approved (email sending in background). ${gradeWarning}`
+        : `Application approved. Congratulations email is being sent to ${app.email}`,
     });
   } catch (err) {
     console.error('Approve error:', err);

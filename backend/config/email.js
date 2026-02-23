@@ -117,7 +117,7 @@ async function sendApplicationNotifications(app) {
     } catch (verifyErr) {
       const msg = verifyErr && verifyErr.message ? verifyErr.message : String(verifyErr);
       console.error('[email] SMTP verify failed:', msg);
-      if (/wrong version number|EPROTO|handshake/i.test(msg)) {
+      if (/wrong version number|EPROTO|handshake|ESOCKET/i.test(msg)) {
         const envCfg = readSmtpEnv();
         const fallback = envCfg.secure || envCfg.port === 465
           ? { host: envCfg.host, port: 587, secure: false, user: envCfg.user, pass: envCfg.pass }
@@ -129,6 +129,23 @@ async function sendApplicationNotifications(app) {
         } catch (fallbackErr) {
           console.error('[email] Fallback SMTP verify failed:', fallbackErr);
         }
+      }
+    }
+  } else {
+    // Even without debug, attempt verify + fallback so emails actually send
+    try {
+      await transporter.verify();
+    } catch (verifyErr) {
+      const msg = verifyErr && verifyErr.message ? verifyErr.message : String(verifyErr);
+      if (/wrong version number|EPROTO|handshake|ESOCKET/i.test(msg)) {
+        const envCfg = readSmtpEnv();
+        const fallback = envCfg.secure || envCfg.port === 465
+          ? { host: envCfg.host, port: 587, secure: false, user: envCfg.user, pass: envCfg.pass }
+          : { host: envCfg.host, port: 465, secure: true, user: envCfg.user, pass: envCfg.pass };
+        try {
+          transporter = createTransportFromConfig(fallback);
+          await transporter.verify();
+        } catch (_) { /* will fail at sendMail below */ }
       }
     }
   }
@@ -285,6 +302,47 @@ async function sendApprovalEmail(app) {
     'Admissions Office',
   ].join('\n');
 
+  // Verify SMTP connection and apply fallback if TLS/SSL issues arise
+  if (debug) {
+    try {
+      await transporter.verify();
+      console.log('[email] SMTP connection verified for approval email');
+    } catch (verifyErr) {
+      const msg = verifyErr && verifyErr.message ? verifyErr.message : String(verifyErr);
+      console.error('[email] SMTP verify failed (approval):', msg);
+      if (/wrong version number|EPROTO|handshake|ESOCKET/i.test(msg)) {
+        const envCfg = readSmtpEnv();
+        const fallback = envCfg.secure || envCfg.port === 465
+          ? { host: envCfg.host, port: 587, secure: false, user: envCfg.user, pass: envCfg.pass }
+          : { host: envCfg.host, port: 465, secure: true, user: envCfg.user, pass: envCfg.pass };
+        try {
+          transporter = createTransportFromConfig(fallback);
+          await transporter.verify();
+          console.log('[email] Fallback SMTP connection verified for approval email');
+        } catch (fallbackErr) {
+          console.error('[email] Fallback SMTP verify failed (approval):', fallbackErr && fallbackErr.message ? fallbackErr.message : fallbackErr);
+        }
+      }
+    }
+  } else {
+    // Even without debug, attempt verify + fallback so emails actually send
+    try {
+      await transporter.verify();
+    } catch (verifyErr) {
+      const msg = verifyErr && verifyErr.message ? verifyErr.message : String(verifyErr);
+      if (/wrong version number|EPROTO|handshake|ESOCKET/i.test(msg)) {
+        const envCfg = readSmtpEnv();
+        const fallback = envCfg.secure || envCfg.port === 465
+          ? { host: envCfg.host, port: 587, secure: false, user: envCfg.user, pass: envCfg.pass }
+          : { host: envCfg.host, port: 465, secure: true, user: envCfg.user, pass: envCfg.pass };
+        try {
+          transporter = createTransportFromConfig(fallback);
+          await transporter.verify();
+        } catch (_) { /* will fail at sendMail below */ }
+      }
+    }
+  }
+
   // SETUP MAIL OPTIONS (WITH ATTACHMENTS FOR CID)
   const mailOptions = {
     from: fromAddress(),
@@ -321,7 +379,32 @@ async function sendApprovalEmail(app) {
     if (debug) {
       console.error(`[email] Failed to send approval email to ${app.email}:`, err && err.message ? err.message : err);
     }
-    return { sent: false, error: err && err.message ? err.message : 'Email sending failed' };
+
+    // Retry once with fallback transport on send failure
+    try {
+      const envCfg = readSmtpEnv();
+      const fallback = envCfg.secure || envCfg.port === 465
+        ? { host: envCfg.host, port: 587, secure: false, user: envCfg.user, pass: envCfg.pass }
+        : { host: envCfg.host, port: 465, secure: true, user: envCfg.user, pass: envCfg.pass };
+      const retryTransport = createTransportFromConfig(fallback);
+      const info = await retryTransport.sendMail(mailOptions);
+
+      if (debug) {
+        console.log(`[email] Approval email sent via fallback to ${app.email}: messageId=${info && info.messageId}`);
+      }
+
+      let preview = null;
+      if (testMode) {
+        preview = nodemailer.getTestMessageUrl(info);
+      }
+
+      return { sent: true, preview };
+    } catch (retryErr) {
+      if (debug) {
+        console.error(`[email] Fallback send also failed for ${app.email}:`, retryErr && retryErr.message ? retryErr.message : retryErr);
+      }
+      return { sent: false, error: err && err.message ? err.message : 'Email sending failed' };
+    }
   }
 }
 
