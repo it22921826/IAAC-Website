@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { 
   Users, User, FileText, Calendar, BookOpen, UploadCloud,
-  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil, Plus, Menu, Award
+  ChevronLeft, ChevronRight, Trash2, MessageSquare, Briefcase, Bell, Eye, X, CheckCircle, Mail, Phone, MapPin, Pencil, Plus, Menu, Award, Download
 } from 'lucide-react';
 import apiClient from '../services/apiClient.js';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1002,14 +1002,123 @@ function Dashboard() {
     w.document.close();
   };
 
+  // --- DOWNLOAD PENDING APPLICATIONS REPORT (PDF) ---
+  const downloadPendingReport = () => {
+    const pending = applications.filter((a) => !a.isDone);
+    if (pending.length === 0) {
+      alert('No pending applications to export.');
+      return;
+    }
+
+    const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 40;
+    const marginTop = 40;
+    const marginBottom = 40;
+
+    // --- Title ---
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(30, 58, 138);
+    doc.text('Pending Student Applications Report', marginX, marginTop);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}  |  Total Pending: ${pending.length}`, marginX, marginTop + 18);
+
+    // --- Table Config ---
+    const headers = ['#', 'Student Name', 'Mobile Number', 'WhatsApp Number', 'O/L Maths', 'O/L English', 'Branch / Academy'];
+    const colWidths = [30, 210, 100, 100, 65, 65, 150];
+    const rowHeight = 24;
+    const headerHeight = 26;
+    let y = marginTop + 38;
+
+    const drawTableHeader = () => {
+      doc.setFillColor(30, 58, 138);
+      doc.rect(marginX, y, colWidths.reduce((a, b) => a + b, 0), headerHeight, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      let x = marginX;
+      headers.forEach((h, i) => {
+        doc.text(h, x + 6, y + 17);
+        x += colWidths[i];
+      });
+      y += headerHeight;
+    };
+
+    const drawRow = (cells, isEven) => {
+      if (y + rowHeight > pageH - marginBottom) {
+        doc.addPage();
+        y = marginTop;
+        drawTableHeader();
+      }
+      if (isEven) {
+        doc.setFillColor(245, 247, 250);
+        doc.rect(marginX, y, colWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
+      }
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 30, 30);
+      let x = marginX;
+      cells.forEach((cell, i) => {
+        const maxW = colWidths[i] - 12;
+        let text = String(cell ?? '-');
+        // Truncate with ellipsis if too long
+        if (doc.getTextWidth(text) > maxW) {
+          while (doc.getTextWidth(text + '...') > maxW && text.length > 1) {
+            text = text.slice(0, -1);
+          }
+          text = text.trim() + '...';
+        }
+        doc.text(text, x + 6, y + 16);
+        x += colWidths[i];
+      });
+      // row border bottom
+      doc.setDrawColor(220, 220, 220);
+      doc.line(marginX, y + rowHeight, marginX + colWidths.reduce((a, b) => a + b, 0), y + rowHeight);
+      y += rowHeight;
+    };
+
+    drawTableHeader();
+
+    pending.forEach((app, idx) => {
+      const name = (app.fullName || app.name || `${app.firstName || ''} ${app.lastName || ''}`.trim() || '-').trim();
+      const mobile = app.mobile || app.contact || app.phone || '-';
+      const whatsapp = app.whatsapp || '-';
+      const mathResult = app.olResults?.math || app.olResults?.mathematics || '-';
+      const engResult = app.olResults?.english || '-';
+      const branch = app.academy || app.course || app.program || '-';
+      drawRow([idx + 1, name, mobile, whatsapp, mathResult, engResult, branch], idx % 2 === 0);
+    });
+
+    // --- Footer on last page ---
+    doc.setFontSize(7);
+    doc.setTextColor(160, 160, 160);
+    doc.text('IAAC - Confidential', marginX, pageH - 20);
+    doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageW - marginX - 30, pageH - 20);
+
+    doc.save(`Pending_Applications_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   // --- VIEW: APPLICATIONS (CARD GRID) ---
   const renderApplications = () => (
     <div className="space-y-6">
-      <div className="flex justify-between items-center px-1 sm:px-2 gap-3">
+      <div className="flex flex-wrap justify-between items-center px-1 sm:px-2 gap-3">
         <h3 className="font-bold text-slate-800 text-lg sm:text-2xl">Student Applications</h3>
-        <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200 shrink-0">
-          {applications.filter((a) => !a.isDone).length} Pending
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={downloadPendingReport}
+            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm transition-colors"
+            title="Download pending applications report as PDF"
+          >
+            <Download size={14} /> Download Report
+          </button>
+          <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm shadow-blue-200 shrink-0">
+            {applications.filter((a) => !a.isDone).length} Pending
+          </span>
+        </div>
       </div>
 
       {applications.length === 0 ? (
