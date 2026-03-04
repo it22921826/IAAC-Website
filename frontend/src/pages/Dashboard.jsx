@@ -774,6 +774,19 @@ function Dashboard() {
 
     y = 130;
 
+    // --- Prominent Diploma Badge ---
+    const diplomaText = safeText(app?.course || app?.courseApplied || app?.program || 'N/A');
+    doc.setFillColor(30, 58, 138); // Dark blue badge
+    doc.rect(40, y, pageWidth - 80, 45, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(180, 210, 255);
+    doc.text('DIPLOMA PROGRAMME', 55, y + 16);
+    doc.setFontSize(14);
+    doc.setTextColor(255, 255, 255);
+    doc.text(diplomaText, 55, y + 34);
+    y += 65;
+
     // Helper to draw sections
     const drawSection = (title, data) => {
       // Check if we need a new page for the section header
@@ -871,7 +884,7 @@ function Dashboard() {
 
     // 5. Program Details
     drawSection('Program Details', [
-      ['Course Applied', getApplicationCourse(app)],
+      ['Diploma Chosen', getApplicationCourse(app)],
       ['Academy / Campus', app.academy],
       ['Referred By', app.referral || 'General Office'],
       ['Application Date', app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '-'],
@@ -929,10 +942,15 @@ function Dashboard() {
             <p>Student Admission Application Form</p>
           </div>
 
+          <div style="background:#1e3a8a;color:#fff;padding:14px 20px;border-radius:8px;margin-bottom:24px;">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#93c5fd;margin-bottom:4px;">Diploma Programme</div>
+            <div style="font-size:18px;font-weight:700;">${getApplicationCourse(app)}</div>
+          </div>
+
           <div class="section">
             <div class="section-title">Program Details</div>
             <div class="grid">
-              <div class="field"><span class="label">Course Applied For</span><div class="value">${getApplicationCourse(app)}</div></div>
+              <div class="field"><span class="label">Diploma Chosen</span><div class="value">${getApplicationCourse(app)}</div></div>
               <div class="field"><span class="label">Academy / Campus</span><div class="value">${safeText(app.academy)}</div></div>
               <div class="field"><span class="label">Referred By</span><div class="value">${safeText(app.referral || 'General Office')}</div></div>
               <div class="field"><span class="label">Application Date</span><div class="value">${app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '-'}</div></div>
@@ -1028,8 +1046,8 @@ function Dashboard() {
     doc.text(`Generated: ${new Date().toLocaleDateString()}  |  Total Pending: ${pending.length}`, marginX, marginTop + 18);
 
     // --- Table Config ---
-    const headers = ['#', 'Student Name', 'Mobile Number', 'WhatsApp Number', 'O/L Maths', 'O/L English', 'Branch / Academy'];
-    const colWidths = [30, 210, 100, 100, 65, 65, 150];
+    const headers = ['#', 'Student Name', 'Diploma', 'Mobile Number', 'WhatsApp Number', 'O/L Maths', 'O/L English', 'Branch / Academy'];
+    const colWidths = [25, 160, 140, 95, 95, 55, 55, 135];
     const rowHeight = 24;
     const headerHeight = 26;
     let y = marginTop + 38;
@@ -1085,12 +1103,13 @@ function Dashboard() {
 
     pending.forEach((app, idx) => {
       const name = (app.fullName || app.name || `${app.firstName || ''} ${app.lastName || ''}`.trim() || '-').trim();
+      const diploma = app.course || app.courseApplied || app.program || '-';
       const mobile = app.mobile || app.contact || app.phone || '-';
       const whatsapp = app.whatsapp || '-';
       const mathResult = app.olResults?.math || app.olResults?.mathematics || '-';
       const engResult = app.olResults?.english || '-';
-      const branch = app.academy || app.course || app.program || '-';
-      drawRow([idx + 1, name, mobile, whatsapp, mathResult, engResult, branch], idx % 2 === 0);
+      const branch = app.academy || '-';
+      drawRow([idx + 1, name, diploma, mobile, whatsapp, mathResult, engResult, branch], idx % 2 === 0);
     });
 
     // --- Footer on last page ---
