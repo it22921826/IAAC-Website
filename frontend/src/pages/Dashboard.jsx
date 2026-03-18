@@ -61,6 +61,10 @@ function Dashboard() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
 
+  // Reports State
+  const [monthlyReportYear, setMonthlyReportYear] = useState(String(new Date().getFullYear()));
+  const [monthlyReportMonth, setMonthlyReportMonth] = useState(''); // '' = all months
+
   // Forms State
   const [courseForm, setCourseForm] = useState({});
   const [practicalForm, setPracticalForm] = useState(createEmptyCourseForm({ courseType: 'Practical Training' }));
@@ -123,6 +127,25 @@ function Dashboard() {
       cancelers.forEach((c) => c.abort());
     };
   }, []);
+
+  const availableApplicationYears = useMemo(() => {
+    const years = new Set();
+    applications.forEach((a) => {
+      const dt = a?.createdAt ? new Date(a.createdAt) : null;
+      if (!dt || Number.isNaN(dt.getTime())) return;
+      years.add(dt.getFullYear());
+    });
+    years.add(new Date().getFullYear());
+    return Array.from(years).sort((a, b) => a - b);
+  }, [applications]);
+
+  useEffect(() => {
+    if (!availableApplicationYears.length) return;
+    const selected = Number(monthlyReportYear);
+    if (!monthlyReportYear || Number.isNaN(selected) || !availableApplicationYears.includes(selected)) {
+      setMonthlyReportYear(String(availableApplicationYears[availableApplicationYears.length - 1]));
+    }
+  }, [availableApplicationYears, monthlyReportYear]);
 
   // --- UNIQUE COURSE TYPES (for dropdown) ---
   const existingCourseTypes = useMemo(() => {
@@ -1028,6 +1051,19 @@ function Dashboard() {
       return;
     }
 
+    const groupedByBranch = pending.reduce((acc, app) => {
+      const branchName = String(app.academy || app.branch || app.campus || 'Unassigned').trim() || 'Unassigned';
+      if (!acc[branchName]) acc[branchName] = [];
+      acc[branchName].push(app);
+      return acc;
+    }, {});
+
+    const sortedBranches = Object.keys(groupedByBranch).sort((a, b) => {
+      if (a === 'Unassigned') return 1;
+      if (b === 'Unassigned') return -1;
+      return a.localeCompare(b);
+    });
+
     const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -1046,15 +1082,32 @@ function Dashboard() {
     doc.text(`Generated: ${new Date().toLocaleDateString()}  |  Total Pending: ${pending.length}`, marginX, marginTop + 18);
 
     // --- Table Config ---
-    const headers = ['#', 'Student Name', 'Diploma', 'Mobile Number', 'WhatsApp Number', 'O/L Maths', 'O/L English', 'Branch / Academy'];
-    const colWidths = [25, 160, 140, 95, 95, 55, 55, 135];
+    const headers = ['#', 'Student Name', 'Diploma', 'Mobile Number', 'WhatsApp Number', 'O/L Maths', 'O/L English'];
+    const colWidths = [30, 190, 180, 110, 110, 65, 65];
     const rowHeight = 24;
     const headerHeight = 26;
+    const tableWidth = colWidths.reduce((a, b) => a + b, 0);
     let y = marginTop + 38;
+    let currentBranch = '';
+    let currentBranchCount = 0;
+
+    const drawBranchHeading = (branchName, count, continued = false) => {
+      const label = continued ? `${branchName} (continued)` : branchName;
+      doc.setFillColor(239, 246, 255);
+      doc.rect(marginX, y, tableWidth, 24, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 58, 138);
+      doc.text(`Branch: ${label}`, marginX + 8, y + 16);
+      doc.setFontSize(8);
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Pending: ${count}`, marginX + tableWidth - 8, y + 16, { align: 'right' });
+      y += 30;
+    };
 
     const drawTableHeader = () => {
       doc.setFillColor(30, 58, 138);
-      doc.rect(marginX, y, colWidths.reduce((a, b) => a + b, 0), headerHeight, 'F');
+      doc.rect(marginX, y, tableWidth, headerHeight, 'F');
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.setTextColor(255, 255, 255);
@@ -1070,11 +1123,12 @@ function Dashboard() {
       if (y + rowHeight > pageH - marginBottom) {
         doc.addPage();
         y = marginTop;
+        drawBranchHeading(currentBranch, currentBranchCount, true);
         drawTableHeader();
       }
       if (isEven) {
         doc.setFillColor(245, 247, 250);
-        doc.rect(marginX, y, colWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
+        doc.rect(marginX, y, tableWidth, rowHeight, 'F');
       }
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
@@ -1095,30 +1149,228 @@ function Dashboard() {
       });
       // row border bottom
       doc.setDrawColor(220, 220, 220);
-      doc.line(marginX, y + rowHeight, marginX + colWidths.reduce((a, b) => a + b, 0), y + rowHeight);
+      doc.line(marginX, y + rowHeight, marginX + tableWidth, y + rowHeight);
+      y += rowHeight;
+    };
+
+    sortedBranches.forEach((branchName, branchIdx) => {
+      const branchItems = groupedByBranch[branchName] || [];
+      if (!branchItems.length) return;
+
+      if (y + 54 > pageH - marginBottom) {
+        doc.addPage();
+        y = marginTop;
+      }
+
+      currentBranch = branchName;
+      currentBranchCount = branchItems.length;
+      drawBranchHeading(branchName, branchItems.length);
+      drawTableHeader();
+
+      branchItems.forEach((app, idx) => {
+        const name = (app.fullName || app.name || `${app.firstName || ''} ${app.lastName || ''}`.trim() || '-').trim();
+        const diploma = app.course || app.courseApplied || app.program || '-';
+        const mobile = app.mobile || app.contact || app.phone || '-';
+        const whatsapp = app.whatsapp || '-';
+        const mathResult = app.olResults?.math || app.olResults?.mathematics || '-';
+        const engResult = app.olResults?.english || '-';
+        drawRow([idx + 1, name, diploma, mobile, whatsapp, mathResult, engResult], idx % 2 === 0);
+      });
+
+      if (branchIdx < sortedBranches.length - 1) {
+        y += 14;
+      }
+    });
+
+    // --- Footer on each page ---
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let pageNum = 1; pageNum <= totalPages; pageNum += 1) {
+      doc.setPage(pageNum);
+      doc.setFontSize(7);
+      doc.setTextColor(160, 160, 160);
+      doc.text('IAAC - Confidential', marginX, pageH - 20);
+      doc.text(`Page ${pageNum} of ${totalPages}`, pageW - marginX, pageH - 20, { align: 'right' });
+    }
+
+    doc.save(`Pending_Applications_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  // --- DOWNLOAD MONTHLY APPLICATIONS TRACKING REPORT (PDF) ---
+  const downloadMonthlyApplicationsReport = () => {
+    if (applications.length === 0) {
+      alert('No applications available to export.');
+      return;
+    }
+
+    if (monthlyReportMonth && !monthlyReportYear) {
+      alert('Please select a year before selecting a month.');
+      return;
+    }
+
+    const yearFilter = monthlyReportYear ? Number(monthlyReportYear) : null;
+    const monthFilter = monthlyReportMonth ? Number(monthlyReportMonth) : null; // 1-12
+
+    const filteredApps = applications.filter((app) => {
+      const createdAt = app?.createdAt ? new Date(app.createdAt) : null;
+      if (!createdAt || Number.isNaN(createdAt.getTime())) return false;
+      if (yearFilter !== null && createdAt.getFullYear() !== yearFilter) return false;
+      if (monthFilter !== null && (createdAt.getMonth() + 1) !== monthFilter) return false;
+      return true;
+    });
+
+    const monthlyMap = filteredApps.reduce((acc, app) => {
+      const createdAt = app?.createdAt ? new Date(app.createdAt) : null;
+      if (!createdAt || Number.isNaN(createdAt.getTime())) {
+        return acc;
+      }
+
+      const monthKey = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
+      if (!acc[monthKey]) {
+        acc[monthKey] = {
+          monthKey,
+          monthLabel: createdAt.toLocaleString('default', { month: 'long', year: 'numeric' }),
+          total: 0,
+          pending: 0,
+          processed: 0,
+          branches: {},
+        };
+      }
+
+      acc[monthKey].total += 1;
+      if (app.isDone) {
+        acc[monthKey].processed += 1;
+      } else {
+        acc[monthKey].pending += 1;
+      }
+
+      const branchName = String(app.academy || app.branch || app.campus || 'Unassigned').trim() || 'Unassigned';
+      acc[monthKey].branches[branchName] = (acc[monthKey].branches[branchName] || 0) + 1;
+
+      return acc;
+    }, {});
+
+    const monthlyRows = Object.values(monthlyMap).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+    if (monthlyRows.length === 0) {
+      alert('No valid application dates found to build monthly report.');
+      return;
+    }
+
+    const totalApplications = monthlyRows.reduce((sum, row) => sum + row.total, 0);
+    const totalPending = monthlyRows.reduce((sum, row) => sum + row.pending, 0);
+    const totalProcessed = monthlyRows.reduce((sum, row) => sum + row.processed, 0);
+
+    const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const marginX = 40;
+    const marginTop = 40;
+    const marginBottom = 40;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(30, 58, 138);
+    doc.text('Monthly Applications Tracking Report', marginX, marginTop);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    const scopeParts = [];
+    if (yearFilter !== null) scopeParts.push(`Year: ${yearFilter}`);
+    if (monthFilter !== null) {
+      const monthLabel = new Date(2000, monthFilter - 1, 1).toLocaleString('default', { month: 'long' });
+      scopeParts.push(`Month: ${monthLabel}`);
+    }
+    const scopeText = scopeParts.length ? `Scope: ${scopeParts.join('  |  ')}` : 'Scope: All time';
+    doc.text(`Generated: ${new Date().toLocaleDateString()}  |  ${scopeText}`, marginX, marginTop + 18);
+    doc.text(`Months: ${monthlyRows.length} | Total: ${totalApplications} | Pending: ${totalPending} | Processed: ${totalProcessed}`, marginX, marginTop + 32);
+
+    const headers = ['Month', 'Total', 'Pending', 'Processed', 'Branch Breakdown'];
+    const colWidths = [120, 70, 70, 80, 415];
+    const headerHeight = 26;
+    const minRowHeight = 24;
+    const tableWidth = colWidths.reduce((a, b) => a + b, 0);
+    let y = marginTop + 52;
+
+    const drawTableHeader = () => {
+      doc.setFillColor(30, 58, 138);
+      doc.rect(marginX, y, tableWidth, headerHeight, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+
+      let x = marginX;
+      headers.forEach((header, index) => {
+        doc.text(header, x + 6, y + 17);
+        x += colWidths[index];
+      });
+      y += headerHeight;
+    };
+
+    const drawRow = (cells, isEven) => {
+      const splitCells = cells.map((cell, index) => doc.splitTextToSize(String(cell ?? '-'), colWidths[index] - 12));
+      const maxLines = Math.max(...splitCells.map((lines) => lines.length));
+      const rowHeight = Math.max(minRowHeight, (maxLines * 12) + 8);
+
+      if (y + rowHeight > pageH - marginBottom) {
+        doc.addPage();
+        y = marginTop;
+        drawTableHeader();
+      }
+
+      if (isEven) {
+        doc.setFillColor(245, 247, 250);
+        doc.rect(marginX, y, tableWidth, rowHeight, 'F');
+      }
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(30, 30, 30);
+
+      let x = marginX;
+      splitCells.forEach((lines, index) => {
+        doc.text(lines, x + 6, y + 14);
+        x += colWidths[index];
+      });
+
+      doc.setDrawColor(220, 220, 220);
+      doc.line(marginX, y + rowHeight, marginX + tableWidth, y + rowHeight);
       y += rowHeight;
     };
 
     drawTableHeader();
 
-    pending.forEach((app, idx) => {
-      const name = (app.fullName || app.name || `${app.firstName || ''} ${app.lastName || ''}`.trim() || '-').trim();
-      const diploma = app.course || app.courseApplied || app.program || '-';
-      const mobile = app.mobile || app.contact || app.phone || '-';
-      const whatsapp = app.whatsapp || '-';
-      const mathResult = app.olResults?.math || app.olResults?.mathematics || '-';
-      const engResult = app.olResults?.english || '-';
-      const branch = app.academy || '-';
-      drawRow([idx + 1, name, diploma, mobile, whatsapp, mathResult, engResult, branch], idx % 2 === 0);
+    monthlyRows.forEach((row, index) => {
+      const branchSummary = Object.entries(row.branches)
+        .sort((a, b) => {
+          if (b[1] !== a[1]) return b[1] - a[1];
+          return a[0].localeCompare(b[0]);
+        })
+        .map(([branch, count]) => `${branch} (${count})`)
+        .join(', ');
+
+      drawRow([
+        row.monthLabel,
+        row.total,
+        row.pending,
+        row.processed,
+        branchSummary || '-',
+      ], index % 2 === 0);
     });
 
-    // --- Footer on last page ---
-    doc.setFontSize(7);
-    doc.setTextColor(160, 160, 160);
-    doc.text('IAAC - Confidential', marginX, pageH - 20);
-    doc.text(`Page ${doc.internal.getNumberOfPages()}`, pageW - marginX - 30, pageH - 20);
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let pageNum = 1; pageNum <= totalPages; pageNum += 1) {
+      doc.setPage(pageNum);
+      doc.setFontSize(7);
+      doc.setTextColor(160, 160, 160);
+      doc.text('IAAC - Monthly Intake Tracking', marginX, pageH - 20);
+      doc.text(`Page ${pageNum} of ${totalPages}`, pageW - marginX, pageH - 20, { align: 'right' });
+    }
 
-    doc.save(`Pending_Applications_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+    const fileParts = ['Monthly_Applications_Report'];
+    if (yearFilter !== null) fileParts.push(String(yearFilter));
+    if (monthFilter !== null) fileParts.push(String(monthFilter).padStart(2, '0'));
+    fileParts.push(new Date().toISOString().slice(0, 10));
+    doc.save(`${fileParts.join('_')}.pdf`);
   };
 
   // --- VIEW: APPLICATIONS (CARD GRID) ---
@@ -1127,6 +1379,40 @@ function Dashboard() {
       <div className="flex flex-wrap justify-between items-center px-1 sm:px-2 gap-3">
         <h3 className="font-bold text-slate-800 text-lg sm:text-2xl">Student Applications</h3>
         <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
+            <select
+              value={monthlyReportYear}
+              onChange={(e) => setMonthlyReportYear(e.target.value)}
+              className="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:border-indigo-500 outline-none"
+              title="Select year for monthly report"
+            >
+              {availableApplicationYears.map((y) => (
+                <option key={y} value={String(y)}>{y}</option>
+              ))}
+            </select>
+            <select
+              value={monthlyReportMonth}
+              onChange={(e) => setMonthlyReportMonth(e.target.value)}
+              className="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:border-indigo-500 outline-none"
+              title="Select month (optional)"
+            >
+              <option value="">All months</option>
+              {Array.from({ length: 12 }).map((_, i) => {
+                const value = String(i + 1);
+                const label = new Date(2000, i, 1).toLocaleString('default', { month: 'short' });
+                return (
+                  <option key={value} value={value}>{label}</option>
+                );
+              })}
+            </select>
+          </div>
+          <button
+            onClick={downloadMonthlyApplicationsReport}
+            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm transition-colors"
+            title="Download monthly applications tracking report as PDF"
+          >
+            <Download size={14} /> Monthly Report
+          </button>
           <button
             onClick={downloadPendingReport}
             className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm transition-colors"
