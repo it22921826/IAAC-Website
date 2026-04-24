@@ -31,6 +31,7 @@ function Navbar() {
             <NavLink to="/" text="Home" />
             <NavLink to="/about" text="About Us" />
             <NavLink to="/student-life" text="Student Life" />
+            <NavLink to="/hall-of-frames" text="Hall of Frames" />
 
             {/* PROGRAMS DROPDOWN */}
             <div className="relative group">
@@ -48,8 +49,6 @@ function Navbar() {
                 </div>
               </div>
             </div>
-
-            <NavLink to="/academic-staff" text="Academic Staff" />
             <NavLink to="/events/upcoming" text="Events" />
             <NavLink to="/contact-us" text="Contact Us" />
           </div>
@@ -87,6 +86,7 @@ function Navbar() {
             <MobileLink to="/" text="Home" close={() => setIsMobileMenuOpen(false)} />
             <MobileLink to="/about" text="About Us" close={() => setIsMobileMenuOpen(false)} />
             <MobileLink to="/student-life" text="Student Life" close={() => setIsMobileMenuOpen(false)} />
+            <MobileLink to="/hall-of-frames" text="Hall of Frames" close={() => setIsMobileMenuOpen(false)} />
 
             {/* MOBILE DROPDOWN */}
             <div>
@@ -121,8 +121,6 @@ function Navbar() {
                 </div>
               )}
             </div>
-
-            <MobileLink to="/academic-staff" text="Academic Staff" close={() => setIsMobileMenuOpen(false)} />
             <MobileLink to="/events/upcoming" text="Events" close={() => setIsMobileMenuOpen(false)} />
             <MobileLink to="/contact-us" text="Contact Us" close={() => setIsMobileMenuOpen(false)} />
 

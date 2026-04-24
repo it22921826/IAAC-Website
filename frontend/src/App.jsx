@@ -13,6 +13,7 @@ import ChatbotWidget from './components/ChatbotWidget.jsx';
 import Home from './pages/Home.jsx';
 import About from './pages/About.jsx'; // This is now a separate page
 import AcademicStaff from './pages/AcademicStaff.jsx'; // The dynamic staff page
+import HallOfFrames from './pages/HallOfFrames.jsx';
 import StudentLife from './pages/Studentlife.jsx';
 import Programs from './pages/Programs.jsx';
 import PracticalTrainings from './pages/PracticalTrainings.jsx';
@@ -49,6 +50,7 @@ function App() {
           <Route path="/" element={<Home user={user} />} />
           <Route path="/about" element={<About />} />
           <Route path="/academic-staff" element={<AcademicStaff />} />
+          <Route path="/hall-of-frames" element={<HallOfFrames />} />
           <Route path="/student-life" element={<StudentLife />} />
           <Route path="/student-login" element={<StudentLogin />} />
           
