@@ -31,7 +31,7 @@ function Navbar() {
             <NavLink to="/" text="Home" />
             <NavLink to="/about" text="About Us" />
             <NavLink to="/student-life" text="Student Life" />
-            <NavLink to="/hall-of-frames" text="Hall of Frames" />
+            <NavLink to="/hall-of-frames" text="Hall of Fame" />
 
             {/* PROGRAMS DROPDOWN */}
             <div className="relative group">
@@ -86,7 +86,7 @@ function Navbar() {
             <MobileLink to="/" text="Home" close={() => setIsMobileMenuOpen(false)} />
             <MobileLink to="/about" text="About Us" close={() => setIsMobileMenuOpen(false)} />
             <MobileLink to="/student-life" text="Student Life" close={() => setIsMobileMenuOpen(false)} />
-            <MobileLink to="/hall-of-frames" text="Hall of Frames" close={() => setIsMobileMenuOpen(false)} />
+            <MobileLink to="/hall-of-frames" text="Hall of Fame" close={() => setIsMobileMenuOpen(false)} />
 
             {/* MOBILE DROPDOWN */}
             <div>
