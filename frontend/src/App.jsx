@@ -8,6 +8,7 @@ import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import ScrollManager from './components/ScrollManager.jsx'; // Ensures page scrolls to top on navigation
 import ChatbotWidget from './components/ChatbotWidget.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 
 // --- PAGES ---
 import Home from './pages/Home.jsx';
@@ -39,53 +40,55 @@ function App() {
 
   return (
     <div className={appClasses}>
-      <Navbar />
-      
-      {/* Handles scrolling to top when route changes */}
-      <ScrollManager />
-      
-      <main className="flex-1">
-        <Routes>
-          {/* --- PUBLIC ROUTES --- */}
-          <Route path="/" element={<Home user={user} />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/academic-staff" element={<AcademicStaff />} />
-          <Route path="/hall-of-frames" element={<HallOfFrames />} />
-          <Route path="/student-life" element={<StudentLife />} />
-          <Route path="/student-login" element={<StudentLogin />} />
-          
-          {/* Programs */}
-          <Route path="/programs" element={<Programs />} />
-          <Route path="/programs/courses" element={<Programs />} />
-          <Route path="/programs/practical-trainings" element={<PracticalTrainings />} />
-          <Route path="/programs/session/:sessionId" element={<SessionDetails />} />
-          <Route path="/programs/course/:courseId" element={<CourseDetails />} />
+      <ErrorBoundary>
+        <Navbar />
+        
+        {/* Handles scrolling to top when route changes */}
+        <ScrollManager />
+        
+        <main className="flex-1">
+          <Routes>
+            {/* --- PUBLIC ROUTES --- */}
+            <Route path="/" element={<Home user={user} />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/academic-staff" element={<AcademicStaff />} />
+            <Route path="/hall-of-frames" element={<HallOfFrames />} />
+            <Route path="/student-life" element={<StudentLife />} />
+            <Route path="/student-login" element={<StudentLogin />} />
+            
+            {/* Programs */}
+            <Route path="/programs" element={<Programs />} />
+            <Route path="/programs/courses" element={<Programs />} />
+            <Route path="/programs/practical-trainings" element={<PracticalTrainings />} />
+            <Route path="/programs/session/:sessionId" element={<SessionDetails />} />
+            <Route path="/programs/course/:courseId" element={<CourseDetails />} />
 
-          {/* Backward-compatible Training URLs */}
-          <Route path="/training" element={<Navigate to="/programs" replace />} />
-          <Route path="/training/courses" element={<Navigate to="/programs/courses" replace />} />
-          <Route path="/training/practical-trainings" element={<Navigate to="/programs/practical-trainings" replace />} />
-          <Route path="/training/course/:courseId" element={<CourseDetails />} />
-          
-          {/* Support & Contact */}
-          <Route path="/career-support" element={<CareerSupport />} />
-          <Route path="/contact-us" element={<ContactUs />} />
-          <Route path="/apply-now" element={<ApplyNow />} />
-          <Route path="/events/upcoming" element={<UpcomingEvents />} />
-          
-          {/* --- ADMIN ROUTES --- */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route
-            path="/admin/dashboard"
-            // Protects the dashboard so only admins can enter
-            element={isAdmin ? <Dashboard /> : <Navigate to="/" replace />}
-          />
-        </Routes>
-      </main>
+            {/* Backward-compatible Training URLs */}
+            <Route path="/training" element={<Navigate to="/programs" replace />} />
+            <Route path="/training/courses" element={<Navigate to="/programs/courses" replace />} />
+            <Route path="/training/practical-trainings" element={<Navigate to="/programs/practical-trainings" replace />} />
+            <Route path="/training/course/:courseId" element={<CourseDetails />} />
+            
+            {/* Support & Contact */}
+            <Route path="/career-support" element={<CareerSupport />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/apply-now" element={<ApplyNow />} />
+            <Route path="/events/upcoming" element={<UpcomingEvents />} />
+            
+            {/* --- ADMIN ROUTES --- */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin/dashboard"
+              // Protects the dashboard so only admins can enter
+              element={isAdmin ? <Dashboard /> : <Navigate to="/" replace />}
+            />
+          </Routes>
+        </main>
 
-      <ChatbotWidget />
+        <ChatbotWidget />
 
-      <Footer />
+        <Footer />
+      </ErrorBoundary>
     </div>
   );
 }
